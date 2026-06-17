@@ -1,0 +1,4 @@
+SCHEMA_VALID
+Tables: categories, composition_categories, composition_festivals, compositions, deities, festivals, saint_relationships, saints
+Deities: 7, Festivals: 7, Categories: 9, Saints: 4
+SEED_DATA_OK

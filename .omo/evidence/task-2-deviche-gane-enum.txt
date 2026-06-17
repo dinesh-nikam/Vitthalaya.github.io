@@ -1,0 +1,1 @@
+postgres_schema.sql line 57: 'deviche_gane' added to composition_type enum

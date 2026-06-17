@@ -1,0 +1,8 @@
+DedupEngine created: true
+Title normalization: true
+Same text = same hash: true
+Different text = different hash: true
+isDuplicate (empty): true
+isDuplicate (after add): true
+Dedup size: true
+ALL_DEDUP_CHECKS_PASS

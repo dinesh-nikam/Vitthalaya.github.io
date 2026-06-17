@@ -1,0 +1,2 @@
+bun run typecheck: 0 errors in src/scraper/tukaram-gatha.ts
+Pre-existing errors: src/lib/search-client.ts (meilisearch module not installed — unrelated)

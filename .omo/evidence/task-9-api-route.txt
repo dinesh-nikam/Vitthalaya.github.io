@@ -1,0 +1,9 @@
+task-9: API route (app/api/scrape/route.ts)
+
+Verification: typecheck passes (0 errors in app/api/scrape/route.ts)
+Features:
+- POST /api/scrape with x-api-key auth
+- Supports source (tukaram-gatha | warkari-rojnishi | abhang-in | all) and limit
+- Returns 401 for missing/wrong key, 400 for invalid source, 500 for DB failure
+- Returns 200 with scrape summary (per-source counts, errors, duration, inserted/skipped)
+- Uses Next.js App Router route handler pattern

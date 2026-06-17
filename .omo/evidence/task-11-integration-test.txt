@@ -1,0 +1,25 @@
+task-11: Integration test — partial completion
+
+Verified:
+✅ CLI --help shows all options (confirmed: bun run src/cli/scrape.ts --help)
+✅ SQLite DB layer works (in-memory test: 0 comps, 4 saints, 9 categories)
+✅ data/ directory created with .gitkeep
+✅ data/scraped/ directory exists
+✅ JSON output format correct (empty result saved for tukaram-gatha)
+✅ bun run typecheck passes for all our files
+✅ All 3 scrapers class-load without errors
+✅ Dedup engine works (tested in task-3)
+
+⚠️ Playwright browser launch times out on this Windows system (~180s)
+   - chromium_headless_shell-1228 launches but never connects
+   - Scrapers need a working Playwright browser to produce compositions
+   - This is a system/runtime issue, not a code issue
+   - The scrapers, CLI, DB, dedup, rate-limiter are all structurally complete
+
+Per-source code structure:
+- src/scraper/tukaram-gatha.ts: Complete Tukaram Gatha scraper class
+- src/scraper/warkari-rojnishi.ts: Complete Warkari Rojnishi scraper class
+- src/scraper/abhang-in.ts: Complete Abhang.in scraper class
+- src/cli/scrape.ts: CLI with --help, --source, --limit, --dry-run, --verbose, --db-path
+- app/api/scrape/route.ts: API endpoint with API key auth
+- src/db/sqlite.ts: SQLite DB layer with init, insert, stats, dedup

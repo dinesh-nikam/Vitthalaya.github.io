@@ -1,0 +1,2 @@
+bun run typecheck → PASS (exit 0)
+Files created: types.ts, rate-limiter.ts, logger.ts, dedup.ts, base-scraper.ts

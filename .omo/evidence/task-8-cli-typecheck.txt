@@ -1,0 +1,4 @@
+task-8: CLI entry point (src/cli/scrape.ts)
+
+Verification: typecheck passes (0 errors in src/cli/scrape.ts)
+Dependencies: package.json updated with "scrape" script

@@ -1,0 +1,4 @@
+task-7: SQLite database layer (src/db/sqlite.ts)
+
+Verification: typecheck passes (0 errors in sqlite.ts)
+Functions: initDatabase, upsertSaint, getSaintId, getDeityId, insertComposition, compositionExists, batchInsertCompositions, getStats, getAllContentHashes

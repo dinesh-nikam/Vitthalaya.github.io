@@ -1,0 +1,1 @@
+website of millions of abhang , bhajan , gaulani , deviche gane all in one website , this comes from real api , scrap online site to get data ,whatever it takes to success add in website , add cool animation with orange and white combination , when other see it should feel marathi culture in website , add some things as your own , think deeply  give high level prompt

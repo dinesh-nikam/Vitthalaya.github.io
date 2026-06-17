@@ -1,0 +1,3 @@
+bun run typecheck → PASS (exit 0)
+Fixed: removed invalid "uselib" option from tsconfig.json
+Fixed: added "baseUrl" and "paths" for @/* aliases

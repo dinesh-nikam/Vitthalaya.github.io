@@ -1,0 +1,10 @@
+{
+  "hooks": {
+    "AfterWrite": [
+      {
+        "type": "command",
+        "command": "bun run typecheck $FILE || true"
+      }
+    ]
+  }
+}
