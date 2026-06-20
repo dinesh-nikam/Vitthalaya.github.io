@@ -1,0 +1,117 @@
+version: '3.8'
+
+services:
+  # Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: dp-postgres
+    environment:
+      POSTGRES_DB: digital_pandharpur
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d digital_pandharpur"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # In-memory store for distributed queue & rate limiting
+  redis:
+    image: redis:7-alpine
+    container_name: dp-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Search Index (lexical + semantic)
+  opensearch:
+    image: opensearchproject/opensearch:2.11.1
+    container_name: dp-opensearch
+    environment:
+      - cluster.name=dp-search-cluster
+      - node.name=dp-node-1
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - DISABLE_INSTALL_DEMO_CONFIG=true
+      - DISABLE_SECURITY_PLUGIN=true # Setup for local development simplicity
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    ports:
+      - "9200:9200"
+      - "9600:9600"
+    volumes:
+      - opensearch_data:/usr/share/opensearch/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200/"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:2.11.1
+    container_name: dp-dashboards
+    ports:
+      - "5601:5601"
+    environment:
+      - OPENSEARCH_HOSTS=http://opensearch:9200
+      - DISABLE_SECURITY_DASHBOARDS_PLUGIN=true
+    depends_on:
+      - opensearch
+
+  # Monitoring & Metrics
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: dp-prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: dp-grafana
+    ports:
+      - "3001:3000" # Mapped to 3001 to avoid conflict with Next.js
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+  # Meilisearch service for fast search indexing
+  meilisearch:
+    image: getmeili/meilisearch:v1.6
+    container_name: dp-meilisearch
+    ports:
+      - "7700:7700"
+    environment:
+      - MEILI_ENV=development
+      - MEILI_NO_ANALYTICS=true
+    volumes:
+      - meili_data:/meili_data
+
+volumes:
+  postgres_data:
+  redis_data:
+  opensearch_data:
+  prometheus_data:
+  grafana_data:
+  meili_data:
+

@@ -4,10 +4,9 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Bookmark, Trash2 } from 'lucide-react';
 import { getBookmarks, clearBookmarks } from '@/src/db/bookmark';
-import { db } from '@/src/db/client';
 
 export default function CollectionsPage() {
-  const [bookmarks, setBookmarks] = React.useState<string[]>([]);
+  const [bookmarks, setBookmarks] = React.useState<Array<{ slug: string; title: string }>>([]);
   const [compositions, setCompositions] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
 
@@ -23,15 +22,15 @@ export default function CollectionsPage() {
     }
   }, []);
 
-  const fetchCompositions = async (slugs: string[]) => {
+  const fetchCompositions = async (saved: Array<{ slug: string; title: string }>) => {
     try {
       // In real implementation, call API to get compositions by slugs
       // This is client-side, so we'll just show the slugs
       setCompositions(
-        slugs.map((slug) => ({
-          slug,
-          titleMarathi: slug.replace(/-/g, ' '),
-          titleTranslit: slug,
+        saved.map((b) => ({
+          slug: b.slug,
+          titleMarathi: b.title,
+          titleTranslit: b.slug,
         }))
       );
     } finally {

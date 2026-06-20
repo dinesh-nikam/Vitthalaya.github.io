@@ -143,4 +143,42 @@ export function getCurrentFestival(): {
   return upcoming.sort((a, b) => a.daysUntil - b.daysUntil)[0];
 }
 
+/**
+ * Gets a festival occurring on a specific date (if any)
+ */
+export function getFestivalForDate(date: Date): { name: string; marathiName: string } | null {
+  if (!date || isNaN(date.getTime())) return null;
+  const festivals = getFestivalsForYear(date.getFullYear());
+  const match = festivals.find(f => {
+    const fDate = new Date(f.date);
+    return fDate.getDate() === date.getDate() && 
+           fDate.getMonth() === date.getMonth();
+  });
+  return match ? { name: match.name, marathiName: match.marathiName } : null;
+}
+
+/**
+ * Gets the next upcoming festival
+ */
+export function getNextFestival() {
+  const current = getCurrentFestival();
+  if (!current) return null;
+  return {
+    ...current,
+    nameMarathi: current.marathiName
+  };
+}
+
+/**
+ * Parses raw rule details
+ */
+export function parseFestivalRule(rule: string) {
+  if (!rule) return null;
+  const isLunar = rule.includes('पूर्णिमा') || rule.includes('एकादशी') || rule.includes('तिथी') || rule.includes('नक्कडीचा');
+  return {
+    type: isLunar ? 'lunar' : 'month-day',
+    rule
+  };
+}
+
 export { MARATHI_FESTIVALS };

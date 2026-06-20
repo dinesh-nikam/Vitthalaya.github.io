@@ -1,42 +1,76 @@
-# dependencies (bun install)
-node_modules
+# --- Dependencies ---
+node_modules/
+.pnp
+.pnp.js
 
-# output
-out
-dist
+# --- Bun ---
+bun.lockb
+
+# --- Next.js ---
+.next/
+out/
+
+# --- Build output ---
+dist/
 *.tgz
 
-# code coverage
-coverage
-*.lcov
-
-# logs
-logs
-_.log
-report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
-
-# dotenv environment variable files
+# --- Environment files ---
 .env
 .env.development.local
 .env.test.local
 .env.production.local
 .env.local
+.env.development
+.env.test
+.env.production
 
-# caches
-.eslintcache
-.cache
+# --- Editor / IDE ---
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.history/
+
+# --- OS files ---
+.DS_Store
+.DS_Store?
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# --- TypeScript ---
 *.tsbuildinfo
 
-# IntelliJ based IDEs
-.idea
+# --- Testing / Coverage ---
+coverage/
+*.lcov
+.nyc_output/
 
-# Finder (MacOS) folder config
-.DS_Store
+# --- Debug logs ---
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Scraping - DO NOT INCLUDE IN REPO
-# All scraping code is deprecated for editorial ingestion pipeline
+# --- Prisma ---
+# Generated Prisma client is regenerated on each install/migration
+src/generated/
+
+# --- Project-specific: scraped data (regenerated on demand) ---
+data/scraped/
+tmp_*.json
+
+# --- Project-specific: scraper code (deprecated for editorial ingestion) ---
 src/scraper/
 src/cli/scrape.ts
 app/api/scrape/
-.omo/plans/content-scraping-pipeline.md
-content-scraping-pipeline.md
+
+# --- Reports (generated) ---
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# --- Caches ---
+.eslintcache
+.cache/

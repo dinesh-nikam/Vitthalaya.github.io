@@ -1,6 +1,7 @@
 import { searchCompositions, type SearchDocument } from '@/src/lib/search-client';
 import Link from 'next/link';
-import { Frown, Music } from 'lucide-react';
+import { Frown, Music, Search } from 'lucide-react';
+import { getTopCanonicalQueries } from '@/src/lib/canonical-queries';
 
 export default async function SearchPage({
   searchParams,
@@ -11,6 +12,9 @@ export default async function SearchPage({
   const query = params.q || '';
   const typeFilter = params.type;
   const deityFilter = params.deity;
+
+  // Load canonical search suggestions when no query is active
+  const canonicalQueries = query ? [] : (await getTopCanonicalQueries(24));
 
   let results: SearchDocument[] = [];
 
@@ -28,8 +32,29 @@ export default async function SearchPage({
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-marathiHeading text-maroon mb-6">
-        शोध निकाल{query && ` - "${query}"`}
+        {query ? `शोध निकाल - "${query}"` : 'शोध'}
       </h1>
+
+      {/* Canonical search suggestions (no query yet) */}
+      {!query && canonicalQueries.length > 0 && (
+        <section className="mb-10" aria-labelledby="popular-searches">
+          <h2 id="popular-searches" className="font-marathiHeading text-xl text-maroon mb-4">
+            लोकप्रिय शोध
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {canonicalQueries.map((cq) => (
+              <Link
+                key={cq.slug}
+                href={`/search/${cq.slug}`}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-saffron/20 bg-saffron/5 text-sm hover:bg-saffron/10 hover:border-saffron/30 transition-colors"
+              >
+                <Search className="w-3.5 h-3.5 text-saffron" />
+                {cq.label}
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {query && results.length === 0 && (
         <div className="text-center py-12">
@@ -90,4 +115,35 @@ export default async function SearchPage({
       )}
     </div>
   );
+}
+
+/**
+ * For the /search page with ?q=... query params: noindex to prevent
+ * infinite crawl of arbitrary search queries.
+ * The canonical search pages at /search/[query] are the indexed versions.
+ */
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; type?: string; deity?: string }>;
+}) {
+  const params = await searchParams;
+  const hasFilters = params.q || params.type || params.deity;
+
+  if (hasFilters) {
+    return {
+      robots: { index: false, follow: true },
+      title: 'शोध निकाल - डिजिटल पंढरपूर',
+    };
+  }
+
+  return {
+    title: 'शोध - डिजिटल पंढरपूर',
+    description: 'मराठी भक्ती साहित्य शोधा — अभंग, भजन, आरत्या, स्तोत्रे आणि संत साहित्य',
+    openGraph: {
+      title: 'शोध - डिजिटल पंढरपूर',
+      description: 'लाखो अभंग, भजन, आरत्या शोधा',
+      locale: 'mr_IN',
+    },
+  };
 }

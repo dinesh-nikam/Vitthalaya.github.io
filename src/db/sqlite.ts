@@ -7,7 +7,17 @@ import { Database } from 'bun:sqlite';
 import { readFileSync, existsSync, mkdirSync } from 'fs';
 import { dirname } from 'path';
 import type { ScrapedComposition, DBStats } from '../scraper/types';
-import { contentHash, normalizeTitle } from '../scraper/dedup';
+import { contentHash } from '../canonical/normalization';
+
+// Local normalizeTitle for slugs
+function normalizeTitle(title: string): string {
+  return title
+    .trim()
+    .replace(/\s+/g, ' ')
+    .replace(/^[०१२३४५६७८९\. \s\-।,]+/, '')
+    .replace(/[०१२३४५६७८९\. \s\-।,]+$/, '')
+    .trim();
+}
 
 // ============================================================
 // Schema & Initialization

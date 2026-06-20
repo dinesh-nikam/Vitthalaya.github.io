@@ -15,7 +15,7 @@ export function extractYouTubeId(url: string): string | null {
     /(?:https?:\/\/)?(?:www\.)?youtube\.com\/v\/([^?]+)/,
   ];
 
-  for const pattern of patterns) {
+  for (const pattern of patterns) {
     const match = url.match(pattern);
     if (match) {
       return match[1];

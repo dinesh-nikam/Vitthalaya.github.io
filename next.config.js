@@ -13,8 +13,11 @@ const nextConfig = {
   },
   // Enable SSR for SEO
   output: 'standalone',
-  // Font optimization
-  optimizeFonts: true,
+  webpack: (config) => {
+    // Handle bun:sqlite for server-side code
+    config.externals = [...(config.externals || []), 'bun:sqlite'];
+    return config;
+  },
 };
 
 module.exports = nextConfig;

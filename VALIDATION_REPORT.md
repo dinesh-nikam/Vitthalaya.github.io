@@ -126,33 +126,28 @@ varkari/
 └── VALIDATION_REPORT.md
 ```
 
-## FINAL STEPS FOR PHASE 0
+## PHASE 1 FEATURES IMPLEMENTED
+
+| Feature | Status | Files |
+|---------|--------|-------|
+| **Festival Engine** | ✅ | `src/lib/festival-calculator.ts`, `app/festival/[slug]/page.tsx` |
+| **Audio Embeds** | ✅ | `src/lib/youtube-embed.ts`, composition page updated |
+| **Bookmarks** | ✅ | `src/db/bookmark.ts`, `app/collections/page.tsx` |
+| **AI Assistant** | ✅ | `src/lib/ai-retrieval.ts`, `app/api/ai/assistant/route.ts`, `components/ai-chat.tsx` |
 
 ```bash
-# 1. Install dependencies
+# To run the platform:
 bun install
-npm install @prisma/client meilisearch
-
-# 2. Run migrations
 bun run db:generate
 bun run db:migrate
-
-# 3. Seed verified content
 bun run db:seed
-bun run src/db/seed-expanded.ts
-
-# 4. Start Meilisearch (in another terminal)
 ./meilisearch --master-key=dev-key
-
-# 5. Index content
 bun run scripts/index-search.ts
-
-# 6. Run development server
 bun dev
 ```
 
-### Optional: Scrape additional content (requires review)
-```bash
-bun run src/scraper/tukaram-gatha.ts
-bun run src/db/scraper-integrator.ts data/scraped/tukaram-gatha-*.json
-```
+### Scraping Integration
+Scraped content flows through `src/db/scraper-integrator.ts`:
+- All imported as `reviewed: false`
+- Requires editorial approval before publication
+- No auto-publishing of third-party content

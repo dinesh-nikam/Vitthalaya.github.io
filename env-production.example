@@ -1,0 +1,50 @@
+# Digital Pandharpur - Production Environment Variables
+# REQUIRED - No defaults are safe for production
+
+# Database
+DATABASE_URL=postgresql://user:password@host:5432/database?connection_limit=20&pool_timeout=15
+
+# Authentication (REQUIRED)
+NEXTAUTH_SECRET=<generate with: openssl rand -base64 32>
+NEXTAUTH_URL=https://digital-pandharpur.org
+GOOGLE_CLIENT_ID=<your-google-oauth-client-id>
+GOOGLE_CLIENT_SECRET=<your-google-oauth-client-secret>
+
+# Cache & Rate Limiting
+UPSTASH_REDIS_REST_URL=<your-upstash-redis-url>
+UPSTASH_REDIS_REST_TOKEN=<your-upstash-redis-token>
+
+# Search Engines
+MEILI_HOST=https://search.digital-pandharpur.org
+MEILI_MASTER_KEY=<your-meilisearch-key>
+OPENSEARCH_URL=https://opensearch.digital-pandharpur.org
+OPENSEARCH_USER=admin
+OPENSEARCH_PASS=<your-opensearch-password>
+
+# OCR Service (REQUIRED for manuscript uploads)
+GOOGLE_VISION_API_KEY=<your-google-vision-api-key>
+
+# AI Enrichment
+LLM_PROVIDER=groq
+GROQ_API_KEY=<your-groq-api-key>
+GROQ_MODEL=llama-3.1-8b-instant
+LLM_TEMPERATURE=0.1
+
+# Worker Authentication (REQUIRED for background jobs)
+WORKER_SECRET_KEY=<generate with: openssl rand -base64 32>
+
+# Scrape API Authentication (REQUIRED for content ingestion)
+SCRAPE_API_KEY=<generate with: openssl rand -base64 32>
+
+# Error Tracking
+SENTRY_DSN=https://example@sentry.io/project
+
+# CDN & Storage
+CDN_BASE_URL=https://cdn.digital-pandharpur.org
+AWS_ACCESS_KEY_ID=<for-s3-uploads>
+AWS_SECRET_ACCESS_KEY=<for-s3-uploads>
+AWS_S3_BUCKET=digital-pandharpur-uploads
+
+# Backup Storage
+BACKUP_DIR=/var/backups/digital-pandharpur
+BACKUP_RETENTION_DAYS=30

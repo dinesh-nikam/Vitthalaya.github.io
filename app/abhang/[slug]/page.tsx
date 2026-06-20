@@ -1,8 +1,10 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { db } from '@/src/db/client';
-import { Share2, Bookmark, Copy, Printer, Moon, Sun, Music } from 'lucide-react';
 import { getFirstValidEmbed, hasAudioLinks } from '@/src/lib/youtube-embed';
+import { compositionSchema, canonicalMetadata } from '@/src/lib/seo';
+import { getGraphLinks } from '@/src/lib/cross-links';
+import { CompositionReader } from '@/components/composition-reader';
 
 interface Composition {
   id: string;
@@ -48,32 +50,38 @@ export default async function CompositionPage({
     },
   });
 
+  // Load AI enrichment result for AI-generated summary (if available)
+  const enrichmentResult = composition
+    ? await db.aiEnrichmentResult.findFirst({
+        where: { compositionId: composition.id },
+        select: { summary: true, meaning: true },
+      })
+    : null;
+
+  // Load cross-links for internal linking
+  const graphLinks = composition?.id
+    ? await getGraphLinks('composition', composition.id, 4)
+    : [];
+
   if (!composition) {
     notFound();
   }
 
+  let audioLinks: string[] = [];
+  if (composition.audioLinks) {
+    try {
+      audioLinks = typeof composition.audioLinks === 'string'
+        ? JSON.parse(composition.audioLinks)
+        : composition.audioLinks;
+    } catch {
+      audioLinks = [];
+    }
+  }
+
   const composerSaint = composition.saint;
   const composerDeity = composition.deity;
-  const hasAudio = hasAudioLinks(composition.audioLinks);
-  const embedUrl = hasAudio ? getFirstValidEmbed(composition.audioLinks) : null;
-
-  // Get related compositions (same saint)
-  const relatedComps = composerSaint
-    ? await db.composition.findMany({
-        where: {
-          saintId: composerSaint?.slug === composition.saint?.slug ? undefined : undefined,
-          slug: { not: slug },
-        },
-        take: 3,
-        select: {
-          titleMarathi: true,
-          slug: true,
-          saint: {
-            select: { nameMarathi: true },
-          },
-        },
-      })
-    : [];
+  const hasAudio = hasAudioLinks(audioLinks);
+  const embedUrl = hasAudio ? getFirstValidEmbed(audioLinks) : null;
 
   // Get compositions by same saint
   let sameSaintComps: { titleMarathi: string; slug: string }[] = [];
@@ -93,28 +101,46 @@ export default async function CompositionPage({
 
   return (
     <>
-      {/* JSON-LD Structured Data */}
+      {/* JSON-LD Structured Data — CreativeWork + Article + BreadcrumbList */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            '@context': 'https://schema.org',
-            '@type': 'CreativeWork',
-            name: composition.titleMarathi,
-            alternateName: composition.titleTranslit,
-            description: composition.meaning,
-            inLanguage: 'mr',
-            about: {
-              '@type': 'Person',
-              name: composerSaint?.nameMarathi,
-            },
-            creator: {
-              '@type': 'Person',
-              name: composerSaint?.nameMarathi,
-            },
-            genre: composition.type.toLowerCase(),
-            url: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/abhang/${slug}`,
-          }),
+          __html: JSON.stringify(
+            compositionSchema(
+              {
+                id: composition.id,
+                titleMarathi: composition.titleMarathi,
+                titleTranslit: composition.titleTranslit,
+                slug: composition.slug,
+                type: composition.type,
+                fullText: composition.fullText,
+                meaning: composition.meaning,
+                summary: enrichmentResult?.summary ?? null,
+                saint: composition.saint
+                  ? {
+                      nameMarathi: composition.saint.nameMarathi,
+                      nameTranslit: composition.saint.nameTranslit,
+                      slug: composition.saint.slug,
+                    }
+                  : null,
+                deity: composition.deity
+                  ? { nameMarathi: composition.deity.nameMarathi }
+                  : null,
+                category: null,
+                festival: null,
+                audioLinks: audioLinks,
+                source: composition.source,
+                updatedAt: composition.updatedAt,
+              },
+              [
+                { name: 'मुख्यपृष्ठ', path: '/' },
+                ...(composition.type
+                  ? [{ name: composition.type, path: `/category/${composition.type.toLowerCase()}` }]
+                  : []),
+                { name: composition.titleMarathi, path: `/abhang/${composition.slug}` },
+              ],
+            ),
+          ),
         }}
       />
 
@@ -153,72 +179,19 @@ export default async function CompositionPage({
         </div>
       </header>
 
-      {/* Actions Bar */}
-      <nav
-        className="flex flex-wrap items-center gap-2 mb-8 justify-center sm:justify-start"
-        aria-label="कृया"
-      >
-        <button
-          className="flex items-center gap-2 px-4 py-2 rounded-lg border border-saffron/20 text-sm hover:bg-saffron/10 transition-colors focus:outline-none focus:ring-2 focus:ring-saffron"
-          aria-label="बुकमार्क करा"
-        >
-          <Bookmark className="w-4 h-4" />
-          <span>वाचले याला</span>
-        </button>
-
-        <button
-          className="flex items-center gap-2 px-4 py-2 rounded-lg border border-saffron/20 text-sm hover:bg-saffron/10 transition-colors focus:outline-none focus:ring-2 focus:ring-saffron"
-          aria-label="शेयर करा"
-        >
-          <Share2 className="w-4 h-4" />
-          <span>शेयर</span>
-        </button>
-
-        <button
-          className="flex items-center gap-2 px-4 py-2 rounded-lg border border-saffron/20 text-sm hover:bg-saffron/10 transition-colors focus:outline-none focus:ring-2 focus:ring-saffron"
-          aria-label="कॉपी करा"
-          onClick={() => navigator.clipboard.writeText(composition.fullText)}
-        >
-          <Copy className="w-4 h-4" />
-          <span>कॉपी</span>
-        </button>
-
-        <button
-          className="flex items-center gap-2 px-4 py-2 rounded-lg border border-saffron/20 text-sm hover:bg-saffron/10 transition-colors focus:outline-none focus:ring-2 focus:ring-saffron"
-          aria-label="प्रिंट करा"
-          onClick={() => window.print()}
-        >
-          <Printer className="w-4 h-4" />
-          <span>प्रिंट</span>
-        </button>
-
-        <div className="flex items-center gap-2 ml-auto">
-          <button
-            className="p-2 rounded-lg border border-saffron/20 hover:bg-saffron/10 transition-colors focus:outline-none focus:ring-2 focus:ring-saffron"
-            aria-label="डार्क मोड"
-            onClick={() => document.documentElement.classList.add('dark')}
-          >
-            <Moon className="w-4 h-4" />
-          </button>
-          <button
-            className="p-2 rounded-lg border border-saffron/20 hover:bg-saffron/10 transition-colors focus:outline-none focus:ring-2 focus:ring-saffron"
-            aria-label="लाइट मोड"
-            onClick={() => document.documentElement.classList.remove('dark')}
-          >
-            <Sun className="w-4 h-4" />
-          </button>
-        </div>
-      </nav>
-
       {/* Main Content */}
       <div className="grid md:grid-cols-3 gap-8">
-        {/* Marathi Text - Main focus */}
-        <div className="md:col-span-2 reading-area">
-          <div className="bg-card rounded-lg p-6 sm:p-8 border border-saffron/10">
-            <div className="reading-text font-marathi text-foreground whitespace-pre-line leading-loose text-xl">
-              {composition.fullText}
-            </div>
-          </div>
+        {/* Marathi Text - Main focus (rendered using CompositionReader client component) */}
+        <div className="md:col-span-2 space-y-6">
+          <CompositionReader
+            fullText={composition.fullText}
+            titleMarathi={composition.titleMarathi}
+            titleTranslit={composition.titleTranslit}
+            slug={slug}
+            saint={composerSaint}
+            deity={composerDeity}
+            embedUrl={embedUrl}
+          />
         </div>
 
         {/* Sidebar - Meaning & Context */}
@@ -313,6 +286,26 @@ export default async function CompositionPage({
           </div>
         </section>
       )}
+
+      {/* Cross-links from knowledge graph — link equity distribution */}
+      {graphLinks.length > 0 && (
+        <section className="mt-8" aria-labelledby="explore-more">
+          <h2 id="explore-more" className="font-marathiHeading text-2xl text-maroon mb-6">
+            अधिक शोधा
+          </h2>
+          <div className="flex flex-wrap gap-3">
+            {graphLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="inline-flex items-center gap-2 rounded-full border border-saffron/20 bg-saffron/5 px-4 py-2 text-sm font-medium text-foreground hover:bg-saffron/10 hover:border-saffron/30 transition-colors focus:outline-none focus:ring-2 focus:ring-saffron"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </article>
     </>
   );
@@ -357,8 +350,6 @@ export async function generateMetadata({
       title: composition.titleMarathi,
       description: `${composition.titleTranslit} - वाचा डिजिटल पंढरपूर वर`,
     },
-    alternates: {
-      canonical: `/abhang/${slug}`,
-    },
+    ...canonicalMetadata({ canonical: `/abhang/${slug}` }),
   };
 }

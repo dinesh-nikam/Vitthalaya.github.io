@@ -1,5 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter, Noto_Sans_Devanagari, Tiro_Devanagari_Marathi } from 'next/font/google';
+import { websiteSchema } from '@/src/lib/seo';
+import { ConsentBanner } from '@/components/consent-banner';
+import { FloatingPlayer } from '@/components/floating-player';
 import './globals.css';
 
 const inter = Inter({
@@ -27,6 +30,12 @@ export const metadata: Metadata = {
   title: 'डिजिटल पंढरपूर - मराठी भक्ती साहित्याचा वाढता डिजिटल संग्रह',
   description: 'लाखो अभंग, भजन, गौळणी, आरत्या, स्तोत्रे आणि संत साहित्य एका ठिकाणी',
   keywords: 'अभंग, भजन, हरिपाठ, आरती, स्तोत्र, विठ्ठल, वारकरी, तुकाराम, द्न्यादेश्वर',
+  robots: {
+    index: true,
+    follow: true,
+    'max-snippet': -1,
+    'max-video-preview': -1,
+  },
   openGraph: {
     title: 'डिजिटल पंढरपूर',
     description: 'मराठी भक्ती साहित्याचा वाढता डिजिटल संग्रह',
@@ -34,6 +43,8 @@ export const metadata: Metadata = {
     type: 'website',
   },
 };
+
+import { Providers } from '@/components/providers';
 
 export default function RootLayout({
   children,
@@ -47,6 +58,13 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-dvh bg-background antialiased">
+        {/* Site-wide JSON-LD Structured Data — WebSite + SearchAction */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(websiteSchema()),
+          }}
+        />
         <div className="relative flex min-h-dvh flex-col">
           <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-sm">
             <div className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -67,7 +85,7 @@ export default function RootLayout({
             </div>
           </header>
           <main className="flex-1" id="main-content">
-            {children}
+            <Providers>{children}</Providers>
           </main>
           <footer className="border-t py-8 bg-saffron/5">
             <div className="container mx-auto px-4 text-center">
@@ -77,6 +95,8 @@ export default function RootLayout({
             </div>
           </footer>
         </div>
+        <ConsentBanner />
+        <FloatingPlayer />
       </body>
     </html>
   );

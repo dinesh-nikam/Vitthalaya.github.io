@@ -10,7 +10,7 @@ interface ReadingModeContextValue {
   isDarkMode: boolean;
   setDarkMode: (value: boolean) => void;
   bookmarked: boolean;
-  toggleBookmarkForSlug: (slug: string) => void;
+  toggleBookmarkForSlug: (slug: string, title?: string) => void;
 }
 
 const ReadingModeContext = React.createContext<ReadingModeContextValue | null>(null);
@@ -89,6 +89,12 @@ export function ReadingModeProvider({
 
   const bookmarked = currentSlug ? isBookmarked(currentSlug) : false;
 
+  const toggleBookmarkWithTitle = (slug: string, title?: string) => {
+    if (title) {
+      toggleBookmark(slug, title);
+    }
+  };
+
   return (
     <ReadingModeContext.Provider
       value={{
@@ -97,7 +103,7 @@ export function ReadingModeProvider({
         isDarkMode,
         setDarkMode: setIsDarkMode,
         bookmarked,
-        toggleBookmarkForSlug: toggleBookmark,
+        toggleBookmarkForSlug: toggleBookmarkWithTitle,
       }}
     >
       <div className={isReadingMode ? 'reading-mode-active' : ''}>{children}</div>

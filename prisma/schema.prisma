@@ -1,9 +1,8 @@
-// Digital Pandharpur - Prisma Schema
-// Phase 0: Core entities for Marathi Bhakti Sahitya
+// Digital Pandharpur - Prisma Schema (SQLite compatible for local development)
+// For PostgreSQL in production, change provider to "postgresql" and set DATABASE_URL
 
 generator client {
   provider = "prisma-client-js"
-  previewFeatures = ["fullTextSearch"]
 }
 
 datasource db {
@@ -12,92 +11,176 @@ datasource db {
 }
 
 model Saint {
-  id           String        @id @default(uuid())
-  nameMarathi  String        @map("name_marathi")
-  nameTranslit String       @unique @map("name_transliteration")
-  slug         String        @unique
-  period       String?
-  biography    String?
-  region       String?
-  imageUrl     String?       @map("image_url")
-  compositions Composition[]
-  relatedFrom  SaintRelation[] @relation("RelatedFrom")
-  relatedTo    SaintRelation[] @relation("RelatedTo")
-  createdAt    DateTime      @default(now()) @map("created_at")
-  updatedAt    DateTime      @updatedAt @map("updated_at")
+  id            String            @id @default(uuid())
+  nameMarathi   String            @map("name_marathi")
+  nameTranslit  String            @unique @map("name_transliteration")
+  slug          String            @unique
+  period        String?
+  biography     String?
+  region        String?
+  imageUrl      String?           @map("image_url")
+  compositions  Composition[]
+  canonicalId   String?
+  canonicalRecords CanonicalRecord[]
+  relatedFrom   SaintRelation[]   @relation("RelatedFrom")
+  relatedTo     SaintRelation[]   @relation("RelatedTo")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
 
   @@map("saints")
 }
 
 model SaintRelation {
-  saintId         String @map("saint_id")
-  relatedSaintId  String @map("related_saint_id")
+  saintId         String  @map("saint_id")
+  relatedSaintId  String  @map("related_saint_id")
   relationshipType String? @map("relationship_type")
 
-  saint     Saint @relation("RelatedTo", fields: [saintId], references: [id])
-  related   Saint @relation("RelatedFrom", fields: [relatedSaintId], references: [id])
+  saint   Saint @relation("RelatedTo", fields: [saintId], references: [id])
+  related Saint @relation("RelatedFrom", fields: [relatedSaintId], references: [id])
 
   @@id([saintId, relatedSaintId])
   @@map("saint_relationships")
 }
 
 model Deity {
-  id          String        @id @default(uuid())
-  nameMarathi String        @map("name_marathi")
-  nameTranslit String       @unique @map("name_transliteration")
-  iconName    String?       @map("icon_name")
-  compositions Composition[]
+  id            String            @id @default(uuid())
+  nameMarathi   String            @map("name_marathi")
+  nameTranslit  String            @unique @map("name_transliteration")
+  iconName      String?           @map("icon_name")
+  compositions  Composition[]
+  canonicalId   String?
+  canonicalRecords CanonicalRecord[]
 
   @@map("deities")
 }
 
 model Festival {
-  id          String        @id @default(uuid())
-  nameMarathi String        @map("name_marathi")
-  nameTranslit String       @unique @map("name_transliteration")
-  dateRule    String?       @map("date_rule")
-  monthDayRule String?       @map("month_day_rule")
-  compositions FestivalComposition[]
+  id            String                @id @default(uuid())
+  nameMarathi   String                @map("name_marathi")
+  nameTranslit  String                @unique @map("name_transliteration")
+  dateRule      String?               @map("date_rule")
+  monthDayRule  String?               @map("month_day_rule")
+  compositions  FestivalComposition[]
 
   @@map("festivals")
 }
 
 model Category {
-  id          String        @id @default(uuid())
-  nameMarathi String        @map("name_marathi")
-  nameTranslit String       @map("name_transliteration")
-  slug        String        @unique
-  description String?
-  parent      Category?     @relation("CategoryHierarchy", fields: [parentId], references: [id])
-  parentId    String?       @map("parent_category_id")
-  children    Category[]    @relation("CategoryHierarchy")
+  id           String               @id @default(uuid())
+  nameMarathi  String               @map("name_marathi")
+  nameTranslit String               @map("name_transliteration")
+  slug         String               @unique
+  description  String?
+  parent       Category?            @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  parentId     String?              @map("parent_category_id")
+  children     Category[]           @relation("CategoryHierarchy")
   compositions CategoryComposition[]
 
   @@map("categories")
 }
 
 model Composition {
-  id           String        @id @default(uuid())
-  titleMarathi String        @map("title_marathi")
-  titleTranslit String       @map("title_transliteration")
-  slug         String        @unique
-  type         CompositionType @map("type")
-  fullText     String        @map("full_text")
-  meaning      String?
-  saint        Saint?        @relation(fields: [saintId], references: [id])
-  saintId      String?       @map("saint_id")
-  deity        Deity?        @relation(fields: [deityId], references: [id])
-  deityId      String?       @map("deity_id")
-  region       String?
-  source       String?       @map("source_attribution")
-  audioLinks   String[]      @map("audio_links") // JSON array for now
-  reviewed     Boolean       @default(false) // Editorially reviewed flag for Phase 2
-  festivals    FestivalComposition[]
-  categories   CategoryComposition[]
-  createdAt    DateTime      @default(now()) @map("created_at")
-  updatedAt    DateTime      @updatedAt @map("updated_at")
+  id            String          @id @default(uuid())
+  titleMarathi  String          @map("title_marathi")
+  titleTranslit String          @map("title_transliteration")
+  slug          String          @unique
+  type          String          @map("type") // SQLite: use String instead of enum
+  fullText      String          @map("full_text")
+  meaning       String?
+  saint         Saint?          @relation(fields: [saintId], references: [id])
+  saintId       String?         @map("saint_id")
+  deity         Deity?          @relation(fields: [deityId], references: [id])
+  deityId       String?         @map("deity_id")
+  region        String?
+  source        String?         @map("source_attribution")
+  audioLinks    String?         @map("audio_links") // SQLite: JSON string
+  reviewed      Boolean         @default(false) @map("is_verified")
 
+  canonicalId    String?        @map("canonical_id")
+  canonicalRecord CanonicalRecord? @relation(fields: [canonicalId], references: [id])
+  contentHash    String?        @map("content_hash")
+
+  festivals      FestivalComposition[]
+  categories     CategoryComposition[]
+  aiEnrichmentJobs  AiEnrichmentJob[]
+  aiEnrichmentResults AiEnrichmentResult[]
+  correctionSuggestions CorrectionSuggestion[]
+  versions       CompositionVersion[]
+  verificationRecord    VerificationRecord?
+
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  @@index([canonicalId])
+  @@index([contentHash])
+  @@index([type])
   @@map("compositions")
+}
+
+model CanonicalRecord {
+  id             String          @id @default(uuid())
+  titleMarathi   String          @map("title_marathi")
+  titleTranslit  String          @map("title_transliteration")
+  type           String
+  canonicalText  String          @map("canonical_text")
+  meaning        String?
+  saintId        String?         @map("saint_id")
+  saint          Saint?          @relation(fields: [saintId], references: [id])
+  deityId        String?         @map("deity_id")
+  deity          Deity?          @relation(fields: [deityId], references: [id])
+  region         String?
+  canonicalVersion Int           @default(1) @map("canonical_version")
+  compositeScore   Float?       @map("composite_score")
+
+  compositions   Composition[]
+
+  @@index([type])
+  @@index([canonicalVersion])
+  @@map("canonical_records")
+}
+
+model CanonicalSourceMapping {
+  id            String  @id @default(uuid())
+  canonicalId   String  @map("canonical_id")
+  compositionId String? @map("composition_id")
+
+  source        String
+  sourceUrl     String  @map("source_url")
+  sourceTitle   String  @map("source_title")
+  sourceText    String  @map("source_text")
+
+  contentHash     String @map("content_hash")
+  confidenceScore Float  @map("confidence_score")
+  mappingType     String @map("mapping_type")
+
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([canonicalId])
+  @@index([compositionId])
+  @@index([contentHash])
+  @@index([source])
+  @@index([mappingType])
+  @@map("canonical_source_mappings")
+}
+
+model CanonicalMergeLog {
+  id                   String  @id @default(uuid())
+  canonicalId          String  @map("canonical_id")
+  sourceCompositionId1 String  @map("source_composition_id_1")
+  sourceCompositionId2 String  @map("source_composition_id_2")
+  action               String
+  confidenceScore      Float?  @map("confidence_score")
+  algorithm            String?
+  reason               String?
+  reviewedBy           String? @map("reviewed_by")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([canonicalId])
+  @@index([sourceCompositionId1])
+  @@index([sourceCompositionId2])
+  @@index([action])
+  @@map("canonical_merge_logs")
 }
 
 model FestivalComposition {
@@ -105,7 +188,7 @@ model FestivalComposition {
   festivalId    String @map("festival_id")
 
   composition Composition @relation(fields: [compositionId], references: [id])
-  festival    Festival  @relation(fields: [festivalId], references: [id])
+  festival    Festival    @relation(fields: [festivalId], references: [id])
 
   @@id([compositionId, festivalId])
   @@map("composition_festivals")
@@ -116,24 +199,330 @@ model CategoryComposition {
   categoryId    String @map("category_id")
 
   composition Composition @relation(fields: [compositionId], references: [id])
-  category    Category  @relation(fields: [categoryId], references: [id])
+  category    Category    @relation(fields: [categoryId], references: [id])
 
   @@id([compositionId, categoryId])
   @@map("composition_categories")
 }
 
-// Enums
-enum CompositionType {
-  ABHANG
-  AARTI
-  BHAJAN
-  STOTRA
-  HARIPATH
-  GAULANI
-  BHARUD
-  KIRTAN
-  NAMASMARAN
-  POWADA
+model Region {
+  id           String  @id @default(uuid())
+  nameMarathi  String  @map("name_marathi")
+  nameTranslit String  @unique @map("name_transliteration")
+  slug         String  @unique
+  description  String?
+  latitude     Float?
+  longitude    Float?
 
-  @@map("composition_type")
+  createdAt DateTime @default(now()) @map("created_at")
+  @@map("regions")
+}
+
+model Temple {
+  id            String  @id @default(uuid())
+  nameMarathi   String  @map("name_marathi")
+  nameTranslit  String  @unique @map("name_transliteration")
+  slug          String  @unique
+  description   String?
+  deityName     String? @map("deity_name")
+  location      String?
+  latitude      Float?
+  longitude     Float?
+  imageUrl      String? @map("image_url")
+
+  createdAt     DateTime @default(now()) @map("created_at")
+  @@map("temples")
+}
+
+model Audio {
+  id            String  @id @default(uuid())
+  titleMarathi  String  @map("title_marathi")
+  titleTranslit String? @map("title_transliteration")
+  duration      Int?
+  audioUrl      String  @map("audio_url")
+  thumbnailUrl  String? @map("thumbnail_url")
+  performer     String?
+  source        String?
+  externalId    String? @map("external_id")
+
+  createdAt     DateTime @default(now()) @map("created_at")
+  @@map("audio_recordings")
+}
+
+model Book {
+  id            String  @id @default(uuid())
+  titleMarathi  String  @map("title_marathi")
+  titleTranslit String? @map("title_transliteration")
+  slug          String  @unique
+  description   String?
+  authorName    String? @map("author_name")
+  publisher     String?
+  publishYear   Int?    @map("publish_year")
+  isbn          String? @unique
+  pageCount     Int?    @map("page_count")
+
+  createdAt     DateTime @default(now()) @map("created_at")
+  @@map("books")
+}
+
+model EntityGraphEdge {
+  id           String   @id @default(uuid())
+  sourceType   String   @map("source_type")
+  sourceId     String   @map("source_id")
+  targetType   String   @map("target_type")
+  targetId     String   @map("target_id")
+  relationship String
+  weight       Float?   @default(1.0)
+  metadata     String?  @map("metadata") // SQLite: JSON as string
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([sourceType, sourceId])
+  @@index([targetType, targetId])
+  @@index([relationship])
+  @@map("entity_graph_edges")
+}
+
+model AiEnrichmentJob {
+  id             String   @id @default(uuid())
+  compositionId  String   @map("composition_id")
+  composition    Composition @relation(fields: [compositionId], references: [id])
+
+  status         String   @default("pending")
+  priority       Int      @default(0) @map("priority")
+  attemptCount   Int      @default(0) @map("attempt_count")
+  maxAttempts    Int      @default(3) @map("max_attempts")
+  errorMessage   String?  @map("error_message")
+  modelProvider  String?  @map("model_provider")
+  modelName      String?  @map("model_name")
+
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([priority])
+  @@index([compositionId])
+  @@map("ai_enrichment_jobs")
+}
+
+model AiEnrichmentResult {
+  id              String   @id @default(uuid())
+  jobId           String   @unique @map("job_id")
+  compositionId   String   @map("composition_id")
+  composition     Composition @relation(fields: [compositionId], references: [id])
+
+  summary         String?
+  meaning         String?
+  keywords        String?  // SQLite: JSON string
+  deityId         String?  @map("deity_id")
+  festivalIds     String?  // SQLite: JSON string
+  categories      String?  // SQLite: JSON string
+  tags            String?  // SQLite: JSON string
+  difficulty      String?
+  sentiment       String?
+
+  confidenceSummary  String? @map("confidence_summary")
+  confidenceDeity    String? @map("confidence_deity")
+  confidenceFestival String? @map("confidence_festival")
+  rawResponse     String?  @map("raw_response")
+  reviewed        Boolean  @default(false)
+
+  createdAt       DateTime @default(now()) @map("created_at")
+  @@map("ai_enrichment_results")
+}
+
+model User {
+  id              String   @id @default(uuid())
+  email           String   @unique
+  emailVerified   DateTime? @map("email_verified")
+  name            String?
+  imageUrl        String?  @map("image_url")
+  password        String?  // Password hash for credentials auth
+  role            String   @default("USER")
+  reputationScore Int      @default(0) @map("reputation_score")
+  bio             String?
+
+  accounts            Account[]
+  sessions            Session[]
+  corrections         CorrectionSuggestion[] @relation("UserCorrections")
+  reviewedCorrections CorrectionSuggestion[] @relation("ReviewerCorrections")
+  versions            CompositionVersion[]   @relation("UserVersions")
+  manuscripts         ManuscriptUpload[]
+  moderationReviews   ModerationReview[]
+  createdAt           DateTime @default(now()) @map("created_at")
+  @@map("users")
+}
+
+model Account {
+  id                 String  @id @default(uuid())
+  userId             String  @map("user_id")
+  type               String
+  provider           String
+  providerAccountId  String  @map("provider_account_id")
+  refresh_token      String?
+  access_token       String?
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String?
+  session_state      String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model CorrectionSuggestion {
+  id            String   @id @default(uuid())
+  compositionId String   @map("composition_id")
+  composition   Composition @relation(fields: [compositionId], references: [id])
+  userId        String   @map("user_id")
+  user          User     @relation("UserCorrections", fields: [userId], references: [id])
+  fieldPath     String   @map("field_path")
+  oldValue      String?  @map("old_value")
+  newValue      String   @map("new_value")
+  diffJson      String?  @map("diff_json") // SQLite: JSON as string
+  reason        String?
+  status        String   @default("draft")
+  
+  reviewerId    String?  @map("reviewer_id")
+  reviewer      User?    @relation("ReviewerCorrections", fields: [reviewerId], references: [id])
+  reviewerNotes String?  @map("reviewer_notes")
+  reviewedAt    DateTime? @map("reviewed_at")
+
+  version       CompositionVersion?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([compositionId])
+  @@map("correction_suggestions")
+}
+
+model CompositionVersion {
+  id              String   @id @default(uuid())
+  compositionId   String   @map("composition_id")
+  composition     Composition @relation(fields: [compositionId], references: [id])
+  versionNumber   Int      @map("version_number")
+
+  titleMarathi    String   @map("title_marathi")
+  titleTranslit   String   @map("title_transliteration")
+  fullText        String   @map("full_text")
+  meaning         String?
+
+  changeReason    String   @map("change_reason")
+  
+  createdByUserId String?  @map("created_by_user_id")
+  createdByUser   User?    @relation("UserVersions", fields: [createdByUserId], references: [id])
+  
+  correctionId    String?  @unique @map("correction_id")
+  correction      CorrectionSuggestion? @relation(fields: [correctionId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([compositionId])
+  @@map("composition_versions")
+}
+
+model VerificationRecord {
+  id                     String   @id @default(uuid())
+  compositionId          String   @unique @map("composition_id")
+  composition            Composition @relation(fields: [compositionId], references: [id])
+  trustScore             Float    @default(0.0) @map("trust_score")
+  sourceCount            Int      @default(0) @map("source_count")
+  templeVerification     Int      @default(0) @map("temple_verification") // SQLite: INTEGER for boolean
+  scholarReview          Int      @default(0) @map("scholar_review")
+  communityConfirmations Int      @default(0) @map("community_confirmations")
+  ageDays                Int      @default(0) @map("age_days")
+
+  @@map("verification_records")
+}
+
+model ManuscriptUpload {
+  id            String             @id @default(uuid())
+  volunteerId   String             @map("volunteer_id")
+  volunteer     User               @relation(fields: [volunteerId], references: [id])
+  imageUrl      String             @map("image_url")
+  status        String             @default("pending") // pending, ocr_completed, failed
+  rawOcrText    String?            @map("raw_ocr_text")
+  ocrJobs       OcrProcessingJob[]
+  createdAt     DateTime           @default(now()) @map("created_at")
+
+  @@map("manuscript_uploads")
+}
+
+model OcrProcessingJob {
+  id            String             @id @default(uuid())
+  uploadId      String             @map("upload_id")
+  upload        ManuscriptUpload   @relation(fields: [uploadId], references: [id])
+  engine        String             @default("paddleocr") // paddleocr, google_vision
+  status        String             @default("queued") // queued, processing, succeeded, failed
+  resultText    String?            @map("result_text")
+  errorLog      String?            @map("error_log")
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @updatedAt @map("updated_at")
+
+  @@map("ocr_processing_jobs")
+}
+
+model ModerationQueue {
+  id             String            @id @default(uuid())
+  sourceType     String            @map("source_type") // "ocr" or "suggestion"
+  sourceId       String            @map("source_id") // ID from ManuscriptUpload or CorrectionSuggestion
+  draftTitle     String            @map("draft_title")
+  draftText      String            @map("draft_text")
+  draftMeaning   String?           @map("draft_meaning")
+  tier           Int               @default(1) // 1 = AI, 2 = Peer, 3 = Scholar
+  consensusScore Int               @default(0) // incremented by peer approvals
+  status         String            @default("pending") // pending, approved, rejected, flagged
+  
+  reviews        ModerationReview[]
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+
+  @@map("moderation_queues")
+}
+
+model ModerationReview {
+  id             String            @id @default(uuid())
+  queueId        String            @map("queue_id")
+  queue          ModerationQueue   @relation(fields: [queueId], references: [id])
+  reviewerId     String            @map("reviewer_id")
+  reviewer       User              @relation(fields: [reviewerId], references: [id])
+  vote           String            @map("vote") // "approve", "reject", "flag"
+  notes          String?
+  createdAt      DateTime          @default(now()) @map("created_at")
+
+  @@map("moderation_reviews")
+}
+
+model SearchSyncJob {
+  id            String   @id @default(uuid())
+  compositionId String   @map("composition_id")
+  action        String   // "upsert" or "delete"
+  status        String   @default("pending") // pending, processing, completed, failed
+  attempts      Int      @default(0)
+  errorMessage  String?  @map("error_message")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@map("search_sync_jobs")
 }

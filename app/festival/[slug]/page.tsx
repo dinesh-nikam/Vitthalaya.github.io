@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { db } from '@/src/db/client';
 import { getCurrentFestival, getFestivalsForYear } from '@/src/lib/festival-calculator';
 import { Calendar, Music } from 'lucide-react';
+import { festivalSchema, canonicalMetadata } from '@/src/lib/seo';
 
 export default async function FestivalPage({
   params,
@@ -10,39 +11,64 @@ export default async function FestivalPage({
 }) {
   const { slug } = await params;
 
-  // Try to fetch from database first
-  let festival = await db.festival.findUnique({
-    where: { nameTranslit: slug.replace('-', ' ') },
+  // Fetch festival and compositions from database
+  const dbFestival = await db.festival.findFirst({
+    where: {
+      OR: [
+        { nameTranslit: { equals: slug.replace(/-/g, ' '), mode: 'insensitive' } },
+        { nameTranslit: { equals: slug, mode: 'insensitive' } },
+      ],
+    },
     include: {
       compositions: {
         include: {
-          composition: {
-            select: {
-              id: true,
-              titleMarathi: true,
-              titleTranslit: true,
-              slug: true,
-              type: true,
-              audioLinks: true,
-            },
-          },
+          composition: true,
         },
       },
     },
   });
 
+  const festival = dbFestival ? {
+    nameMarathi: dbFestival.nameMarathi,
+    nameTranslit: dbFestival.nameTranslit,
+    dateRule: dbFestival.dateRule || dbFestival.monthDayRule,
+    compositions: dbFestival.compositions.map((c) => {
+      let audioLinks: string[] = [];
+      if (c.composition.audioLinks) {
+        try {
+          audioLinks = typeof c.composition.audioLinks === 'string'
+            ? JSON.parse(c.composition.audioLinks)
+            : c.composition.audioLinks;
+        } catch {
+          audioLinks = [];
+        }
+      }
+      return {
+        id: c.composition.id,
+        titleMarathi: c.composition.titleMarathi,
+        titleTranslit: c.composition.titleTranslit,
+        slug: c.composition.slug,
+        type: c.composition.type,
+        audioLinks,
+      };
+    }),
+  } : null;
+
   // If not in DB, use calculator data
-  if (!festival) {
-    const calculated = getCurrentFestival();
-    if (calculated && calculated.name === slug.replace('-', '_')) {
-      // Render with calculated data
-      return renderCalculatedFestival(calculated);
-    }
+  const calculated = getCurrentFestival();
+  if (calculated && calculated.name.toLowerCase().replace(/_/g, '-') === slug) {
+    // Render with calculated data
+    return renderCalculatedFestival({
+      name: calculated.name,
+      marathiName: calculated.marathiName,
+      date: calculated.date,
+      daysUntil: calculated.daysUntil,
+    });
   }
 
   // Get festival info from calculator for upcoming status
   const allFestivals = getFestivalsForYear(new Date().getFullYear());
-  const festInfo = allFestivals.find((f) => f.name === slug.replace('-', '_'));
+  const festInfo = allFestivals.find((f) => f.name.toLowerCase().replace(/_/g, '-') === slug);
 
   return renderFestivalFromDb(festival, festInfo);
 }
@@ -72,7 +98,7 @@ function renderCalculatedFestival(festival: {
         <p className="text-sm text-saffron">
           {festival.daysUntil >= 0
             ? `${festival.daysUntil} दिवस उटपीठे`
-            : 'आतापर्यंत सुरू झाला`}
+            : 'आतापर्यंत सुरू झाला'}
         </p>
       </header>
 
@@ -85,21 +111,21 @@ function renderCalculatedFestival(festival: {
   );
 }
 
+interface FestivalComposition {
+  id: string;
+  titleMarathi: string;
+  titleTranslit: string;
+  slug: string;
+  type: string;
+  audioLinks: string[];
+}
+
 function renderFestivalFromDb(
   festival: {
     nameMarathi: string;
     nameTranslit: string;
     dateRule?: string | null;
-    compositions: {
-      composition: {
-        id: string;
-        titleMarathi: string;
-        titleTranslit: string;
-        slug: string;
-        type: string;
-        audioLinks: string[];
-      };
-    }[];
+    compositions: FestivalComposition[];
   } | null,
   festInfo?: {
     date: Date;
@@ -119,6 +145,28 @@ function renderFestivalFromDb(
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
+      {/* JSON-LD Structured Data - Festival + BreadcrumbList */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(
+            festivalSchema(
+              {
+                nameMarathi: festival.nameMarathi,
+                nameTranslit: festival.nameTranslit,
+                slug: festival.nameTranslit.toLowerCase().replace(/\s+/g, '-'),
+                date: festInfo?.date ?? null,
+                compositionCount: festival.compositions.length,
+              },
+              [
+                { name: '\u092E\u0941\u0916\u094D\u092F\u092A\u0943\u0937\u094D\u0920', path: '/' },
+                { name: festival.nameMarathi, path: '/festival/' + festival.nameTranslit.toLowerCase().replace(/\s+/g, '-') },
+              ],
+            ),
+          ),
+        }}
+      />
+
       {/* Header */}
       <header className="mb-12 text-center">
         <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gold/20 flex items-center justify-center">
@@ -153,7 +201,7 @@ function renderFestivalFromDb(
           </div>
         ) : (
           <div className="grid gap-4">
-            {festival.compositions.map(({ composition }) => (
+            {festival.compositions.map((composition) => (
               <Link
                 key={composition.id}
                 href={`/abhang/${composition.slug}`}
@@ -193,8 +241,18 @@ export async function generateMetadata({
   });
 
   if (!festival) {
+    const calculated = getCurrentFestival();
+    if (calculated && calculated.name === slug.replace('-', '_')) {
+      return {
+        title: `${calculated.marathiName} - डिजिटल पंढरपूर`,
+        description: `${calculated.marathiName} सण - डिजिटल पंढरपूर वर वाचा`,
+        ...canonicalMetadata({ canonical: `/festival/${slug}` }),
+      };
+    }
+
     return {
       title: 'सण सापडला नाही - डिजिटल पंढरपूर',
+      ...canonicalMetadata({ canonical: `/festival/${slug}` }),
     };
   }
 
@@ -207,5 +265,8 @@ export async function generateMetadata({
       type: 'article',
       locale: 'mr_IN',
     },
+    ...canonicalMetadata({
+      canonical: `/festival/${festival.nameTranslit.toLowerCase().replace(/\s+/g, '-')}`,
+    }),
   };
 }

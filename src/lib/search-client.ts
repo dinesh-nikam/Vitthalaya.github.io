@@ -48,7 +48,7 @@ export async function initializeSearchIndex() {
       'attribute',
       'sort',
       'exactness',
-      '_rankingScore(desc(popularityScore))',
+      'popularityScore:desc',
     ],
     // Enable transliteration matching
     // "vitthal" will match "विठ्ठल" because we index both
@@ -135,12 +135,100 @@ export async function searchCompositions(
     searchFilters.push(`hasAudio = ${filters.hasAudio}`);
   }
 
-  const results = await index.search(query, {
-    filter: searchFilters.length > 0 ? searchFilters : undefined,
-    limit: 50,
-  });
+  try {
+    const lowercaseQuery = query.toLowerCase().trim();
+    const dict: Record<string, string> = {
+      'vitthal': 'विठ्ठल',
+      'vithoba': 'विठोबा',
+      'pandurang': 'पांडुरंग',
+      'vithu': 'विठू',
+      'pandharpur': 'पंढरपूर',
+      'tukaram': 'तुकाराम',
+      'dnyaneshwar': 'ज्ञानेश्वर',
+      'eknath': 'एकनाथ',
+      'namdev': 'नामदेव',
+      'haripath': 'हरिपाठ',
+      'abhang': 'अभंग',
+      'aarti': 'आरती',
+    };
+    const expandedQuery = dict[lowercaseQuery];
+    const searchQuery = expandedQuery ? `${query} ${expandedQuery}` : query;
 
-  return results.hits as SearchDocument[];
+    const results = await index.search(searchQuery, {
+      filter: searchFilters.length > 0 ? searchFilters : undefined,
+      limit: 50,
+    });
+
+    return results.hits as SearchDocument[];
+  } catch (error) {
+    console.warn('Meilisearch failed, falling back to local database query:', error);
+
+    const hasLatin = /[a-zA-Z]/.test(query);
+    const lowercaseQuery = query.toLowerCase().trim();
+
+    // Basic transliteration dictionary for key words
+    const dict: Record<string, string> = {
+      'vitthal': 'विठ्ठल',
+      'vithoba': 'विठोबा',
+      'pandurang': 'पांडुरंग',
+      'vithu': 'विठू',
+      'pandharpur': 'पंढरपूर',
+      'tukaram': 'तुकाराम',
+      'dnyaneshwar': 'ज्ञानेश्वर',
+      'eknath': 'एकनाथ',
+      'namdev': 'नामदेव',
+      'haripath': 'हरिपाठ',
+      'abhang': 'अभंग',
+      'aarti': 'आरती',
+    };
+    const expandedQuery = dict[lowercaseQuery] || query;
+
+    const dbCompositions = await db.composition.findMany({
+      where: {
+        reviewed: true,
+        type: filters?.type ? { equals: filters.type, mode: 'insensitive' } : undefined,
+        deity: filters?.deityName ? { nameMarathi: { contains: filters.deityName } } : undefined,
+        OR: [
+          { titleMarathi: { contains: query } },
+          { titleMarathi: { contains: expandedQuery } },
+          { titleTranslit: { contains: query, mode: 'insensitive' } },
+          { fullText: { contains: query } },
+          { fullText: { contains: expandedQuery } },
+          { saint: { nameMarathi: { contains: query } } },
+          { saint: { nameMarathi: { contains: expandedQuery } } },
+          { saint: { nameTranslit: { contains: query, mode: 'insensitive' } } },
+        ],
+      },
+      include: {
+        saint: {
+          select: {
+            nameMarathi: true,
+            nameTranslit: true,
+          },
+        },
+        deity: {
+          select: {
+            nameMarathi: true,
+          },
+        },
+      },
+      take: 50,
+    });
+
+    return dbCompositions.map((comp: any) => ({
+      id: comp.id,
+      titleMarathi: comp.titleMarathi,
+      titleTranslit: comp.titleTranslit,
+      fullText: comp.fullText.substring(0, 500),
+      type: comp.type.toLowerCase(),
+      slug: comp.slug,
+      saintName: comp.saint?.nameMarathi || null,
+      saintTranslit: comp.saint?.nameTranslit || null,
+      deityName: comp.deity?.nameMarathi || null,
+      hasAudio: comp.audioLinks && comp.audioLinks.length > 0,
+      popularityScore: 100,
+    }));
+  }
 }
 
 // Test transliteration matching
@@ -160,4 +248,74 @@ export async function testTransliterationSearch() {
   console.log(`Transliteration match: ${match ? '✓ PASS' : '✗ FAIL'}`);
 
   return match;
+}
+
+// Upsert a single composition to Meilisearch index
+export async function upsertCompositionToIndex(id: string): Promise<void> {
+  try {
+    const comp = await db.composition.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        titleMarathi: true,
+        titleTranslit: true,
+        fullText: true,
+        type: true,
+        slug: true,
+        saint: {
+          select: {
+            nameMarathi: true,
+            nameTranslit: true,
+          },
+        },
+        deity: {
+          select: {
+            nameMarathi: true,
+          },
+        },
+        audioLinks: true,
+        reviewed: true,
+      },
+    });
+
+    if (!comp) {
+      throw new Error(`Composition ${id} not found in database`);
+    }
+
+    if (!comp.reviewed) {
+      await deleteCompositionFromIndex(id);
+      return;
+    }
+
+    const doc: SearchDocument = {
+      id: comp.id,
+      titleMarathi: comp.titleMarathi,
+      titleTranslit: comp.titleTranslit,
+      fullText: comp.fullText.substring(0, 500),
+      type: comp.type.toLowerCase(),
+      slug: comp.slug,
+      saintName: comp.saint?.nameMarathi || null,
+      saintTranslit: comp.saint?.nameTranslit || null,
+      deityName: comp.deity?.nameMarathi || null,
+      hasAudio: !!(comp.audioLinks && comp.audioLinks.length > 0),
+      popularityScore: 100,
+    };
+
+    const index = client.index(INDEX_NAME);
+    await index.addDocuments([doc]);
+    console.log(`✓ Upserted composition ${id} to Meilisearch index`);
+  } catch (err: any) {
+    console.warn(`⚠️ Failed to upsert composition ${id} to Meilisearch:`, err.message || err);
+  }
+}
+
+// Delete a single composition from Meilisearch index
+export async function deleteCompositionFromIndex(id: string): Promise<void> {
+  try {
+    const index = client.index(INDEX_NAME);
+    await index.deleteDocument(id);
+    console.log(`✓ Deleted composition ${id} from Meilisearch index`);
+  } catch (err: any) {
+    console.warn(`⚠️ Failed to delete composition ${id} from Meilisearch:`, err.message || err);
+  }
 }

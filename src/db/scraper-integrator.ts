@@ -83,7 +83,7 @@ export async function importScrapedContent(
         deityId,
         source: scraped.source_url,
         reviewed: options?.autoApprove ?? false, // Always false unless explicitly set
-        audioLinks: [], // Scraped content should NOT include audio
+        audioLinks: "[]", // Scraped content should NOT include audio
       },
     });
 

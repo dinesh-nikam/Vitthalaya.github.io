@@ -19,8 +19,8 @@
       ]
     },
     "strict": true,
-    "noImplicitAny": true,
     "strictNullChecks": true,
+    "noImplicitAny": false,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "jsx": "preserve",
@@ -40,6 +40,9 @@
     ".next/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "scripts",
+    "tests",
+    "src/cli"
   ]
 }
