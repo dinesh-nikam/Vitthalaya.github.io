@@ -1,7 +1,8 @@
+const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build';
+
 // Environment variable validation helper
 const validateEnv = () => {
   const isProd = process.env.NODE_ENV === 'production';
-  const isBuildPhase = process.env.NEXT_PHASE === 'phase-production-build';
   const missingVars: string[] = [];
 
   if (!process.env.DATABASE_URL) missingVars.push('DATABASE_URL');
@@ -94,7 +95,10 @@ const createResilientDb = (client: any) => {
               return await target[modelName].apply(target, args);
             } catch (err) {
               console.error(`🔴 Database query error on direct $queryRawUnsafe query:`, err);
-              return [];
+              if (isBuildPhase) {
+                return [];
+              }
+              throw err;
             }
           };
         }
@@ -114,7 +118,10 @@ const createResilientDb = (client: any) => {
                     return await originalMethod.apply(modelObj, args);
                   } catch (err) {
                     console.error(`🔴 Database connection/query error on ${String(modelName)}.${String(method)}:`, err);
-                    return getFallbackValue(String(method));
+                    if (isBuildPhase) {
+                      return getFallbackValue(String(method));
+                    }
+                    throw err;
                   }
                 };
               }
@@ -130,7 +137,10 @@ const createResilientDb = (client: any) => {
         get(modelObj, method) {
           return async (...args: any[]) => {
             console.warn(`⚠️ [Production Readiness] Fallback stub model method called: ${String(modelName)}.${String(method)}`);
-            return getFallbackValue(String(method));
+            if (isBuildPhase) {
+              return getFallbackValue(String(method));
+            }
+            throw new Error(`[Database Client Error] DATABASE_URL is not set or Prisma failed to initialize. Cannot query '${String(modelName)}.${String(method)}'.`);
           };
         }
       });
