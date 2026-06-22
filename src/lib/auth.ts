@@ -128,13 +128,16 @@ export const authOptions: NextAuthOptions = {
   },
   secret: (() => {
     const secret = process.env.NEXTAUTH_SECRET;
-    if (!secret && process.env.NODE_ENV === 'production') {
-      throw new Error('FATAL: NEXTAUTH_SECRET is required in production. Set environment variable.');
-    }
     if (!secret) {
+      if (process.env.NODE_ENV === 'production') {
+        if (process.env.NEXT_PHASE === 'phase-production-build') {
+          return 'build-fallback-secret-key';
+        }
+        throw new Error('FATAL: NEXTAUTH_SECRET is required in production. Set environment variable.');
+      }
       console.warn('⚠️ NEXTAUTH_SECRET not set. Using dev secret. DO NOT USE IN PRODUCTION.');
     }
-    return secret || 'dev-secret-' + Date.now();
+    return secret || 'dev-secret-fallback';
   })(),
   pages: {
     signIn: '/auth/signin',
