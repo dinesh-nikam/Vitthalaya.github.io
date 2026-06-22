@@ -1,15 +1,9 @@
+'use client';
+
 /**
  * Offline fallback page — shown when the user navigates without connectivity
  * and the page is not in the service worker cache.
  */
-
-import type { Metadata } from 'next';
-
-export const metadata: Metadata = {
-  title: 'ऑफलाइन — Digital Pandharpur',
-  description: 'You are offline. Some content may not be available.',
-  robots: { index: false, follow: false },
-};
 
 export default function OfflinePage() {
   return (

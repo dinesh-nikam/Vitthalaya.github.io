@@ -279,7 +279,6 @@ export default async function CompositionPage({
           <div className="mt-3">
             <VersionHistory
               compositionId={composition.id}
-              compositionSlug={composition.slug}
             />
           </div>
         </aside>
