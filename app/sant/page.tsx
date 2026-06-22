@@ -3,6 +3,8 @@ import { SaintsList } from '@/components/saints-list';
 import Link from 'next/link';
 import { canonicalMetadata } from '@/src/lib/seo';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'संत मंडळ - वारकरी संप्रदायाचे थोर संत | डिजिटल पंढरपूर',
   description: 'संत ज्ञानेश्वर महाराज, संत तुकाराम महाराज, संत एकनाथ, संत नामदेव आणि इतर थोर वारकरी संतांची चरित्रे आणि अभंग संग्रह एकाच ठिकाणी.',

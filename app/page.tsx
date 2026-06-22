@@ -63,4 +63,4 @@ export default async function HomePage() {
     </>
   );
 }
-export const revalidate = 3600; // Cache page for 1 hour
+export const dynamic = 'force-dynamic';

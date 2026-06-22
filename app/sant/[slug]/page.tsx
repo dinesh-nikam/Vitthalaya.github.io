@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
 import { db } from '@/src/db/client';
 import { saintSchema, canonicalMetadata } from '@/src/lib/seo';
 import { ConchSoundButton } from '@/components/conch-sound-button';
@@ -389,4 +388,4 @@ function CompositionCard({
     </Link>
   );
 }
-export const revalidate = 3600; // Cache page for 1 hour
+export const dynamic = 'force-dynamic';

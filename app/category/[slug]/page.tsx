@@ -4,6 +4,8 @@ import { db } from '@/src/db/client';
 import { ArrowLeft, ArrowRight, BookOpen, Layers } from 'lucide-react';
 import { categorySchema, canonicalMetadata } from '@/src/lib/seo';
 
+export const dynamic = 'force-dynamic';
+
 function toDevanagariDigits(num: number): string {
   const devanagariDigits = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
   const formatted = num.toString().padStart(2, '0');

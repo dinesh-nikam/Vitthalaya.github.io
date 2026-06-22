@@ -4,6 +4,8 @@ import { getCurrentFestival, getFestivalsForYear } from '@/src/lib/festival-calc
 import { Calendar, Music } from 'lucide-react';
 import { festivalSchema, canonicalMetadata } from '@/src/lib/seo';
 
+export const dynamic = 'force-dynamic';
+
 export default async function FestivalPage({
   params,
 }: {

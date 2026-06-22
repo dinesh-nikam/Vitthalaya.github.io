@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { ArrowRight, BookOpen, Layers } from 'lucide-react';
 import { canonicalMetadata } from '@/src/lib/seo';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'साहित्य श्रेणी - अभंग, आरती, हरिपाठ आणि इतर प्रकार | डिजिटल पंढरपूर',
   description: 'विठ्ठल भक्ती, देवीचे भजन, शिव स्तोत्रे, गणपती आरत्या, हरिपाठ आणि इतर प्रकारांनुसार भक्ती साहित्य ब्राउझ करा.',

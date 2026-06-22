@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/src/lib/auth';
 import { db } from '@/src/db/client';
+
+export const dynamic = 'force-dynamic';
 import { getFirstValidEmbed, hasAudioLinks } from '@/src/lib/youtube-embed';
 import { compositionSchema, canonicalMetadata } from '@/src/lib/seo';
 import { getGraphLinks } from '@/src/lib/cross-links';

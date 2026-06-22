@@ -4,6 +4,8 @@ import { getFestivalsForYear } from '@/src/lib/festival-calculator';
 import { Calendar, Music, ArrowRight } from 'lucide-react';
 import { canonicalMetadata } from '@/src/lib/seo';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'सण व उत्सव - हिंदू पंचांग व वारकरी सण | डिजिटल पंढरपूर',
   description: 'आषाढी एकादशी, कार्तिकी एकादशी, दत्त जयंती आणि गणेश चतुर्थी यांसारख्या पवित्र वारकरी सणांचे वेळापत्रक आणि संबंधित भक्ती साहित्य.',

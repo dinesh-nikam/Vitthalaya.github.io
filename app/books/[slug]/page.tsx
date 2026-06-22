@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { db } from '../../../src/db/client';
 import { AddToCartButton } from '@/components/add-to-cart-button';
 
+export const dynamic = 'force-dynamic';
+
 interface Props {
   params: Promise<{ slug: string }>;
 }
