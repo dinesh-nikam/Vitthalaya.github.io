@@ -2,10 +2,20 @@
  * Shared types for the Digital Pandharpur Book Generation Engine.
  */
 
-import type { CompositionType as ScraperCompositionType } from '../scraper/types';
+/** All supported composition types (mirrors scraper pipeline enum) */
+export type CompositionType =
+  | 'abhang'
+  | 'aarti'
+  | 'bhajan'
+  | 'stotra'
+  | 'haripath'
+  | 'gaulani'
+  | 'deviche_gane'
+  | 'bharud'
+  | 'kirtan'
+  | 'namasmaran'
+  | 'powada';
 
-/** Re-exported for convenience in UI pages */
-export type CompositionType = ScraperCompositionType;
 
 // ── Curation ──────────────────────────────────────────────────────────────────
 

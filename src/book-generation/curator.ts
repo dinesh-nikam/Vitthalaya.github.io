@@ -11,8 +11,7 @@
  */
 
 import { db } from '../db/client';
-import type { CompositionType } from '../scraper/types';
-import type { CurationCriteria, CurationScore, CuratedSelection, BookSection } from './types';
+import type { CompositionType, CurationCriteria, CurationScore, CuratedSelection, BookSection } from './types';
 
 // ── Scoring Weights ────────────────────────────────────────────────────────────
 
