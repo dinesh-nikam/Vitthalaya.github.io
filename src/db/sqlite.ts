@@ -6,8 +6,43 @@
 import { Database } from 'bun:sqlite';
 import { readFileSync, existsSync, mkdirSync } from 'fs';
 import { dirname } from 'path';
-import type { ScrapedComposition, DBStats } from '../scraper/types';
+export type CompositionType =
+  | 'abhang'
+  | 'aarti'
+  | 'bhajan'
+  | 'stotra'
+  | 'haripath'
+  | 'gaulani'
+  | 'deviche_gane'
+  | 'bharud'
+  | 'kirtan'
+  | 'namasmaran'
+  | 'powada';
+
+export interface ScrapedComposition {
+  title_marathi: string;
+  title_transliteration: string;
+  type: CompositionType;
+  full_text: string;
+  meaning?: string;
+  saint_name_marathi?: string;
+  saint_name_transliteration?: string;
+  deity_name_marathi?: string;
+  deity_name_transliteration?: string;
+  source_attribution: string;
+  source_url: string;
+  region?: string;
+}
+
+export interface DBStats {
+  total_compositions: number;
+  by_type: Record<string, number>;
+  total_saints: number;
+  total_categories: number;
+}
+
 import { contentHash } from '../canonical/normalization';
+
 
 // Local normalizeTitle for slugs
 function normalizeTitle(title: string): string {

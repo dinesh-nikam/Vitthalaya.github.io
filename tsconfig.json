@@ -43,6 +43,12 @@
     "node_modules",
     "scripts",
     "tests",
-    "src/cli"
+    "src/cli",
+    "src/db/sqlite.ts",
+    "src/db/seed-sqlite.ts",
+    "src/scraper",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/__tests__/**"
   ]
 }
