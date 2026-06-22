@@ -45,6 +45,7 @@ export const metadata: Metadata = {
 };
 
 import { Providers } from '@/components/providers';
+import { HeaderNav } from '@/components/header-nav';
 
 export default function RootLayout({
   children,
@@ -57,6 +58,16 @@ export default function RootLayout({
       className={`${inter.variable} ${notoSansDevanagari.variable} ${tiroDevanagari.variable}`}
       suppressHydrationWarning
     >
+      <head>
+        <link rel="manifest" href="/manifest.webmanifest" />
+        <meta name="theme-color" content="#FF7A1A" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="डिजिटल पंढरपूर" />
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png" />
+        <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512x512.png" />
+      </head>
       <body className="min-h-dvh bg-background antialiased">
         {/* Site-wide JSON-LD Structured Data — WebSite + SearchAction */}
         <script
@@ -71,17 +82,7 @@ export default function RootLayout({
               <a href="/" className="font-marathiHeading text-xl text-saffron">
                 डिजिटल पंढरपूर
               </a>
-              <nav className="flex items-center gap-4" aria-label="मुख्य नेव्हिगेशन">
-                <a href="/sant" className="text-sm font-medium hover:text-saffron transition-colors">
-                  संत
-                </a>
-                <a href="/category" className="text-sm font-medium hover:text-saffron transition-colors">
-                  श्रेणी
-                </a>
-                <a href="/festival" className="text-sm font-medium hover:text-saffron transition-colors">
-                  सण
-                </a>
-              </nav>
+              <HeaderNav />
             </div>
           </header>
           <main className="flex-1" id="main-content">
@@ -97,6 +98,21 @@ export default function RootLayout({
         </div>
         <ConsentBanner />
         <FloatingPlayer />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                  navigator.serviceWorker.register('/sw.js').then((reg) => {
+                    console.log('SW registered:', reg.scope);
+                  }).catch((err) => {
+                    console.log('SW registration failed:', err);
+                  });
+                });
+              }
+            `,
+          }}
+        />
       </body>
     </html>
   );

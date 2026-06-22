@@ -1,10 +1,15 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/src/lib/auth';
 import { db } from '@/src/db/client';
 import { getFirstValidEmbed, hasAudioLinks } from '@/src/lib/youtube-embed';
 import { compositionSchema, canonicalMetadata } from '@/src/lib/seo';
 import { getGraphLinks } from '@/src/lib/cross-links';
 import { CompositionReader } from '@/components/composition-reader';
+import RelatedCompositions from '@/components/related-compositions';
+import CorrectionPanel from '@/components/correction-panel';
+import VersionHistory from '@/components/version-history';
 
 interface Composition {
   id: string;
@@ -30,6 +35,7 @@ export default async function CompositionPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  const session = await getServerSession(authOptions);
 
   // Fetch from database
   const composition = await db.composition.findUnique({
@@ -259,6 +265,23 @@ export default async function CompositionPage({
               स्रोत: {composition.source}
             </div>
           )}
+
+          {/* Community: Correction Suggestion */}
+          <div className="mt-4">
+            <CorrectionPanel
+              compositionId={composition.id}
+              compositionTitle={composition.titleMarathi}
+              isAuthenticated={!!session?.user}
+            />
+          </div>
+
+          {/* Community: Version History */}
+          <div className="mt-3">
+            <VersionHistory
+              compositionId={composition.id}
+              compositionSlug={composition.slug}
+            />
+          </div>
         </aside>
       </div>
 
@@ -306,6 +329,11 @@ export default async function CompositionPage({
           </div>
         </section>
       )}
+
+      {/* Related compositions via knowledge graph */}
+      <section className="mt-8">
+        <RelatedCompositions compositionId={composition.id} limit={6} />
+      </section>
     </article>
     </>
   );

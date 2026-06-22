@@ -5,6 +5,7 @@
 
 import { Meilisearch } from 'meilisearch';
 import { db } from '@/src/db/client';
+import { expandTransliteration, getTransliterationSuggestions } from '@/src/lib/search-transliteration';
 
 const client = new Meilisearch({
   host: process.env.MEILI_HOST || 'http://localhost:7700',
@@ -27,6 +28,17 @@ export interface SearchDocument {
   popularityScore: number;
 }
 
+/** Search result with highlighted field excerpts from Meilisearch */
+export interface HighlightedSearchResult extends SearchDocument {
+  /** Meilisearch _formatted object with <em> tags */
+  _formatted?: {
+    titleMarathi?: string;
+    fullText?: string;
+    saintName?: string;
+    deityName?: string;
+  };
+}
+
 // Initialize index with settings
 export async function initializeSearchIndex() {
   const index = client.index(INDEX_NAME);
@@ -40,7 +52,7 @@ export async function initializeSearchIndex() {
       'saintName',
       'saintTranslit',
     ],
-    filterableAttributes: ['type', 'deityName', 'hasAudio'],
+    filterableAttributes: ['type', 'deityName', 'hasAudio', 'saintName', 'festivalNames'],
     rankingRules: [
       'words',
       'typo',
@@ -113,17 +125,17 @@ export async function indexAllCompositions() {
   console.log(`✓ Indexed ${documents.length} compositions`);
 }
 
-// Search function - supports Devanagari + Latin
-export async function searchCompositions(
-  query: string,
-  filters?: {
-    type?: string;
-    deityName?: string;
-    hasAudio?: boolean;
-  }
-): Promise<SearchDocument[]> {
-  const index = client.index(INDEX_NAME);
+/** Extended filter options with festival support */
+export interface SearchFilters {
+  type?: string;
+  deityName?: string;
+  hasAudio?: boolean;
+  saintName?: string;
+  festivalNames?: string;
+}
 
+/** Build Meilisearch filter string from filter object */
+function buildFilters(filters?: SearchFilters): string[] {
   const searchFilters: string[] = [];
   if (filters?.type) {
     searchFilters.push(`type = "${filters.type}"`);
@@ -131,71 +143,63 @@ export async function searchCompositions(
   if (filters?.deityName) {
     searchFilters.push(`deityName = "${filters.deityName}"`);
   }
+  if (filters?.saintName) {
+    searchFilters.push(`saintName = "${filters.saintName}"`);
+  }
+  if (filters?.festivalNames) {
+    searchFilters.push(`festivalNames = "${filters.festivalNames}"`);
+  }
   if (filters?.hasAudio !== undefined) {
     searchFilters.push(`hasAudio = ${filters.hasAudio}`);
   }
+  return searchFilters;
+}
+
+// Search function - supports Devanagari + Latin
+export async function searchCompositions(
+  query: string,
+  filters?: SearchFilters,
+  options?: { limit?: number; highlights?: boolean }
+): Promise<(SearchDocument | HighlightedSearchResult)[]> {
+  const index = client.index(INDEX_NAME);
+  const searchFilters = buildFilters(filters);
 
   try {
-    const lowercaseQuery = query.toLowerCase().trim();
-    const dict: Record<string, string> = {
-      'vitthal': 'विठ्ठल',
-      'vithoba': 'विठोबा',
-      'pandurang': 'पांडुरंग',
-      'vithu': 'विठू',
-      'pandharpur': 'पंढरपूर',
-      'tukaram': 'तुकाराम',
-      'dnyaneshwar': 'ज्ञानेश्वर',
-      'eknath': 'एकनाथ',
-      'namdev': 'नामदेव',
-      'haripath': 'हरिपाठ',
-      'abhang': 'अभंग',
-      'aarti': 'आरती',
-    };
-    const expandedQuery = dict[lowercaseQuery];
-    const searchQuery = expandedQuery ? `${query} ${expandedQuery}` : query;
+    const expandedQuery = expandTransliteration(query);
+    const searchQuery = expandedQuery !== query ? expandedQuery : query;
 
     const results = await index.search(searchQuery, {
       filter: searchFilters.length > 0 ? searchFilters : undefined,
-      limit: 50,
+      limit: options?.limit ?? 50,
+      attributesToHighlight: options?.highlights ? [
+        'titleMarathi',
+        'fullText',
+        'saintName',
+        'deityName',
+      ] : undefined,
     });
 
-    return results.hits as SearchDocument[];
+    return results.hits as (SearchDocument | HighlightedSearchResult)[];
   } catch (error) {
     console.warn('Meilisearch failed, falling back to local database query:', error);
 
-    const hasLatin = /[a-zA-Z]/.test(query);
-    const lowercaseQuery = query.toLowerCase().trim();
-
-    // Basic transliteration dictionary for key words
-    const dict: Record<string, string> = {
-      'vitthal': 'विठ्ठल',
-      'vithoba': 'विठोबा',
-      'pandurang': 'पांडुरंग',
-      'vithu': 'विठू',
-      'pandharpur': 'पंढरपूर',
-      'tukaram': 'तुकाराम',
-      'dnyaneshwar': 'ज्ञानेश्वर',
-      'eknath': 'एकनाथ',
-      'namdev': 'नामदेव',
-      'haripath': 'हरिपाठ',
-      'abhang': 'अभंग',
-      'aarti': 'आरती',
-    };
-    const expandedQuery = dict[lowercaseQuery] || query;
+    const expandedQuery = expandTransliteration(query);
+    const searchQuery = expandedQuery !== query ? expandedQuery : query;
 
     const dbCompositions = await db.composition.findMany({
       where: {
         reviewed: true,
-        type: filters?.type ? { equals: filters.type, mode: 'insensitive' } : undefined,
+        type: filters?.type ? { contains: filters.type, mode: 'insensitive' } : undefined,
+        saint: filters?.saintName ? { nameMarathi: { contains: filters.saintName } } : undefined,
         deity: filters?.deityName ? { nameMarathi: { contains: filters.deityName } } : undefined,
         OR: [
           { titleMarathi: { contains: query } },
-          { titleMarathi: { contains: expandedQuery } },
+          { titleMarathi: { contains: searchQuery } },
           { titleTranslit: { contains: query, mode: 'insensitive' } },
           { fullText: { contains: query } },
-          { fullText: { contains: expandedQuery } },
+          { fullText: { contains: searchQuery } },
           { saint: { nameMarathi: { contains: query } } },
-          { saint: { nameMarathi: { contains: expandedQuery } } },
+          { saint: { nameMarathi: { contains: searchQuery } } },
           { saint: { nameTranslit: { contains: query, mode: 'insensitive' } } },
         ],
       },
@@ -228,6 +232,111 @@ export async function searchCompositions(
       hasAudio: comp.audioLinks && comp.audioLinks.length > 0,
       popularityScore: 100,
     }));
+  }
+}
+
+/** Search with highlights — returns Meilisearch _formatted data */
+export async function searchCompositionsWithHighlights(
+  query: string,
+  filters?: SearchFilters,
+  limit?: number
+): Promise<HighlightedSearchResult[]> {
+  return (await searchCompositions(query, filters, { limit, highlights: true })) as HighlightedSearchResult[];
+}
+
+/** Prefix-based autocomplete suggestions from Meilisearch */
+export async function getSearchSuggestions(prefix: string): Promise<{ text: string; type: string }[]> {
+  if (!prefix || prefix.length < 2) return [];
+
+  // Also get transliteration-based suggestions
+  const translitSuggestions = getTransliterationSuggestions(prefix);
+  const suggestions: { text: string; type: string }[] = translitSuggestions.map(
+    (s) => ({ text: s.devanagari, type: 'transliteration' })
+  );
+
+  try {
+    const index = client.index(INDEX_NAME);
+    const results = await index.search(prefix, {
+      limit: 6,
+      attributesToRetrieve: ['titleMarathi', 'titleTranslit', 'type'],
+    });
+
+    const titleSuggestions: { text: string; type: string }[] = results.hits
+      .filter((hit: any) => {
+        const title = (hit.titleMarathi || hit.titleTranslit || '').toLowerCase();
+        return title.startsWith(prefix.toLowerCase());
+      })
+      .slice(0, 5)
+      .map((hit: any) => ({
+        text: hit.titleMarathi || hit.titleTranslit,
+        type: hit.type || 'composition',
+      }));
+
+    // Merge — dedup by text, transliteration suggestions first
+    const seen = new Set<string>();
+    const merged = [...suggestions, ...titleSuggestions].filter((s) => {
+      const key = s.text.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+    return merged.slice(0, 10);
+  } catch {
+    // Fall back to transliteration-only suggestions
+    return suggestions.slice(0, 8);
+  }
+}
+
+/** Aggregate suggestions from common entities (saints, deities, types) */
+export async function getEntitySuggestions(prefix: string): Promise<{ text: string; type: string }[]> {
+  if (!prefix || prefix.length < 1) return [];
+  const lower = prefix.toLowerCase();
+
+  // Search DB for matching saints and deities
+  try {
+    const [saints, deities, types] = await Promise.all([
+      db.saint.findMany({
+        where: {
+          OR: [
+            { nameTranslit: { contains: lower, mode: 'insensitive' } },
+            { nameMarathi: { contains: prefix } },
+          ],
+        },
+        select: { nameMarathi: true, nameTranslit: true },
+        take: 4,
+      }),
+      db.deity.findMany({
+        where: {
+          OR: [
+            { nameTranslit: { contains: lower, mode: 'insensitive' } },
+            { nameMarathi: { contains: prefix } },
+          ],
+        },
+        select: { nameMarathi: true, nameTranslit: true },
+        take: 4,
+      }),
+      db.composition.findMany({
+        where: { type: { contains: lower, mode: 'insensitive' } },
+        select: { type: true },
+        distinct: ['type'],
+        take: 4,
+      }),
+    ]);
+
+    const results: { text: string; type: string }[] = [];
+    for (const s of saints) {
+      results.push({ text: s.nameMarathi || s.nameTranslit || '', type: 'saint' });
+    }
+    for (const d of deities) {
+      results.push({ text: d.nameMarathi || d.nameTranslit || '', type: 'deity' });
+    }
+    for (const t of types) {
+      if (t.type) results.push({ text: t.type, type: 'type' });
+    }
+    return results.slice(0, 10);
+  } catch {
+    return [];
   }
 }
 

@@ -531,12 +531,108 @@ async function main() {
     });
   }
 
+  // =============== BOOK PUBLICATIONS ===============
+  const tukaramAbhangs = await prisma.bookPublication.upsert({
+    where: { slug: 'tukaram-abhang-sangrah' },
+    update: {},
+    create: {
+      titleMarathi: 'तुकाराम अभंग संग्रह',
+      titleEnglish: 'Tukaram Abhang Collection',
+      slug: 'tukaram-abhang-sangrah',
+      bookType: 'STANDARD',
+      status: 'PUBLISHED',
+      curationType: 'SAINT_BASED',
+      curationConfig: JSON.stringify({ saintSlug: 'tukaram-maharaj', maxCompositions: 100 }),
+      description: 'तुकाराम महाराजांच्या १०० प्रमुख अभंगांचा संग्रह. हे पुस्तक वारकरी संप्रदायाच्या भक्ती साहित्याचे मुख्य संग्रह आहे.',
+      saintId: tukaramId,
+      isPublic: true,
+      basePrice: 99,
+      totalCompositions: 5,
+      totalPages: 120,
+      totalSections: 5,
+      generationCompletedAt: new Date(),
+    },
+  });
+
+  const ebookEditions = await Promise.all([
+    prisma.bookEdition.upsert({
+      where: { id: `${tukaramAbhangs.id}-pdf` },
+      update: {},
+      create: {
+        id: `${tukaramAbhangs.id}-pdf`,
+        publicationId: tukaramAbhangs.id,
+        format: 'DIGITAL_PDF',
+        price: 99,
+        fileUrl: 'public/books/tukaram-abhang-sangrah.pdf',
+        fileSizeBytes: 2_500_000,
+        pageCount: 120,
+        isDefault: true,
+      },
+    }),
+    prisma.bookEdition.upsert({
+      where: { id: `${tukaramAbhangs.id}-epub` },
+      update: {},
+      create: {
+        id: `${tukaramAbhangs.id}-epub`,
+        publicationId: tukaramAbhangs.id,
+        format: 'DIGITAL_EPUB',
+        price: 99,
+        fileUrl: 'public/books/tukaram-abhang-sangrah.epub',
+        fileSizeBytes: 1_800_000,
+        pageCount: 120,
+      },
+    }),
+    prisma.bookEdition.upsert({
+      where: { id: `${tukaramAbhangs.id}-kindle` },
+      update: {},
+      create: {
+        id: `${tukaramAbhangs.id}-kindle`,
+        publicationId: tukaramAbhangs.id,
+        format: 'DIGITAL_KINDLE',
+        price: 99,
+        fileUrl: 'public/books/tukaram-abhang-sangrah.mobi',
+        fileSizeBytes: 2_000_000,
+        pageCount: 120,
+      },
+    }),
+  ]);
+
+  // Link tukaram compositions to the book
+  const tukaramCompSlugs = [
+    'tuze-rup-chitti-raho',
+    'vitthal-varkarichi',
+    'mauli-mauli-pandurang',
+    'manache-shlok',
+    'pandharpurche-deva',
+  ];
+  for (const slug of tukaramCompSlugs) {
+    const comp = compositions.find((c) => c.slug === slug);
+    if (comp) {
+      await prisma.bookComposition.upsert({
+        where: { id: `${tukaramAbhangs.id}-${comp.id}` },
+        update: {},
+        create: {
+          id: `${tukaramAbhangs.id}-${comp.id}`,
+          publicationId: tukaramAbhangs.id,
+          compositionId: comp.id,
+          sortOrder: tukaramCompSlugs.indexOf(slug),
+        },
+      });
+    }
+  }
+
+  // Verify
+  const bookCount = await prisma.bookPublication.count();
+  const editionCount = await prisma.bookEdition.count();
+
   console.log('✓ Database seeded successfully!');
   console.log(`  - ${saints.length} Saints`);
   console.log(`  - ${deities.length} Deities`);
   console.log(`  - ${categories.length} Categories`);
   console.log(`  - ${festivals.length} Festivals`);
   console.log(`  - ${compositions.length} Compositions (all editorially reviewed)`);
+  console.log(`  - ${bookCount} Book Publications`);
+  console.log(`  - ${editionCount} Book Editions`);
 }
 
 main()

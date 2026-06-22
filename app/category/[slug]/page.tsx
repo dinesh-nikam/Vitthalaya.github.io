@@ -16,12 +16,37 @@ function toDevanagariDigits(num: number): string {
     .join('');
 }
 
+const typeMap: Record<string, string> = {
+  'abhang': 'अभंग',
+  'aarti': 'आरती',
+  'bhajan': 'भजन',
+  'stotra': 'स्तोत्र',
+  'haripath': 'हरिपाठ',
+  'gaulani': 'गौळणी',
+  'kirtan': 'कीर्तन',
+  'deviche_gane': 'देवीचे गाणे',
+};
+
+function getMarathiType(type: string): string {
+  const lower = type.toLowerCase();
+  return typeMap[lower] || type;
+}
+
 export default async function CategoryPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ page?: string }>;
 }) {
   const { slug } = await params;
+  const sParams = await searchParams;
+  let page = parseInt(sParams.page || '1', 10);
+  if (isNaN(page) || page < 1) {
+    page = 1;
+  }
+  const pageSize = 50;
+  const skip = (page - 1) * pageSize;
 
   // Query category from database
   const dbCategory = await db.category.findUnique({
@@ -37,20 +62,6 @@ export default async function CategoryPage({
           nameMarathi: 'asc',
         },
       },
-      compositions: {
-        include: {
-          composition: {
-            include: {
-              saint: {
-                select: {
-                  nameMarathi: true,
-                },
-              },
-            },
-          },
-        },
-        take: 50,
-      },
     },
   });
 
@@ -58,18 +69,47 @@ export default async function CategoryPage({
     notFound();
   }
 
+  // Get total count of compositions in category
+  const totalCompositions = await db.categoryComposition.count({
+    where: { categoryId: dbCategory.id },
+  });
+
+  // Query paginated compositions
+  const categoryCompositions = await db.categoryComposition.findMany({
+    where: { categoryId: dbCategory.id },
+    include: {
+      composition: {
+        include: {
+          saint: {
+            select: {
+              nameMarathi: true,
+            },
+          },
+        },
+      },
+    },
+    take: pageSize,
+    skip: skip,
+    orderBy: {
+      compositionId: 'asc',
+    },
+  });
+
   // Format compositions list
-  const compositions = dbCategory.compositions.map((cc) => ({
+  const compositions = categoryCompositions.map((cc: any) => ({
     title: cc.composition.titleMarathi,
     slug: cc.composition.slug,
     saint: cc.composition.saint?.nameMarathi || 'अज्ञात संत',
+    typeMarathi: getMarathiType(cc.composition.type),
   }));
 
-  const subCategories = dbCategory.children.map((child) => ({
+  const subCategories = dbCategory.children.map((child: any) => ({
     name: child.nameMarathi,
     slug: child.slug,
     count: child._count.compositions,
   }));
+
+  const totalPages = Math.ceil(totalCompositions / pageSize);
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -85,7 +125,7 @@ export default async function CategoryPage({
                 slug: slug,
                 description: dbCategory.description,
                 parent: null,
-                compositionCount: compositions.length,
+                compositionCount: totalCompositions,
                 children: subCategories.map((c) => ({
                   nameMarathi: c.name,
                   slug: c.slug,
@@ -137,7 +177,7 @@ export default async function CategoryPage({
           <div className="flex-shrink-0">
             <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-saffron/10 text-saffron border border-saffron/20 shadow-sm">
               <BookOpen className="w-3.5 h-3.5" />
-              <span>{compositions.length} साहित्य उपलब्ध</span>
+              <span>{totalCompositions} साहित्य उपलब्ध</span>
             </span>
           </div>
         </div>
@@ -176,57 +216,88 @@ export default async function CategoryPage({
       {/* Compositions Grid */}
       <section aria-labelledby="compositions">
         <h2 id="compositions" className="font-marathiHeading text-lg text-maroon dark:text-saffron mb-4 font-bold">
-          श्रेणी अंतर्गत भक्ती साहित्य ({compositions.length})
+          श्रेणी अंतर्गत भक्ती साहित्य (एकूण {totalCompositions})
         </h2>
         {compositions.length === 0 ? (
           <div className="bg-card rounded-xl p-6 border border-saffron/10 text-center">
             <p className="text-muted-foreground">सध्या या श्रेणीत कोणतेही साहित्य उपलब्ध नाही.</p>
           </div>
         ) : (
-          <div className="space-y-3.5">
-            {compositions.map((comp, index) => {
-              const indexStr = toDevanagariDigits(index + 1);
-              return (
-                <Link
-                  key={comp.slug}
-                  href={`/abhang/${comp.slug}`}
-                  className="group flex items-center justify-between rounded-2xl glass-premium px-6 py-4.5 border border-saffron/15 hover:border-saffron/35 hover:shadow-md hover:shadow-saffron/5 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-saffron relative overflow-hidden"
-                >
-                  {/* Glow effect on hover */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-saffron/[0.03] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  
-                  <div className="flex items-center gap-4 min-w-0 z-10">
-                    {/* Stylized index marker */}
-                    <span className="font-marathiHeading text-lg font-bold text-saffron/60 group-hover:text-saffron transition-colors flex-shrink-0 w-8">
-                      {indexStr}
-                    </span>
+          <>
+            <div className="space-y-3.5">
+              {compositions.map((comp, index) => {
+                const indexStr = toDevanagariDigits(skip + index + 1);
+                return (
+                  <Link
+                    key={comp.slug}
+                    href={`/abhang/${comp.slug}`}
+                    className="group flex items-center justify-between rounded-2xl glass-premium px-6 py-4.5 border border-saffron/15 hover:border-saffron/35 hover:shadow-md hover:shadow-saffron/5 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-saffron relative overflow-hidden"
+                  >
+                    {/* Glow effect on hover */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-saffron/[0.03] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     
-                    <div className="min-w-0">
-                      <p className="font-marathi font-bold text-base sm:text-lg text-foreground group-hover:text-saffron transition-colors truncate">
-                        {comp.title}
-                      </p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-xs text-muted-foreground font-marathi flex items-center gap-1">
-                          <span>🙏</span> {comp.saint}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground">•</span>
-                        <span className="text-[10px] text-saffron bg-saffron/5 px-2 py-0.5 rounded-full font-bold border border-saffron/10">
-                          अभंग
-                        </span>
+                    <div className="flex items-center gap-4 min-w-0 z-10">
+                      {/* Stylized index marker */}
+                      <span className="font-marathiHeading text-lg font-bold text-saffron/60 group-hover:text-saffron transition-colors flex-shrink-0 w-8">
+                        {indexStr}
+                      </span>
+                      
+                      <div className="min-w-0">
+                        <p className="font-marathi font-bold text-base sm:text-lg text-foreground group-hover:text-saffron transition-colors truncate">
+                          {comp.title}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs text-muted-foreground font-marathi flex items-center gap-1">
+                            <span>🙏</span> {comp.saint}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">•</span>
+                          <span className="text-[10px] text-saffron bg-saffron/5 px-2 py-0.5 rounded-full font-bold border border-saffron/10">
+                            {comp.typeMarathi}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex items-center gap-2 flex-shrink-0 z-10 ml-4">
-                    <span className="text-xs text-saffron font-bold opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 font-marathi">
-                      वाचा
-                    </span>
-                    <ArrowRight className="w-5 h-5 text-saffron transform group-hover:translate-x-1 transition-transform duration-300" aria-hidden="true" />
-                  </div>
+                    <div className="flex items-center gap-2 flex-shrink-0 z-10 ml-4">
+                      <span className="text-xs text-saffron font-bold opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 font-marathi">
+                        वाचा
+                      </span>
+                      <ArrowRight className="w-5 h-5 text-saffron transform group-hover:translate-x-1 transition-transform duration-300" aria-hidden="true" />
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between border-t border-saffron/10 pt-6 mt-8">
+                <Link
+                  href={page > 1 ? `?page=${page - 1}` : '#'}
+                  className={`flex items-center gap-1 px-4 py-2 rounded-lg border border-saffron/20 text-sm font-semibold transition-all ${
+                    page > 1 
+                      ? 'hover:bg-saffron/10 text-foreground' 
+                      : 'opacity-40 pointer-events-none text-muted-foreground'
+                  }`}
+                >
+                  <ArrowLeft className="w-4 h-4" /> मागील (Prev)
                 </Link>
-              );
-            })}
-          </div>
+                <span className="text-sm font-marathi font-semibold text-foreground/80">
+                  पान {toDevanagariDigits(page)} / {toDevanagariDigits(totalPages)}
+                </span>
+                <Link
+                  href={page < totalPages ? `?page=${page + 1}` : '#'}
+                  className={`flex items-center gap-1 px-4 py-2 rounded-lg border border-saffron/20 text-sm font-semibold transition-all ${
+                    page < totalPages 
+                      ? 'hover:bg-saffron/10 text-foreground' 
+                      : 'opacity-40 pointer-events-none text-muted-foreground'
+                  }`}
+                >
+                  पुढील (Next) <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            )}
+          </>
         )}
       </section>
     </div>

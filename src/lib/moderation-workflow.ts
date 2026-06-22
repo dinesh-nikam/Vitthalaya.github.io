@@ -236,25 +236,101 @@ async function promoteAndPublish(item: any): Promise<void> {
         .replace(/\s+/g, '-');
       const slug = `${cleanTitle || 'abhang'}-${uuidv4().substring(0, 8)}`;
 
+      // Try to read pre-classification data from UploadedFile
+      let detectedType: string | null = null;
+      let saintName: string | null = null;
+      let deityName: string | null = null;
+
+      if (item.uploadedFileId) {
+        try {
+          const uploadedFile = await tx.uploadedFile.findUnique({
+            where: { id: item.uploadedFileId },
+          });
+          if (uploadedFile?.detectedMetadata) {
+            const parsed = JSON.parse(uploadedFile.detectedMetadata);
+            if (parsed) {
+              detectedType = parsed.compositionType ?? null;
+              saintName = parsed.saintName ?? null;
+              deityName = parsed.deityName ?? null;
+            }
+          }
+        } catch {
+          // Non-critical — classification data is optional
+        }
+      }
+
+      // Map English type to Marathi if we have a classification
+      const TYPE_MAP: Record<string, string> = {
+        abhang: 'अभंग',
+        aarti: 'आरती',
+        bhajan: 'भजन',
+        stotra: 'स्तोत्र',
+        haripath: 'हरीपाठ',
+        gaulani: 'गौळणी',
+        bharud: 'भारूड',
+        kirtan: 'कीर्तन',
+        pad: 'पद',
+        ovi: 'ओवी',
+        namasmaran: 'नामस्मरण',
+        powada: 'पोवाडा',
+      };
+
+      const compositionType = detectedType && TYPE_MAP[detectedType.toLowerCase()]
+        ? TYPE_MAP[detectedType.toLowerCase()]
+        : 'अभंग';
+
+      const compData: Record<string, unknown> = {
+        titleMarathi: item.draftTitle,
+        titleTranslit: cleanTitle || 'Abhang',
+        slug,
+        type: compositionType,
+        fullText: item.draftText,
+        meaning: item.draftMeaning,
+        reviewed: true,
+      };
+
+      // Try to resolve saint and deity from classification
+      if (saintName) {
+        const saint = await tx.saint.findFirst({
+          where: {
+            OR: [
+              { nameMarathi: saintName },
+              { nameTranslit: { contains: saintName, mode: 'insensitive' } },
+            ],
+          },
+          select: { id: true },
+        });
+        if (saint) compData.saintId = saint.id;
+      }
+
+      if (deityName) {
+        const deity = await tx.deity.findFirst({
+          where: {
+            OR: [
+              { nameMarathi: deityName },
+              { nameTranslit: { contains: deityName, mode: 'insensitive' } },
+            ],
+          },
+          select: { id: true },
+        });
+        if (deity) compData.deityId = deity.id;
+      }
+
       // Create composition
-      const comp = await tx.composition.create({
-        data: {
-          titleMarathi: item.draftTitle,
-          titleTranslit: cleanTitle || 'Abhang',
-          slug,
-          type: 'अभंग',
-          fullText: item.draftText,
-          meaning: item.draftMeaning,
-          reviewed: true,
-        },
-      });
+      const comp = await tx.composition.create({ data: compData as any });
       compositionId = comp.id;
 
-      // Update upload status
+      // Update upload status (try UploadedFile first, fallback to ManuscriptUpload)
+      if (item.uploadedFileId) {
+        await tx.uploadedFile.update({
+          where: { id: item.uploadedFileId },
+          data: { processingStatus: 'completed' },
+        }).catch(() => {});
+      }
       await tx.manuscriptUpload.update({
         where: { id: item.sourceId },
         data: { status: 'ocr_completed' },
-      });
+      }).catch(() => {});
     } else if (item.sourceType === 'suggestion') {
       // Apply correction suggestion directly to composition
       const suggestion = await tx.correctionSuggestion.findUnique({

@@ -13,6 +13,7 @@ out/
 # --- Build output ---
 dist/
 *.tgz
+public/books/
 
 # --- Environment files ---
 .env
@@ -74,3 +75,7 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 # --- Caches ---
 .eslintcache
 .cache/
+
+# --- OMO Continuation Session Data ---
+.omo/run-continuation/*.json
+

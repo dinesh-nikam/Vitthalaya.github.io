@@ -11,11 +11,14 @@ bun dev
 # Build for production
 bun build
 
-# Run lint
+# Run lint (includes type-aware rules)
 bun lint
 
 # Type check
 bun typecheck
+
+# Run tests (if any in src/)
+bun test
 
 # Database operations
 bun run db:generate     # Generate Prisma client
@@ -27,7 +30,15 @@ bun run db:studio       # Open Prisma Studio
 # CLI utilities
 bun run canonical       # Canonical record management (deduplication)
 bun run enrich          # AI enrichment pipeline
-bun run scrape          # Scrape devotional content (outputs to data/scraped/)
+bun run scrape          # Scrape devotional content (CLI)
+bun run acquire:all     # Acquire content from all sources
+bun run graph:build     # Build knowledge graph from compositions
+
+# Miscellaneous scripts
+bun run scripts/index-search.ts    # Index compositions to Meilisearch
+bun run scripts/build-graph.ts   # Build knowledge graph
+bun run scripts/check-db.ts      # Inspect database state
+bun run scripts/backup.ts        # Backup database
 ```
 
 ## Architecture Overview
@@ -54,6 +65,11 @@ Composition → canonicalId → CanonicalRecord
 
 Use `bun run canonical` CLI for deduplication operations. See `src/canonical/` for the engine.
 
+#### Confidence Thresholds
+- `auto_merge`: ≥ 0.90 — Automatically merge duplicates
+- `suggested`: 0.70–0.89 — Show as suggested match for editor review
+- `rejected`: ≤ 0.69 — Reject as non-duplicate
+
 ### Data Model (Prisma)
 Core entities in `prisma/schema.prisma`:
 - **Saint** → compositions, related saints, birth region
@@ -79,12 +95,27 @@ src/
 ├── canonical/       Duplicate detection, fuzzy matching, normalization
 ├── community/       Corrections, user verification, versioning
 ├── db/              Prisma client, seed scripts, scraper integrator
-├── knowledge-graph/ GraphQL-style graph traversals
+├── knowledge-graph/ GraphQL-style graph traversals, build scripts
 ├── lib/             Search client, SEO, festival calculator, utils
 └── scraper/         Web scrapers for devotional content (BaseScraper pattern)
 
-scripts/             One-off scripts (search indexing)
+scripts/             One-off scripts (search indexing, graph building, testing)
 ```
+
+### Knowledge Graph Architecture
+
+The `EntityGraphEdge` table forms a polymorphic relationship graph connecting all entities:
+- **Source/Target types**: Saint, Composition, Deity, Festival, Category, Temple, Book
+- **Relationships**: authorship, theme, occasion, location-based, community-curated
+- **Graph building**: Run `bun run scripts/build-graph.ts` to generate edges from data
+
+### Upload & Moderation Pipeline (Phase 1+)
+
+Content ingestion flows through a multi-stage pipeline:
+1. **UploadedFile** - Initial submission (any format)
+2. **OcrConsensusResult** - Multi-engine OCR voting (Google Vision + Tesseract + PaddleOCR)
+3. **ModerationQueue** - Editorial review with 3-tier system (AI → Peer → Scholar)
+4. **Composition** - Published after approval
 
 ## Content Workflow
 
@@ -101,6 +132,13 @@ Automated scraping is **disabled** in Phase 0-2. Content must come from:
 4. Editor approval → publish
 
 Scraper code exists in `src/scraper/` but should not be executed; files to remove before launch are documented in `VALIDATION_REPORT.md`.
+
+#### Scraping Ethics (for production use)
+- **robots.txt compliance**: Respect before scraping
+- **Rate limiting**: 1 request per 2 seconds with ±30% jitter
+- **Attribution**: Store source URL for every composition
+- **No login bypass**: Only public pages scraped
+- **Manual review gate**: All scraped content reviewed before production
 
 ## Design System
 
@@ -144,6 +182,23 @@ All cultural animations respect `prefers-reduced-motion`:
 - No barrel re-exports in `components/`
 - Explicit `.ts`/`.tsx` extensions in imports
 - kebab-case for files, camelCase for functions, UPPER_SNAKE_CASE for constants
+
+### Testing
+- Framework: `bun:test` (bundled with Bun, no Jest)
+- Run single test file: `bun test src/canonical/__tests__/matching.test.ts`
+- Run all tests: `bun test`
+
+### TypeScript Configuration
+- Strict mode enabled (`strict: true`, `strictNullChecks: true`)
+- `noImplicitAny: false` — use explicit types but implicit any allowed
+- Scripts and CLI files are excluded from tsconfig (see `exclude` array)
+- Test files use `bun:test` describe/it/expect instead of Jest
+
+### Environment Variables
+- `DATABASE_URL` - PostgreSQL connection string
+- `MEILISEARCH_URL`, `MEILISEARCH_API_KEY` - Search service
+- `NEXTAUTH_SECRET` - NextAuth configuration
+- `x-api-key` header required for `/api/scrape` endpoint
 
 ## Verification Checklist
 Before committing changes:

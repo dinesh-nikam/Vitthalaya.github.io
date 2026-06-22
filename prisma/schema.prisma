@@ -22,8 +22,10 @@ model Saint {
   compositions  Composition[]
   canonicalId   String?
   canonicalRecords CanonicalRecord[]
-  relatedFrom   SaintRelation[]   @relation("RelatedFrom")
-  relatedTo     SaintRelation[]   @relation("RelatedTo")
+  relatedFrom     SaintRelation[]      @relation("RelatedFrom")
+  relatedTo       SaintRelation[]      @relation("RelatedTo")
+  bookPublications BookPublication[]
+
   createdAt     DateTime          @default(now()) @map("created_at")
   updatedAt     DateTime          @updatedAt @map("updated_at")
 
@@ -50,6 +52,7 @@ model Deity {
   compositions  Composition[]
   canonicalId   String?
   canonicalRecords CanonicalRecord[]
+  bookPublications BookPublication[]
 
   @@map("deities")
 }
@@ -106,7 +109,11 @@ model Composition {
   aiEnrichmentResults AiEnrichmentResult[]
   correctionSuggestions CorrectionSuggestion[]
   versions       CompositionVersion[]
-  verificationRecord    VerificationRecord?
+  verificationRecord    VerificationRecord[]
+
+  // Book commerce
+  bookEntries        BookComposition[]
+  collectionEntries  CollectionComposition[]
 
   createdAt    DateTime   @default(now()) @map("created_at")
   updatedAt    DateTime   @updatedAt @map("updated_at")
@@ -249,20 +256,306 @@ model Audio {
   @@map("audio_recordings")
 }
 
-model Book {
-  id            String  @id @default(uuid())
-  titleMarathi  String  @map("title_marathi")
-  titleTranslit String? @map("title_transliteration")
-  slug          String  @unique
+// ═══════════════════════════════════════════════════════════════
+// Book Commerce — Publication, Edition, Composition, Theme
+// ═══════════════════════════════════════════════════════════════
+
+model BookPublication {
+  id            String   @id @default(uuid())
+  titleMarathi  String   @map("title_marathi")
+  titleEnglish  String?  @map("title_english")
+  slug          String   @unique
+
+  bookType      String   @default("STANDARD") @map("book_type")
+  // POCKET | STANDARD | PREMIUM_HARDCOVER | COLLECTOR | TEMPLE
+
+  status        String   @default("DRAFT") @map("status")
+  // DRAFT | GENERATING | READY | PUBLISHED | ARCHIVED
+
+  curationType  String   @map("curation_type")
+  // SAINT_BASED | DEITY_BASED | FESTIVAL_BASED | THEME_BASED | USER_CURATED
+
+  curationConfig String? @map("curation_config") // JSON: criteria, filters, count per type
+
   description   String?
-  authorName    String? @map("author_name")
-  publisher     String?
-  publishYear   Int?    @map("publish_year")
-  isbn          String? @unique
-  pageCount     Int?    @map("page_count")
+  themeId       String?  @map("theme_id")
+
+  // Focus entity relationships
+  saintId       String?  @map("saint_id")
+  saint         Saint?   @relation(fields: [saintId], references: [id])
+  deityId       String?  @map("deity_id")
+  deity         Deity?   @relation(fields: [deityId], references: [id])
+
+  // Creator
+  creatorId     String?  @map("creator_id")
+  creator       User?    @relation("BookCreator", fields: [creatorId], references: [id])
+  isPublic      Boolean  @default(false) @map("is_public")
+
+  // Pricing (base, overridden by editions)
+  basePrice     Decimal? @map("base_price")
+  royaltyPercent Float?  @map("royalty_percent")
+  totalCompositions  Int?  @map("total_compositions")
+  totalPages         Int?  @map("total_pages")
+  totalSections      Int?  @map("total_sections")
+
+
+  // Generation tracking
+  generationStartedAt   DateTime? @map("generation_started_at")
+  generationCompletedAt DateTime? @map("generation_completed_at")
+  generationError       String?   @map("generation_error")
+
+  // Relations
+  editions      BookEdition[]
+  compositions  BookComposition[]
+  orderItems    OrderItem[]
 
   createdAt     DateTime @default(now()) @map("created_at")
-  @@map("books")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([bookType])
+  @@index([curationType])
+  @@index([saintId])
+  @@index([deityId])
+  @@index([creatorId])
+  @@map("book_publications")
+}
+
+model BookEdition {
+  id              String   @id @default(uuid())
+  publicationId   String   @map("publication_id")
+  publication     BookPublication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+
+  format          String   @map("format")
+  // DIGITAL_PDF | DIGITAL_EPUB | DIGITAL_KINDLE | PRINT_PAPERBACK | PRINT_HARDCOVER | PRINT_COLLECTOR
+
+  // File assets
+  fileUrl         String?  @map("file_url")
+  fileSizeBytes   Int?     @map("file_size_bytes")
+  previewUrl      String?  @map("preview_url")
+  coverUrl        String?  @map("cover_url")
+
+  // Print specs
+  pageCount       Int?     @map("page_count")
+  trimSize        String?  @map("trim_size")
+  paperType       String?  @map("paper_type")
+  coverFinish     String?  @map("cover_finish")
+  bleedMm         Float?   @map("bleed_mm")
+  dpi             Int?     @default(300) @map("dpi")
+  colorMode       String?  @default("CMYK") @map("color_mode")
+
+  // Pricing
+  price           Decimal? @map("price")
+  printCost       Decimal? @map("print_cost")
+  shippingWeightG Int?     @map("shipping_weight_g")
+
+  isDefault       Boolean  @default(false) @map("is_default")
+
+  // Order items using this edition
+  orderItems      OrderItem[]
+
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([publicationId])
+  @@index([format])
+  @@map("book_editions")
+}
+
+model BookComposition {
+  id              String   @id @default(uuid())
+  publicationId   String   @map("publication_id")
+  publication     BookPublication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  compositionId   String   @map("composition_id")
+  composition     Composition @relation(fields: [compositionId], references: [id])
+
+  sortOrder       Int      @map("sort_order")
+  sectionName     String?  @map("section_name")
+  curatedByAi     Boolean  @default(true) @map("curated_by_ai")
+  includeMeaning  Boolean  @default(true) @map("include_meaning")
+  userNotes       String?  @map("user_notes")
+
+  @@unique([publicationId, compositionId])
+  @@index([publicationId])
+  @@index([compositionId])
+  @@map("book_compositions")
+}
+
+model BookTheme {
+  id              String   @id @default(uuid())
+  nameMarathi     String   @map("name_marathi")
+  nameEnglish     String   @map("name_english")
+  slug            String   @unique
+  description     String?
+
+  curationRules   String?  @map("curation_rules") // JSON
+  isOfficial      Boolean  @default(false) @map("is_official")
+  isActive        Boolean  @default(true) @map("is_active")
+
+  createdAt       DateTime @default(now()) @map("created_at")
+  @@map("book_themes")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// E-Commerce — Orders, Addresses, Print Partners
+// ═══════════════════════════════════════════════════════════════
+
+model Order {
+  id                String     @id @default(uuid())
+
+  userId            String?    @map("user_id")
+  user              User?      @relation(fields: [userId], references: [id])
+
+  guestEmail        String?    @map("guest_email")
+  guestName         String?    @map("guest_name")
+
+  status            String     @default("PENDING") @map("status")
+  // PENDING | CONFIRMED | PROCESSING | PRINTING | SHIPPED | DELIVERED | CANCELLED | REFUNDED
+
+  shippingAddressId String?    @map("shipping_address_id")
+  shippingAddress   Address?   @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+  shippingMethod    String?    @map("shipping_method")
+  shippingCost      Decimal?   @map("shipping_cost")
+  trackingNumber    String?    @map("tracking_number")
+
+  paymentProvider   String?    @map("payment_provider")
+  paymentId         String?    @map("payment_id")
+  paymentStatus     String?    @map("payment_status")
+  currency          String     @default("INR")
+  subtotal          Decimal    @map("subtotal")
+  tax               Decimal    @default(0)
+  total             Decimal
+
+  isGift            Boolean    @default(false) @map("is_gift")
+  giftMessage       String?    @map("gift_message")
+  giftRecipient     String?    @map("gift_recipient")
+  dedicationText    String?    @map("dedication_text")
+
+  printPartnerId    String?    @map("print_partner_id")
+
+  items             OrderItem[]
+
+  createdAt         DateTime   @default(now()) @map("created_at")
+  updatedAt         DateTime   @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([status])
+  @@index([paymentStatus])
+  @@map("orders")
+}
+
+model OrderItem {
+  id                 String         @id @default(uuid())
+  orderId            String         @map("order_id")
+  order              Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  publicationId      String         @map("publication_id")
+  publication        BookPublication @relation(fields: [publicationId], references: [id])
+  editionId          String?        @map("edition_id")
+  /// Enforces Restrict onDelete to prevent deletion of book editions that are referenced by existing order items.
+  edition            BookEdition?   @relation(fields: [editionId], references: [id], onDelete: Restrict)
+
+  quantity           Int            @default(1)
+  unitPrice          Decimal        @map("unit_price")
+  totalPrice         Decimal        @map("total_price")
+
+  dedicationText     String?        @map("dedication_text")
+  personalizationJson String?       @map("personalization_json")
+
+  createdAt          DateTime       @default(now()) @map("created_at")
+
+  @@index([orderId])
+  @@index([publicationId])
+  @@map("order_items")
+}
+
+model Address {
+  id              String   @id @default(uuid())
+  userId          String?  @map("user_id")
+  user            User?    @relation(fields: [userId], references: [id])
+
+  label           String?  // "Home", "Office", "Temple"
+  fullName        String   @map("full_name")
+  phone           String
+  line1           String
+  line2           String?
+  city            String
+  state           String
+  postalCode      String   @map("postal_code")
+  country         String   @default("IN")
+
+  isDefault       Boolean  @default(false) @map("is_default")
+  orders          Order[]  @relation("ShippingAddress")
+
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("addresses")
+}
+
+model PrintPartner {
+  id                 String   @id @default(uuid())
+  name               String
+  provider           String   // "printful", "lulu", "kdp", "regional_printer"
+  isActive           Boolean  @default(true) @map("is_active")
+
+  apiEndpoint        String?  @map("api_endpoint")
+  apiKey             String?  @map("api_key")
+  apiSecret          String?  @map("api_secret")
+
+  supportsHardcover  Boolean  @default(false) @map("supports_hardcover")
+  supportsColor      Boolean  @default(true) @map("supports_color")
+  maxPages           Int?     @map("max_pages")
+
+  baseCostPerPage    Decimal? @map("base_cost_per_page")
+  baseCostPerBook    Decimal? @map("base_cost_per_book")
+  coverCostPerBook   Decimal? @map("cover_cost_per_book")
+  currency           String   @default("INR")
+
+  regions            String?  // JSON array
+
+  createdAt          DateTime @default(now()) @map("created_at")
+  @@map("print_partners")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Community — User Collections
+// ═══════════════════════════════════════════════════════════════
+
+model UserCollection {
+  id              String   @id @default(uuid())
+  name            String
+  slug            String   @unique
+  description     String?
+  userId          String   @map("user_id")
+  user            User     @relation(fields: [userId], references: [id])
+
+  isPublic        Boolean  @default(false) @map("is_public")
+  isFeatured      Boolean  @default(false) @map("is_featured")
+
+  compositions    CollectionComposition[]
+
+  likes           Int      @default(0)
+  saves           Int      @default(0)
+
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([isPublic, isFeatured])
+  @@map("user_collections")
+}
+
+model CollectionComposition {
+  id              String   @id @default(uuid())
+  collectionId    String   @map("collection_id")
+  collection      UserCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  compositionId   String   @map("composition_id")
+  composition     Composition @relation(fields: [compositionId], references: [id])
+
+  sortOrder       Int      @map("sort_order")
+  userNotes       String?  @map("user_notes")
+
+  @@unique([collectionId, compositionId])
+  @@map("collection_compositions")
 }
 
 model EntityGraphEdge {
@@ -347,7 +640,16 @@ model User {
   reviewedCorrections CorrectionSuggestion[] @relation("ReviewerCorrections")
   versions            CompositionVersion[]   @relation("UserVersions")
   manuscripts         ManuscriptUpload[]
+  uploads             UploadedFile[]
   moderationReviews   ModerationReview[]
+  moderationNotes     ModerationEditorialNote[]
+
+  // Book commerce
+  createdPublications  BookPublication[] @relation("BookCreator")
+  orders               Order[]
+  addresses            Address[]
+  collections          UserCollection[]
+
   createdAt           DateTime @default(now()) @map("created_at")
   @@map("users")
 }
@@ -482,21 +784,117 @@ model OcrProcessingJob {
   @@map("ocr_processing_jobs")
 }
 
+// ═══════════════════════════════════════════════════════════════
+// Phase 1 — Universal Upload Pipeline
+// ═══════════════════════════════════════════════════════════════
+
+/// Central upload record for ALL file types (supersedes ManuscriptUpload for new content)
+model UploadedFile {
+  id                String              @id @default(uuid())
+  userId            String              @map("user_id")
+  user              User                @relation(fields: [userId], references: [id])
+
+  originalName      String              @map("original_name")
+  mimeType          String              @map("mime_type")
+  sizeBytes         Int                 @map("size_bytes")
+  format            String              @map("format") // image, pdf, document, ebook, audio, video
+
+  storagePath       String              @map("storage_path")
+  storageProvider   String              @default("local") @map("storage_provider")
+
+  processingStatus  String              @default("pending") @map("processing_status")
+  // pending → extracting → ocr → ai_classifying → completed → moderation_queue → failed
+  processingSteps   String?             @map("processing_steps") // JSON array of completed steps
+
+  extractedText     String?             @map("extracted_text")
+  extractedMetadata String?             @map("extracted_metadata") // JSON
+  extractionConfidence Float?           @map("extraction_confidence")
+
+  sourceUrl         String?             @map("source_url") // YouTube URL or original source link
+  detectedMetadata  String?             @map("detected_metadata") // JSON: AI-detected saint, deity, etc.
+
+  versions          UploadedFileVersion[]
+  ocrResults        OcrConsensusResult[]
+  moderationQueue   ModerationQueue[]   @relation("FileModerationQueue")
+
+  createdAt         DateTime            @default(now()) @map("created_at")
+  updatedAt         DateTime            @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([processingStatus])
+  @@index([format])
+  @@index([createdAt])
+  @@map("uploaded_files")
+}
+
+/// Versioned snapshots of uploaded files (original, preprocessed, OCR output)
+model UploadedFileVersion {
+  id              String       @id @default(uuid())
+  fileId          String       @map("file_id")
+  file            UploadedFile @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  versionNumber   Int          @map("version_number")
+  label           String       @map("label") // "original", "preprocessed", "ocr_input", "ocr_output"
+  storagePath     String       @map("storage_path")
+  sizeBytes       Int          @map("size_bytes")
+  metadata        String?      @map("metadata") // JSON
+
+  createdAt       DateTime     @default(now()) @map("created_at")
+
+  @@unique([fileId, versionNumber])
+  @@index([fileId])
+  @@map("uploaded_file_versions")
+}
+
+/// Multi-engine OCR consensus results
+model OcrConsensusResult {
+  id                String       @id @default(uuid())
+  fileId            String       @map("file_id")
+  file              UploadedFile @relation(fields: [fileId], references: [id], onDelete: Cascade)
+
+  engineAResult     String?      @map("engine_a_result")  // Google Vision text
+  engineAConfidence Float?       @map("engine_a_confidence")
+  engineBResult     String?      @map("engine_b_result")  // Tesseract text
+  engineBConfidence Float?       @map("engine_b_confidence")
+  engineCResult     String?      @map("engine_c_result")  // PaddleOCR text
+  engineCConfidence Float?       @map("engine_c_confidence")
+
+  votedText         String       @map("voted_text")
+  finalConfidence   Float        @map("final_confidence")
+  votingMethod      String       @default("weighted-average") @map("voting_method")
+  engineCount       Int          @default(0) @map("engine_count")
+
+  createdAt         DateTime     @default(now()) @map("created_at")
+
+  @@index([fileId])
+  @@map("ocr_consensus_results")
+}
+
 model ModerationQueue {
   id             String            @id @default(uuid())
-  sourceType     String            @map("source_type") // "ocr" or "suggestion"
-  sourceId       String            @map("source_id") // ID from ManuscriptUpload or CorrectionSuggestion
+  sourceType     String            @map("source_type") // "ocr", "suggestion", "upload"
+  sourceId       String            @map("source_id") // ID from ManuscriptUpload, CorrectionSuggestion, or UploadedFile
+  uploadedFileId String?           @map("uploaded_file_id")
+  uploadedFile   UploadedFile?     @relation("FileModerationQueue", fields: [uploadedFileId], references: [id])
   draftTitle     String            @map("draft_title")
   draftText      String            @map("draft_text")
   draftMeaning   String?           @map("draft_meaning")
   tier           Int               @default(1) // 1 = AI, 2 = Peer, 3 = Scholar
   consensusScore Int               @default(0) // incremented by peer approvals
   status         String            @default("pending") // pending, approved, rejected, flagged
-  
+  statusReason   String?           @map("status_reason") // why it was flagged/rejected
+  flags          String?           @map("flags") // JSON: AI flags, safety flags, etc.
+  reviewedAt     DateTime?         @map("reviewed_at")
+
   reviews        ModerationReview[]
+  notes          ModerationEditorialNote[]
   createdAt      DateTime          @default(now()) @map("created_at")
   updatedAt      DateTime          @updatedAt @map("updated_at")
 
+  @@index([uploadedFileId])
+  @@index([status])
+  @@index([sourceType])
+  @@index([createdAt])
   @@map("moderation_queues")
 }
 
@@ -510,7 +908,27 @@ model ModerationReview {
   notes          String?
   createdAt      DateTime          @default(now()) @map("created_at")
 
+  @@index([queueId])
+  @@index([reviewerId])
   @@map("moderation_reviews")
+}
+
+/// Threaded editorial notes on moderation queue items — internal discussions between editors
+model ModerationEditorialNote {
+  id             String            @id @default(uuid())
+  queueId        String            @map("queue_id")
+  queue          ModerationQueue   @relation(fields: [queueId], references: [id], onDelete: Cascade)
+  authorId       String            @map("author_id")
+  author         User              @relation(fields: [authorId], references: [id])
+  content        String            @map("content")
+  parentNoteId   String?           @map("parent_note_id") // for threaded replies
+
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+
+  @@index([queueId])
+  @@index([authorId])
+  @@map("moderation_editorial_notes")
 }
 
 model SearchSyncJob {
@@ -525,4 +943,37 @@ model SearchSyncJob {
 
   @@index([status])
   @@map("search_sync_jobs")
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid())
+  userId    String?  @map("user_id")
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([endpoint])
+  @@map("push_subscriptions")
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(uuid())
+  eventType String   @map("event_type")          // page_view, book_view, add_to_cart, search, checkout_start, payment_success, etc.
+  page      String?                              // Current page path
+  referrer  String?                              // HTTP referrer
+  metadata  Json?                                // Arbitrary event-specific payload
+  ip        String?                              // Client IP (anonymized)
+  userAgent String?  @map("user_agent")
+  userId    String?  @map("user_id")
+  sessionId String?  @map("session_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([eventType, createdAt])
+  @@index([page])
+  @@index([createdAt])
+  @@index([userId])
+  @@map("analytics_events")
 }

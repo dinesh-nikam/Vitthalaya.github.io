@@ -62,6 +62,8 @@ Analyze this composition and provide the following fields in JSON:
 
   "meaning": "Deeper spiritual/philosophical meaning in Marathi (2-3 sentences). What lesson or devotional concept does it convey?",
 
+  "simplifiedMeaning": "Simplified meaning in simple Marathi for lay readers (2-3 sentences). Avoid complex philosophical terms. Write for someone with basic Marathi literacy.",
+
   "keywords": ["keyword1", "keyword2", ...],
   // 5-10 keywords in Marathi and English covering main themes, names, places.
 

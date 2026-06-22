@@ -1,119 +1,39 @@
-import { searchCompositions, type SearchDocument } from '@/src/lib/search-client';
-import Link from 'next/link';
-import { Frown, Music, Search } from 'lucide-react';
+import { Suspense } from 'react';
+import SearchPageClient from './search-page-client';
 import { getTopCanonicalQueries } from '@/src/lib/canonical-queries';
+import { db } from '@/src/db/client';
 
 export default async function SearchPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; type?: string; deity?: string }>;
+  searchParams: Promise<{ q?: string; type?: string; deity?: string; saint?: string; festival?: string; hasAudio?: string }>;
 }) {
   const params = await searchParams;
-  const query = params.q || '';
-  const typeFilter = params.type;
-  const deityFilter = params.deity;
 
-  // Load canonical search suggestions when no query is active
-  const canonicalQueries = query ? [] : (await getTopCanonicalQueries(24));
+  // Pre-fetch filter options (server-side)
+  const [saints, deities, festivals] = await Promise.all([
+    db.saint.findMany({ select: { nameMarathi: true, slug: true }, orderBy: { nameTranslit: 'asc' } }),
+    db.deity.findMany({ select: { nameMarathi: true, slug: true }, orderBy: { nameTranslit: 'asc' } }),
+    db.festival.findMany({ select: { nameMarathi: true, slug: true }, orderBy: { name: 'asc' } }),
+  ]);
 
-  let results: SearchDocument[] = [];
-
-  if (query) {
-    try {
-      results = await searchCompositions(query, {
-        type: typeFilter,
-        deityName: deityFilter,
-      });
-    } catch (error) {
-      console.error('Search error:', error);
-    }
-  }
+  const canonicalQueries = params.q ? [] : await getTopCanonicalQueries(24);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-marathiHeading text-maroon mb-6">
-        {query ? `शोध निकाल - "${query}"` : 'शोध'}
-      </h1>
-
-      {/* Canonical search suggestions (no query yet) */}
-      {!query && canonicalQueries.length > 0 && (
-        <section className="mb-10" aria-labelledby="popular-searches">
-          <h2 id="popular-searches" className="font-marathiHeading text-xl text-maroon mb-4">
-            लोकप्रिय शोध
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {canonicalQueries.map((cq) => (
-              <Link
-                key={cq.slug}
-                href={`/search/${cq.slug}`}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-saffron/20 bg-saffron/5 text-sm hover:bg-saffron/10 hover:border-saffron/30 transition-colors"
-              >
-                <Search className="w-3.5 h-3.5 text-saffron" />
-                {cq.label}
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {query && results.length === 0 && (
-        <div className="text-center py-12">
-          <Frown className="w-12 h-12 mx-auto mb-4 text-muted-foreground" aria-hidden="true" />
-          <p className="text-lg text-foreground">
-            "{query}" साठी कोणतेही निकाल आढळले नाही
-          </p>
-          <p className="text-sm text-muted-foreground mt-2">
-            इतर शब्दांनी पुन्हा प्रयत्न केला या
-          </p>
-        </div>
-      )}
-
-      {results.length > 0 && (
-        <>
-          <p className="text-sm text-muted-foreground mb-4">
-            {results.length} निकाल आढळले
-          </p>
-
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {results.map((result) => (
-              <Link
-                key={result.id}
-                href={`/abhang/${result.slug}`}
-                className="block rounded-lg border border-saffron/10 bg-card p-5 hover:shadow-md hover:border-saffron/30 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-saffron"
-              >
-                <h2 className="font-marathiHeading text-lg text-maroon mb-2 line-clamp-2">
-                  {result.titleMarathi}
-                </h2>
-                <p className="text-sm text-muted-foreground mb-3">
-                  {result.titleTranslit}
-                </p>
-
-                <div className="flex items-center gap-2 mb-3">
-                  {result.hasAudio && (
-                    <Music
-                      className="w-4 h-4 text-saffron"
-                      aria-label="ऑडियो उपलब्ध"
-                    />
-                  )}
-                  <span className="text-xs px-2 py-1 bg-saffron/10 text-saffron rounded">
-                    {result.type}
-                  </span>
-                </div>
-
-                <p className="text-sm text-foreground line-clamp-3 mb-4">
-                  {result.fullText}...
-                </p>
-
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-maroon">{result.saintName}</span>
-                  <span className="text-muted-foreground">{result.deityName}</span>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
+    <Suspense fallback={<div className="container mx-auto px-4 py-8"><p className="text-muted-foreground">लोड होत आहे...</p></div>}>
+      <SearchPageClient
+        initialQuery={params.q || ''}
+        initialType={params.type || ''}
+        initialDeity={params.deity || ''}
+        initialSaint={params.saint || ''}
+        initialFestival={params.festival || ''}
+        initialHasAudio={params.hasAudio === 'true'}
+        saints={saints.map((s) => ({ name: s.nameMarathi, slug: s.slug }))}
+        deities={deities.map((d) => ({ name: d.nameMarathi, slug: d.slug }))}
+        festivals={festivals.map((f) => ({ name: f.nameMarathi, slug: f.slug }))}
+        canonicalQueries={canonicalQueries.map((cq) => ({ label: cq.label, slug: cq.slug }))}
+      />
+    </Suspense>
   );
 }
 
@@ -125,15 +45,15 @@ export default async function SearchPage({
 export async function generateMetadata({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; type?: string; deity?: string }>;
+  searchParams: Promise<{ q?: string }>;
 }) {
   const params = await searchParams;
-  const hasFilters = params.q || params.type || params.deity;
+  const hasQuery = !!params.q;
 
-  if (hasFilters) {
+  if (hasQuery) {
     return {
       robots: { index: false, follow: true },
-      title: 'शोध निकाल - डिजिटल पंढरपूर',
+      title: `शोध निकाल - "${params.q}" - डिजिटल पंढरपूर`,
     };
   }
 

@@ -14,8 +14,8 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://digitalpandharpur.
 
 /**
  * Dynamic entity sitemap router.
- * Serves saints, categories, festivals, static, canonical-search from a single route.
- * Query param `?type=saints|categories|festivals|static|canonical-search` selects the set.
+ * Serves saints, categories, festivals, static, canonical-search, books from a single route.
+ * Query param `?type=saints|categories|festivals|static|canonical-search|books` selects the set.
  * Uses Redis caching to reduce database load.
  */
 export async function GET(request: NextRequest) {
@@ -50,9 +50,12 @@ export async function GET(request: NextRequest) {
     case 'canonical-search':
       xml = await generateCanonicalSearchXml();
       break;
+    case 'books':
+      xml = await generateBooksXml();
+      break;
     default:
       return new Response(
-        'Unknown sitemap type. Use: saints, categories, festivals, static, canonical-search',
+        'Unknown sitemap type. Use: saints, categories, festivals, static, canonical-search, books',
         { status: 400 },
       );
   }
@@ -144,6 +147,28 @@ async function generateStaticXml(): Promise<string> {
       lastmod: now,
     })),
   );
+}
+
+async function generateBooksXml(): Promise<string> {
+  const books = await db.bookPublication.findMany({
+    where: { isPublic: true, status: 'PUBLISHED' },
+    select: { slug: true, updatedAt: true },
+    orderBy: { slug: 'asc' },
+  });
+
+  const now = new Date().toISOString();
+  const urls = books.map((b) => ({
+    loc: `${SITE_URL}/books/${b.slug}`,
+    lastmod: b.updatedAt ? b.updatedAt.toISOString() : now,
+    changefreq: ENTITY_CHANGEFREQ,
+    priority: 0.7,
+  }));
+
+  // Add marketplace and generate pages
+  urls.push({ loc: `${SITE_URL}/books`, lastmod: now, changefreq: 'daily' as const, priority: 0.8 });
+  urls.push({ loc: `${SITE_URL}/books/generate`, lastmod: now, changefreq: 'weekly' as const, priority: 0.6 });
+
+  return buildUrlSet(urls);
 }
 
 function xmlResponse(xml: string, cacheHeaderVal = 'MISS'): Response {

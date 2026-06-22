@@ -76,3 +76,7 @@ export type {
   ReviewAction,
   ReviewResult,
 } from './review';
+
+// Classifier
+export { classifyContent } from './classifier';
+export type { ClassificationResult, ClassifierResponse } from './classifier';

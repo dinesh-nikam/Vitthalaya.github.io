@@ -68,6 +68,7 @@ export interface EnrichmentInput {
 export interface EnrichmentOutput {
   summary: string | null;
   meaning: string | null;
+  simplifiedMeaning: string | null;
   keywords: string[];
   deity: string | null;
   deityConfidence: string | null;
@@ -118,6 +119,7 @@ function parseLLMResponse(raw: string): EnrichmentOutput | null {
     return {
       summary: parsed.summary ?? null,
       meaning: parsed.meaning ?? null,
+      simplifiedMeaning: parsed.simplifiedMeaning ?? parsed.simplified_meaning ?? null,
       keywords: Array.isArray(parsed.keywords) ? parsed.keywords : [],
       deity: parsed.deity ?? null,
       deityConfidence: parsed.deityConfidence ?? null,

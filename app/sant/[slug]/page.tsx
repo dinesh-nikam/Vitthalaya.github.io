@@ -5,6 +5,7 @@ import { db } from '@/src/db/client';
 import { saintSchema, canonicalMetadata } from '@/src/lib/seo';
 import { ConchSoundButton } from '@/components/conch-sound-button';
 import { TempleViewerClient } from '@/components/temple-viewer-client';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 
 interface Composition {
   titleMarathi: string;
@@ -12,25 +13,38 @@ interface Composition {
   type: string;
 }
 
+function toDevanagariDigits(num: number): string {
+  const devanagariDigits = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
+  const formatted = num.toString().padStart(2, '0');
+  return formatted
+    .split('')
+    .map(digit => {
+      const idx = parseInt(digit, 10);
+      return isNaN(idx) ? digit : devanagariDigits[idx];
+    })
+    .join('');
+}
+
 export default async function SaintPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ page?: string }>;
 }) {
   const { slug } = await params;
+  const sParams = await searchParams;
+  let page = parseInt(sParams.page || '1', 10);
+  if (isNaN(page) || page < 1) {
+    page = 1;
+  }
+  const pageSize = 50;
+  const skip = (page - 1) * pageSize;
 
   // Fetch saint details from database
   const dbSaint = await db.saint.findUnique({
     where: { slug },
     include: {
-      compositions: {
-        select: {
-          titleMarathi: true,
-          slug: true,
-          type: true,
-        },
-        take: 20,
-      },
       relatedTo: {
         include: {
           related: {
@@ -49,6 +63,28 @@ export default async function SaintPage({
     notFound();
   }
 
+  // Get total count of compositions for saint
+  const totalCompositions = await db.composition.count({
+    where: { saintId: dbSaint.id },
+  });
+
+  const totalPages = Math.ceil(totalCompositions / pageSize);
+
+  // Query paginated compositions
+  const dbCompositions = await db.composition.findMany({
+    where: { saintId: dbSaint.id },
+    select: {
+      titleMarathi: true,
+      slug: true,
+      type: true,
+    },
+    take: pageSize,
+    skip: skip,
+    orderBy: {
+      id: 'asc',
+    },
+  });
+
   // Format data to fit page UI
   const saint = {
     id: dbSaint.id,
@@ -61,7 +97,7 @@ export default async function SaintPage({
       name: rel.related.nameMarathi,
       slug: rel.related.slug,
     })),
-    compositions: dbSaint.compositions,
+    compositions: dbCompositions,
   };
 
   // Structured timeline based on saint identity
@@ -106,7 +142,7 @@ export default async function SaintPage({
                 period: saint.period,
                 biography: saint.biography,
                 region: saint.region,
-                compositionCount: saint.compositions.length,
+                compositionCount: totalCompositions,
                 relatedSaints: saint.related_saints.map((rs) => ({
                   nameMarathi: rs.name,
                   slug: rs.slug,
@@ -223,24 +259,55 @@ export default async function SaintPage({
       {/* Compositions List Section */}
       <section className="container mx-auto px-4 max-w-5xl mt-16 space-y-6" aria-labelledby="works">
         <h2 id="works" className="font-marathiHeading text-2xl text-maroon dark:text-saffron font-bold border-b border-saffron/10 pb-3">
-          प्रकाशित भक्ती साहित्य ({saint.compositions.length})
+          प्रकाशित भक्ती साहित्य (एकूण {totalCompositions})
         </h2>
         
-        {saint.compositions.length === 0 ? (
+        {totalCompositions === 0 ? (
           <div className="bg-card rounded-xl p-8 border border-saffron/10 text-center">
             <p className="text-muted-foreground text-sm font-marathi">या संतांचे भक्ती साहित्य लवकरच अपलोड केले जाईल.</p>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {saint.compositions.map((comp) => (
-              <CompositionCard
-                key={comp.slug}
-                title={comp.titleMarathi}
-                slug={comp.slug}
-                type={comp.type}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {saint.compositions.map((comp) => (
+                <CompositionCard
+                  key={comp.slug}
+                  title={comp.titleMarathi}
+                  slug={comp.slug}
+                  type={comp.type}
+                />
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between border-t border-saffron/10 pt-6 mt-8">
+                <Link
+                  href={page > 1 ? `?page=${page - 1}` : '#'}
+                  className={`flex items-center gap-1 px-4 py-2 rounded-lg border border-saffron/20 text-sm font-semibold transition-all ${
+                    page > 1 
+                      ? 'hover:bg-saffron/10 text-foreground' 
+                      : 'opacity-40 pointer-events-none text-muted-foreground'
+                  }`}
+                >
+                  <ArrowLeft className="w-4 h-4" /> मागील (Prev)
+                </Link>
+                <span className="text-sm font-marathi font-semibold text-foreground/80">
+                  पान {toDevanagariDigits(page)} / {toDevanagariDigits(totalPages)}
+                </span>
+                <Link
+                  href={page < totalPages ? `?page=${page + 1}` : '#'}
+                  className={`flex items-center gap-1 px-4 py-2 rounded-lg border border-saffron/20 text-sm font-semibold transition-all ${
+                    page < totalPages 
+                      ? 'hover:bg-saffron/10 text-foreground' 
+                      : 'opacity-40 pointer-events-none text-muted-foreground'
+                  }`}
+                >
+                  पुढील (Next) <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            )}
+          </>
         )}
       </section>
 
