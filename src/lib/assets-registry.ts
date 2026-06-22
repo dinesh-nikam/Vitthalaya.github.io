@@ -111,7 +111,7 @@ export const SAINTS_COLLECTION: ImageAsset[] = [
   },
   {
     id: 's11',
-    url: unsplashUrl('photo-1447752875215-b2761acb3c5d'),
+    url: unsplashUrl('photo-1542273917363-3b1817f69a2d'),
     titleMarathi: 'देहू येथील पावन वन',
     titleEnglish: 'Sacred Woods of Dehu',
     descriptionMarathi: 'संत तुकाराम महाराजांच्या वास्तव्याने पुनीत झालेले शांत वन.',
@@ -120,7 +120,7 @@ export const SAINTS_COLLECTION: ImageAsset[] = [
   },
   {
     id: 's12',
-    url: unsplashUrl('photo-1507525428034-b723cf961d3e'),
+    url: unsplashUrl('photo-1596176530529-78163a4f7af2'),
     titleMarathi: 'चंद्रभागेचा शांत किनारा',
     titleEnglish: 'Silent Chandrabhaga Shore',
     descriptionMarathi: 'पहाटेच्या वेळी चंद्रभागा नदीचा संथ वाहणारा प्रवाह.',
@@ -129,7 +129,7 @@ export const SAINTS_COLLECTION: ImageAsset[] = [
   },
   {
     id: 's13',
-    url: unsplashUrl('photo-1604871000636-074fa5117945'),
+    url: unsplashUrl('photo-1599488615731-7e5c2823ff28'),
     titleMarathi: 'पवित्र नामस्मरण माळ',
     titleEnglish: 'Prayer Beads of Devotion',
     descriptionMarathi: 'हातात तुळशीची माळ धरून जप करणारे वारकरी भक्त.',
@@ -138,7 +138,7 @@ export const SAINTS_COLLECTION: ImageAsset[] = [
   },
   {
     id: 's14',
-    url: unsplashUrl('photo-1518005020951-eccb494ad742'),
+    url: unsplashUrl('photo-1566847438217-76e82d383f84'),
     titleMarathi: 'प्राचीन मंदिराचे द्वार',
     titleEnglish: 'Gateway to the Divine',
     descriptionMarathi: 'दगडी कोरीव काम असलेले प्राचीन मंदिराचे प्रवेशद्वार.',
@@ -156,7 +156,7 @@ export const SAINTS_COLLECTION: ImageAsset[] = [
   },
   {
     id: 's16',
-    url: unsplashUrl('photo-1502082553048-f009c37129b9'),
+    url: unsplashUrl('photo-1596436889106-be35e843f974'),
     titleMarathi: 'वड आणि पिंपळाचे झाड',
     titleEnglish: 'The Sacred Banyan Tree',
     descriptionMarathi: 'ज्याखाली बसून संतांनी ज्ञान प्राप्ती केली तो प्राचीन वटवृक्ष.',
@@ -165,7 +165,7 @@ export const SAINTS_COLLECTION: ImageAsset[] = [
   },
   {
     id: 's17',
-    url: unsplashUrl('photo-1544644181-1484b3fdfc62'),
+    url: unsplashUrl('photo-1585314062340-f1a5a7c9328d'),
     titleMarathi: 'संतांची हस्तलिखिते',
     titleEnglish: 'Ancient Devotional Manuscripts',
     descriptionMarathi: 'भूर्जपत्रावरील किंवा जुन्या कागदावरील हस्ताक्षरात लिहिलेले अभंग.',
@@ -174,7 +174,7 @@ export const SAINTS_COLLECTION: ImageAsset[] = [
   },
   {
     id: 's18',
-    url: unsplashUrl('photo-1582510003544-4d00b7f74220'),
+    url: unsplashUrl('photo-1621252179027-94459d278660'),
     titleMarathi: 'पारंपारिक भजन',
     titleEnglish: 'Traditional Chants',
     descriptionMarathi: 'टाळ-मृदंगाच्या गजरात भजनामध्ये तल्लीन झालेले वारकरी भक्त.',
@@ -204,7 +204,7 @@ export const SAINTS_COLLECTION: ImageAsset[] = [
 export const PANDHARPUR_COLLECTION: ImageAsset[] = [
   {
     id: 'p1',
-    url: unsplashUrl('photo-1590076211831-299f24ba8382'),
+    url: unsplashUrl('photo-1600100397608-f010e428de03'),
     titleMarathi: 'पंढरपूर मंदिर शिखर',
     titleEnglish: 'Pandharpur Temple Shikhara',
     descriptionMarathi: 'दूरवरून दिसणारे श्री विठ्ठल रुक्मिणी मंदिराचे उंच आणि सुंदर शिखर.',
@@ -222,7 +222,7 @@ export const PANDHARPUR_COLLECTION: ImageAsset[] = [
   },
   {
     id: 'p3',
-    url: unsplashUrl('photo-1562016600-ece13e8ba570'),
+    url: unsplashUrl('photo-1566847438217-76e82d383f84'),
     titleMarathi: 'मंदिर परिसरातील गर्दी',
     titleEnglish: 'Devotees at Temple Complex',
     descriptionMarathi: 'विठू माऊलीच्या दर्शनासाठी मंदिराबाहेर लागलेल्या लांबच लांब रांगा.',
@@ -240,7 +240,7 @@ export const PANDHARPUR_COLLECTION: ImageAsset[] = [
   },
   {
     id: 'p5',
-    url: unsplashUrl('photo-1605276374104-dee2a0ed3cd6'),
+    url: unsplashUrl('photo-1511556532299-8f662fc26c06'),
     titleMarathi: 'गर्भगृहातील दीपमाळ',
     titleEnglish: 'Lamps of the Sanctum',
     descriptionMarathi: 'मंदिराच्या आत विठ्ठल मूर्तीसमोर पेटवलेले शेकडो तेजोमय दिवे.',
@@ -303,7 +303,7 @@ export const PANDHARPUR_COLLECTION: ImageAsset[] = [
   },
   {
     id: 'p12',
-    url: unsplashUrl('photo-1447752875215-b2761acb3c5d'),
+    url: unsplashUrl('photo-1590076211831-299f24ba8382'),
     titleMarathi: 'संत नामदेव पायरी',
     titleEnglish: 'Namdev Step at Entrance',
     descriptionMarathi: 'मंदिराच्या प्रवेशद्वारावरील संत नामदेव महाराजांची समाधी पायरी.',
@@ -348,7 +348,7 @@ export const PANDHARPUR_COLLECTION: ImageAsset[] = [
   },
   {
     id: 'p17',
-    url: unsplashUrl('photo-1604871000636-074fa5117945'),
+    url: unsplashUrl('photo-1584551246679-0daf3d275d0f'),
     titleMarathi: 'माऊलींची मूर्ती तेज',
     titleEnglish: 'Mauli Divine Radiance',
     descriptionMarathi: 'कमरेवर हात ठेवून विटेवर उभा असलेल्या विठू माऊलीचे काल्पनिक चित्र.',
@@ -366,7 +366,7 @@ export const PANDHARPUR_COLLECTION: ImageAsset[] = [
   },
   {
     id: 'p19',
-    url: unsplashUrl('photo-1502082553048-f009c37129b9'),
+    url: unsplashUrl('photo-1542224566-6e85f2e6772f'),
     titleMarathi: 'गोपाळपूर मंदिर परिसर',
     titleEnglish: 'Gopalpur Temple Area',
     descriptionMarathi: 'पंढरपूरजवळ असलेले श्रीकृष्ण लीलांचे गोपाळपूर मंदिर.',
@@ -387,7 +387,7 @@ export const PANDHARPUR_COLLECTION: ImageAsset[] = [
 export const WARI_COLLECTION: ImageAsset[] = [
   {
     id: 'w1',
-    url: unsplashUrl('photo-1473163928189-364b2c4e1135'),
+    url: unsplashUrl('photo-1591543665191-2d7c588523c9'),
     titleMarathi: 'वारीची पायी वाटचाल',
     titleEnglish: 'Wari Foot Pilgrimage',
     descriptionMarathi: 'उन्हा-पावसातही विठ्ठलाच्या नामस्मरणात मैलोन्मैल चालणारे वारकरी.',
@@ -423,7 +423,7 @@ export const WARI_COLLECTION: ImageAsset[] = [
   },
   {
     id: 'w5',
-    url: unsplashUrl('photo-1590076211831-299f24ba8382'),
+    url: unsplashUrl('photo-1614082242765-7c98cbc0d3db'),
     titleMarathi: 'पालखी प्रस्थान सोहळा',
     titleEnglish: 'Palkhi Procession Start',
     descriptionMarathi: 'आळंदी किंवा देहू येथून निघणाऱ्या ज्ञानेश्वर-तुकाराम महाराजांच्या पालख्या.',
@@ -432,7 +432,7 @@ export const WARI_COLLECTION: ImageAsset[] = [
   },
   {
     id: 'w6',
-    url: unsplashUrl('photo-1545128485-c400e7702796'),
+    url: unsplashUrl('photo-1507679799987-c73779587ccf'),
     titleMarathi: 'वृद्ध वारकरी',
     titleEnglish: 'Elderly Warkari Pilgrim',
     descriptionMarathi: 'कपाळावर बुक्का आणि हाती टाळ घेऊन गाणारे वयोवृद्ध वारकरी बाबा.',
@@ -441,7 +441,7 @@ export const WARI_COLLECTION: ImageAsset[] = [
   },
   {
     id: 'w7',
-    url: unsplashUrl('photo-1506126613408-eca07ce68773'),
+    url: unsplashUrl('photo-1534447677768-be436bb09401'),
     titleMarathi: 'रस्त्यावरील रिंगण सोहळा',
     titleEnglish: 'Sacred Circle Dance - Ringan',
     descriptionMarathi: 'वारीतील प्रसिद्ध रिंगण सोहळा, जेथे घोडे आणि भाविक गोल धावतात.',
@@ -486,7 +486,7 @@ export const WARI_COLLECTION: ImageAsset[] = [
   },
   {
     id: 'w12',
-    url: unsplashUrl('photo-1518241353330-0f7941c2d9b5'),
+    url: unsplashUrl('photo-1511192336575-5a79af67a629'),
     titleMarathi: 'वीणा धारक वारकरी',
     titleEnglish: 'Veena Carrying Devotee',
     descriptionMarathi: 'खांद्यावर वीणा घेऊन अखंड विठ्ठल जप करणारे वारकरी.',
@@ -495,7 +495,7 @@ export const WARI_COLLECTION: ImageAsset[] = [
   },
   {
     id: 'w13',
-    url: unsplashUrl('photo-1604871000636-074fa5117945'),
+    url: unsplashUrl('photo-1560856218-01410728c310'),
     titleMarathi: 'कपाळावरील गोपीचंद',
     titleEnglish: 'Sandalwood Paste Markings',
     descriptionMarathi: 'कपाळावर टिळा आणि बुक्का लावलेले वारकऱ्यांचे पारंपरिक रूप.',
@@ -522,7 +522,7 @@ export const WARI_COLLECTION: ImageAsset[] = [
   },
   {
     id: 'w16',
-    url: unsplashUrl('photo-1519817650390-64a93db51149'),
+    url: unsplashUrl('photo-1506126613408-eca07ce68773'),
     titleMarathi: 'टाळ वादक भगिनी',
     titleEnglish: 'Women Devotees with Cymbals',
     descriptionMarathi: 'डोक्यावर तुळशीचे वृंदावन घेऊन नाचणाऱ्या महिला वारकरी.',
@@ -579,7 +579,7 @@ export const FESTIVAL_COLLECTION: ImageAsset[] = [
   },
   {
     id: 'f2',
-    url: unsplashUrl('photo-1532186212198-d8f8b8cf8d2e'),
+    url: unsplashUrl('photo-1610116306796-6ebd3051c330'),
     titleMarathi: 'पारंपारिक गुढीपाडवा',
     titleEnglish: 'Traditional Gudi Padwa',
     descriptionMarathi: 'नवीन वर्षाच्या स्वागतासाठी घरासमोर उभारलेली गुढी.',
@@ -723,7 +723,7 @@ export const FESTIVAL_COLLECTION: ImageAsset[] = [
   },
   {
     id: 'f18',
-    url: unsplashUrl('photo-1544644181-1484b3fdfc62'),
+    url: unsplashUrl('photo-1540910419892-4a36d2c3266c'),
     titleMarathi: 'खंडोबा चंपाषष्ठी उत्सव',
     titleEnglish: 'Khandoba Bhandara Festival',
     descriptionMarathi: 'जेजुरी गडावर उधळण्यात येणारा पिवळाधमक भंडारा (हळद).',
@@ -753,7 +753,7 @@ export const FESTIVAL_COLLECTION: ImageAsset[] = [
 export const HERITAGE_COLLECTION: ImageAsset[] = [
   {
     id: 'h1',
-    url: unsplashUrl('photo-1589308078059-be1415eab4c3'),
+    url: unsplashUrl('photo-1608958416733-4f954ec282ad'),
     titleMarathi: 'रायगड किल्ला - सह्याद्रीचे वैभव',
     titleEnglish: 'Raigad Fort - Sahyadri Glory',
     descriptionMarathi: 'छत्रपती शिवाजी महाराजांची राजधानी असलेला ऐतिहासिक रायगड किल्ला.',
@@ -861,7 +861,7 @@ export const HERITAGE_COLLECTION: ImageAsset[] = [
   },
   {
     id: 'h13',
-    url: unsplashUrl('photo-1604871000636-074fa5117945'),
+    url: unsplashUrl('photo-1617627143750-d86bc21e42bb'),
     titleMarathi: 'पैठणी विणकाम',
     titleEnglish: 'Paithani Saree Weaving',
     descriptionMarathi: 'पैठण येथील सोन्याच्या जरीचे आणि मोराच्या नक्षीचे रेशमी विणकाम.',

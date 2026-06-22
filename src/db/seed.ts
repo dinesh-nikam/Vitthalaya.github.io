@@ -277,7 +277,7 @@ async function main() {
     // Namdev Maharaj - Haripath verse
     // Source: Namdev Abhangas - Traditional collection
     prisma.composition.upsert({
-      where: { slug: 'hare ram hare krishna' },
+      where: { slug: 'hare-ram-hare-krishna' },
       update: {},
       create: {
         titleMarathi: 'हरे राम हरे कृष्ण',
@@ -299,7 +299,7 @@ async function main() {
 
     // Eknath Maharaj - Stotra
     prisma.composition.upsert({
-      where: { slug: 'om namah shivaya' },
+      where: { slug: 'om-namah-shivaya' },
       update: {},
       create: {
         titleMarathi: 'ओं नमः शिवाय',
@@ -339,7 +339,7 @@ async function main() {
     }),
 
     prisma.composition.upsert({
-      where: { slug: 'manache shlok' },
+      where: { slug: 'manache-shlok' },
       update: {},
       create: {
         titleMarathi: 'मनाचे श्लोक',
@@ -358,7 +358,7 @@ async function main() {
 
     // More verified compositions - let me add a few more key ones
     prisma.composition.upsert({
-      where: { slug: 'pandharpurche deva' },
+      where: { slug: 'pandharpurche-deva' },
       update: {},
       create: {
         titleMarathi: 'पंढरपूरचे देवा',
@@ -377,7 +377,7 @@ async function main() {
 
     // Ganpati Aarti
     prisma.composition.upsert({
-      where: { slug: 'ganapati-aarti' },
+      where: { slug: 'ganpati-aarti' },
       update: {},
       create: {
         titleMarathi: 'गणपती आरती',
