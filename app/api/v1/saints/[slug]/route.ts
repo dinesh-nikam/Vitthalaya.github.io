@@ -11,7 +11,8 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ slug: string }> },
 ) {
-  const { slug } = await params;
+  const rawSlug = await params;
+  const slug = decodeURIComponent(rawSlug.slug);
 
   try {
     const saint = await db.saint.findUnique({

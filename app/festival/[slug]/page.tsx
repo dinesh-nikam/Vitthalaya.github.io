@@ -11,7 +11,8 @@ export default async function FestivalPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params;
+  const rawSlug = await params;
+  const slug = decodeURIComponent(rawSlug.slug);
 
   // Fetch festival and compositions from database
   const dbFestival = await db.festival.findFirst({
@@ -237,7 +238,8 @@ export async function generateMetadata({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params;
+  const rawSlug = await params;
+  const slug = decodeURIComponent(rawSlug.slug);
   const festival = await db.festival.findUnique({
     where: { nameTranslit: slug.replace('-', ' ') },
   });

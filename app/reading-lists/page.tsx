@@ -33,7 +33,7 @@ export default async function ReadingListsPage({ searchParams }: SearchParams) {
       take: limit,
       skip: (page - 1) * limit,
       include: {
-        creator: { select: { id: true, name: true, image: true } },
+        creator: { select: { id: true, name: true, imageUrl: true } },
         _count: { select: { compositions: true } },
       },
     }),

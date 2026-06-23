@@ -36,7 +36,8 @@ export default async function CompositionPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params;
+  const rawSlug = await params;
+  const slug = decodeURIComponent(rawSlug.slug);
   const session = await getServerSession(authOptions);
 
   // Fetch from database
@@ -345,7 +346,8 @@ export async function generateMetadata({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params;
+  const rawSlug = await params;
+  const slug = decodeURIComponent(rawSlug.slug);
 
   const composition = await db.composition.findUnique({
     where: { slug },

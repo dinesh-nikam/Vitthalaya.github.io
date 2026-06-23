@@ -25,7 +25,7 @@ export interface ReadingListSummary {
   isPublic: boolean;
   compositionCount: number;
   createdAt: Date;
-  creator: { id: string; name: string | null; image: string | null } | null;
+  creator: { id: string; name: string | null; imageUrl: string | null } | null;
 }
 
 export interface ReadingListDetail extends ReadingListSummary {
@@ -75,7 +75,7 @@ export async function createReadingList(
     },
     include: {
       _count: { select: { compositions: true } },
-      creator: { select: { id: true, name: true, image: true } },
+      creator: { select: { id: true, name: true, imageUrl: true } },
     },
   });
 
@@ -88,7 +88,7 @@ export async function createReadingList(
     compositionCount: list._count.compositions,
     createdAt: list.createdAt,
     creator: list.creator
-      ? { id: list.creator.id, name: list.creator.name, image: list.creator.image }
+      ? { id: list.creator.id, name: list.creator.name, imageUrl: list.creator.imageUrl }
       : null,
   };
 }
@@ -108,7 +108,7 @@ export async function getReadingListBySlug(slug: string): Promise<ReadingListDet
           },
         },
       },
-      creator: { select: { id: true, name: true, image: true } },
+      creator: { select: { id: true, name: true, imageUrl: true } },
       _count: { select: { compositions: true } },
     },
   });
@@ -124,7 +124,7 @@ export async function getReadingListBySlug(slug: string): Promise<ReadingListDet
     compositionCount: list._count.compositions,
     createdAt: list.createdAt,
     creator: list.creator
-      ? { id: list.creator.id, name: list.creator.name, image: list.creator.image }
+      ? { id: list.creator.id, name: list.creator.name, imageUrl: list.creator.imageUrl }
       : null,
     compositions: list.compositions.map((cc) => ({
       id: cc.id,
@@ -152,7 +152,7 @@ export async function getPublicReadingLists(options: {
       take,
       skip,
       include: {
-        creator: { select: { id: true, name: true, image: true } },
+        creator: { select: { id: true, name: true, imageUrl: true } },
         _count: { select: { compositions: true } },
       },
     }),
@@ -169,7 +169,7 @@ export async function getPublicReadingLists(options: {
       compositionCount: l._count.compositions,
       createdAt: l.createdAt,
       creator: l.creator
-        ? { id: l.creator.id, name: l.creator.name, image: l.creator.image }
+        ? { id: l.creator.id, name: l.creator.name, imageUrl: l.creator.imageUrl }
         : null,
     })),
     total,
@@ -185,7 +185,7 @@ export async function getUserReadingLists(userId: string): Promise<ReadingListSu
     orderBy: { createdAt: 'desc' },
     include: {
       _count: { select: { compositions: true } },
-      creator: { select: { id: true, name: true, image: true } },
+      creator: { select: { id: true, name: true, imageUrl: true } },
     },
   });
 
@@ -198,7 +198,7 @@ export async function getUserReadingLists(userId: string): Promise<ReadingListSu
     compositionCount: l._count.compositions,
     createdAt: l.createdAt,
     creator: l.creator
-      ? { id: l.creator.id, name: l.creator.name, image: l.creator.image }
+      ? { id: l.creator.id, name: l.creator.name, imageUrl: l.creator.imageUrl }
       : null,
   }));
 }

@@ -11,12 +11,13 @@ interface Props {
 export const dynamic = 'force-dynamic';
 
 export default async function CollectionDetailPage({ params }: Props) {
-  const { slug } = await params;
+  const rawSlug = await params;
+  const slug = decodeURIComponent(rawSlug.slug);
 
   const collection = await db.userCollection.findUnique({
     where: { slug },
     include: {
-      user: { select: { id: true, name: true, image: true } },
+      user: { select: { id: true, name: true, imageUrl: true } },
       compositions: {
         include: {
           composition: {

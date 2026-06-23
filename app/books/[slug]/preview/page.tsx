@@ -10,7 +10,8 @@ interface Props {
 export const dynamic = 'force-dynamic';
 
 export default async function BookPreviewPage({ params }: Props) {
-  const { slug } = await params;
+  const rawSlug = await params;
+  const slug = decodeURIComponent(rawSlug.slug);
 
   const book = await db.bookPublication.findUnique({
     where: { slug },

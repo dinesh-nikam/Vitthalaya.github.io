@@ -11,7 +11,8 @@ interface Props {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params;
+  const rawSlug = await params;
+  const slug = decodeURIComponent(rawSlug.slug);
   const book = await db.bookPublication.findUnique({
     where: { slug },
     select: { titleMarathi: true, titleEnglish: true, totalCompositions: true, totalPages: true, bookType: true },
@@ -60,7 +61,8 @@ const FORMAT_ICONS: Record<string, string> = {
 };
 
 export default async function BookDetailPage({ params }: Props) {
-  const { slug } = await params;
+  const rawSlug = await params;
+  const slug = decodeURIComponent(rawSlug.slug);
 
   const book = await db.bookPublication.findUnique({
     where: { slug },
@@ -74,7 +76,7 @@ export default async function BookDetailPage({ params }: Props) {
         },
         orderBy: { sortOrder: 'asc' },
       },
-      creator: { select: { id: true, name: true, image: true } },
+      creator: { select: { id: true, name: true, imageUrl: true } },
       _count: { select: { orderItems: true } },
     },
   });

@@ -12,7 +12,9 @@ interface Props {
 }
 
 export default async function FestivalYearPage({ params }: Props) {
-  const { slug, year: yearStr } = await params;
+  const rawParams = await params;
+  const slug = decodeURIComponent(rawParams.slug);
+  const yearStr = rawParams.year;
   const year = parseInt(yearStr, 10);
 
   if (isNaN(year) || year < 1900 || year > 2100) {
@@ -192,7 +194,9 @@ export default async function FestivalYearPage({ params }: Props) {
 }
 
 export async function generateMetadata({ params }: Props) {
-  const { slug, year } = await params;
+  const rawParams = await params;
+  const slug = decodeURIComponent(rawParams.slug);
+  const year = rawParams.year;
 
   const festival = await db.festival.findUnique({
     where: { nameTranslit: slug.replace(/-/g, ' ') },

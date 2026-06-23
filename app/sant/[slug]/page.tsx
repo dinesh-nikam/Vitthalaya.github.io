@@ -31,7 +31,8 @@ export default async function SaintPage({
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ page?: string }>;
 }) {
-  const { slug } = await params;
+  const rawSlug = await params;
+  const slug = decodeURIComponent(rawSlug.slug);
   const sParams = await searchParams;
   let page = parseInt(sParams.page || '1', 10);
   if (isNaN(page) || page < 1) {
@@ -338,7 +339,8 @@ export async function generateMetadata({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const { slug } = await params;
+  const rawSlug = await params;
+  const slug = decodeURIComponent(rawSlug.slug);
   
   const saint = await db.saint.findUnique({
     where: { slug },

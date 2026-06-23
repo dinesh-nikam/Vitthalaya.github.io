@@ -24,7 +24,8 @@ type EnrichmentResult = {
 };
 
 export default async function ArthPage({ params }: Props) {
-  const { slug } = await params;
+  const rawSlug = await params;
+  const slug = decodeURIComponent(rawSlug.slug);
 
   const composition = await db.composition.findUnique({
     where: { slug },
@@ -83,7 +84,8 @@ export default async function ArthPage({ params }: Props) {
 }
 
 export async function generateMetadata({ params }: Props) {
-  const { slug } = await params;
+  const rawSlug = await params;
+  const slug = decodeURIComponent(rawSlug.slug);
   const composition = await db.composition.findUnique({ where: { slug }, select: { titleMarathi: true } });
   if (!composition) return { title: 'Meaning Not Found' };
   return {

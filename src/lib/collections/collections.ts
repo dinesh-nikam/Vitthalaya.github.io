@@ -48,7 +48,7 @@ export async function createCollection(input: CreateCollectionInput) {
     },
     include: {
       compositions: { include: { composition: true } },
-      user: { select: { id: true, name: true, image: true } },
+      user: { select: { id: true, name: true, imageUrl: true } },
     },
   });
 
@@ -133,7 +133,7 @@ export async function getPublicCollections(limit = 30, offset = 0) {
     take: limit,
     skip: offset,
     include: {
-      user: { select: { id: true, name: true, image: true } },
+      user: { select: { id: true, name: true, imageUrl: true } },
       _count: { select: { compositions: true } },
       compositions: { take: 3, include: { composition: { select: { titleMarathi: true } } } },
     },
@@ -144,7 +144,7 @@ export async function getCollectionBySlug(slug: string) {
   return db.userCollection.findUnique({
     where: { slug },
     include: {
-      user: { select: { id: true, name: true, image: true } },
+      user: { select: { id: true, name: true, imageUrl: true } },
       compositions: {
         include: { composition: { select: { id: true, titleMarathi: true, type: true, saint: { select: { nameMarathi: true } } } } },
         orderBy: { sortOrder: 'asc' },

@@ -11,7 +11,8 @@ interface Props {
 }
 
 export default async function CanonicalSearchPage({ params }: Props) {
-  const { query } = await params;
+  const rawParams = await params;
+  const query = decodeURIComponent(rawParams.query);
 
   // Resolve canonical query — if it doesn't match a known entity, redirect to main search
   const canonicalQuery = await resolveCanonicalQuery(query);
@@ -170,7 +171,8 @@ export default async function CanonicalSearchPage({ params }: Props) {
 }
 
 export async function generateMetadata({ params }: Props) {
-  const { query } = await params;
+  const rawParams = await params;
+  const query = decodeURIComponent(rawParams.query);
   const canonicalQuery = await resolveCanonicalQuery(query);
 
   if (!canonicalQuery) {
