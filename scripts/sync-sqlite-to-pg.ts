@@ -2,6 +2,10 @@
 /**
  * Sync SQLite data to PostgreSQL.
  * One-shot: reads from SQLite, writes to PostgreSQL via Prisma.
+ *
+ * Fix: builds sqlite_id → pg_id maps for saints and deities so
+ * composition foreign keys resolve correctly even when production
+ * already had rows with different UUIDs.
  */
 import { PrismaClient } from '@prisma/client';
 import Database from 'bun:sqlite';
@@ -16,8 +20,12 @@ async function sync() {
   // ── Saints ──
   const saints = sqlite.query('SELECT * FROM saints').all() as any[];
   console.log(`Saints: ${saints.length}`);
+
+  // sqlite_id → pg_id mapping
+  const saintIdMap = new Map<string, string>();
+
   for (const s of saints) {
-    await prisma.saint.upsert({
+    const pgSaint = await prisma.saint.upsert({
       where: { nameTranslit: s.name_transliteration },
       update: { period: s.period, biography: s.biography, region: s.region },
       create: {
@@ -30,13 +38,19 @@ async function sync() {
         region: s.region,
       },
     });
+    // Map SQLite id → actual PG id (may differ if row already existed in prod)
+    saintIdMap.set(s.id, pgSaint.id);
   }
+  console.log(`  ✓ Saint ID map built (${saintIdMap.size} entries)`);
 
   // ── Deities ──
   const deities = sqlite.query('SELECT * FROM deities').all() as any[];
   console.log(`Deities: ${deities.length}`);
+
+  const deityIdMap = new Map<string, string>();
+
   for (const d of deities) {
-    await prisma.deity.upsert({
+    const pgDeity = await prisma.deity.upsert({
       where: { nameTranslit: d.name_transliteration },
       update: { iconName: d.icon_name },
       create: {
@@ -46,7 +60,9 @@ async function sync() {
         iconName: d.icon_name,
       },
     });
+    deityIdMap.set(d.id, pgDeity.id);
   }
+  console.log(`  ✓ Deity ID map built (${deityIdMap.size} entries)`);
 
   // ── Festivals ──
   const festivals = sqlite.query('SELECT * FROM festivals').all() as any[];
@@ -84,9 +100,21 @@ async function sync() {
 
   // ── Compositions ──
   const comps = sqlite.query('SELECT * FROM compositions').all() as any[];
-  console.log(`Compositions: ${comps.length}`);
+  console.log(`\nCompositions: ${comps.length}`);
   let count = 0;
+  let skipped = 0;
+
   for (const c of comps) {
+    // Remap foreign keys: use PG ids, not SQLite ids
+    const pgSaintId = c.saint_id ? (saintIdMap.get(c.saint_id) ?? null) : null;
+    const pgDeityId = c.deity_id ? (deityIdMap.get(c.deity_id) ?? null) : null;
+
+    if (c.saint_id && !pgSaintId) {
+      console.warn(`  ⚠ Skipping "${c.title_marathi}" — saint_id ${c.saint_id} not found in PG`);
+      skipped++;
+      continue;
+    }
+
     try {
       await prisma.composition.upsert({
         where: { slug: c.slug },
@@ -96,6 +124,9 @@ async function sync() {
           region: c.region,
           source: c.source_attribution,
           reviewed: c.is_verified === 1,
+          // Update FK mappings in case they were wrong before
+          saintId: pgSaintId,
+          deityId: pgDeityId,
         },
         create: {
           id: c.id,
@@ -105,8 +136,8 @@ async function sync() {
           type: c.type,
           fullText: c.full_text,
           meaning: c.meaning,
-          saintId: c.saint_id,
-          deityId: c.deity_id,
+          saintId: pgSaintId,
+          deityId: pgDeityId,
           region: c.region,
           source: c.source_attribution,
           audioLinks: c.audio_links,
@@ -115,11 +146,11 @@ async function sync() {
       });
       count++;
     } catch (err) {
-      console.error(`  ✗ Error inserting ${c.title_marathi}:`, (err as Error).message.slice(0, 80));
+      console.error(`  ✗ Error inserting ${c.title_marathi}:`, (err as Error).message.slice(0, 120));
     }
   }
 
-  console.log(`\n✓ Synced ${count}/${comps.length} compositions`);
+  console.log(`\n✓ Synced ${count}/${comps.length} compositions (${skipped} skipped — unmapped saints)`);
   await prisma.$disconnect();
 }
 

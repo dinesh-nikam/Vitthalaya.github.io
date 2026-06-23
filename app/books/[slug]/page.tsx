@@ -75,7 +75,7 @@ export default async function BookDetailPage({ params }: Props) {
         orderBy: { sortOrder: 'asc' },
       },
       creator: { select: { id: true, name: true, image: true } },
-      _count: { select: { orders: true } },
+      _count: { select: { orderItems: true } },
     },
   });
 
@@ -212,9 +212,9 @@ export default async function BookDetailPage({ params }: Props) {
             </div>
           )}
 
-          {book._count.orders > 0 && (
+          {book._count.orderItems > 0 && (
             <div className="bg-white rounded-xl shadow-sm p-6 text-center">
-              <p className="text-2xl font-bold text-maroon-800">{book._count.orders}</p>
+              <p className="text-2xl font-bold text-maroon-800">{book._count.orderItems}</p>
               <p className="text-sm text-gray-500">विक्री झालेल्या प्रती</p>
             </div>
           )}

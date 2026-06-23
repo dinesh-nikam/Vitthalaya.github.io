@@ -10,12 +10,13 @@
  */
 
 const CACHE_NAMES = {
-  static: 'static-v1',
-  pages: 'pages-v1',
-  images: 'images-v1',
-  fonts: 'fonts-v1',
-  api: 'api-v1',
+  static: 'static-v2',
+  pages: 'pages-v2',
+  images: 'images-v2',
+  fonts: 'fonts-v2',
+  api: 'api-v2',
 };
+
 
 const STATIC_ASSETS = [
   '/',
@@ -102,6 +103,7 @@ async function cacheFirst(request, cacheName) {
 
   try {
     const response = await fetch(request);
+    // Only cache successful responses — never cache error pages
     if (response.ok) {
       const cache = await caches.open(cacheName);
       cache.put(request, response.clone());
@@ -115,6 +117,7 @@ async function cacheFirst(request, cacheName) {
 async function staleWhileRevalidate(request, cacheName) {
   const cached = await caches.match(request);
   const fetchPromise = fetch(request).then((response) => {
+    // Only update cache with successful responses
     if (response.ok) {
       caches.open(cacheName).then((cache) => cache.put(request, response.clone()));
     }
@@ -130,6 +133,7 @@ async function staleWhileRevalidate(request, cacheName) {
 async function networkFirstWithOffline(request) {
   try {
     const response = await fetch(request);
+    // Only cache successful page responses — skip 4xx/5xx
     if (response.ok) {
       const cache = await caches.open(CACHE_NAMES.pages);
       cache.put(request, response.clone());
@@ -159,6 +163,7 @@ async function networkOnly(request) {
     });
   }
 }
+
 
 // ── Push Notification ────────────────────────────────────────────────────────
 

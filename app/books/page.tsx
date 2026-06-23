@@ -65,7 +65,7 @@ export default async function BookMarketplacePage({ searchParams }: SearchParams
       bookType: true, totalCompositions: true, totalPages: true,
       createdAt: true,
       editions: { select: { format: true, price: true }, take: 3 },
-      _count: { select: { orders: true, compositions: true } },
+      _count: { select: { orderItems: true, compositions: true } },
     },
   });
 
@@ -173,8 +173,8 @@ export default async function BookMarketplacePage({ searchParams }: SearchParams
                     <span>{book._count.compositions} रचना</span>
                     <span>{book.totalPages ?? '-'} पाने</span>
                   </div>
-                  {book._count.orders > 0 && (
-                    <p className="text-xs text-gray-400">{book._count.orders} विक्री झाली</p>
+                  {book._count.orderItems > 0 && (
+                    <p className="text-xs text-gray-400">{book._count.orderItems} विक्री झाली</p>
                   )}
                 </div>
               </Link>

@@ -13,14 +13,16 @@ const SECURITY_HEADERS: Record<string, string> = {
   'Content-Security-Policy': [
     "default-src 'self'",
     "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net", // unsafe-inline needed for Next.js inline scripts
-    "style-src 'self' 'unsafe-inline'",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: https: blob:",
-    "font-src 'self' https://fonts.gstatic.com",
-    "connect-src 'self'",
+    "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com",
+    // Allow Google Fonts stylesheet + gstatic font files, plus Google APIs used server-side
+    "connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://generativelanguage.googleapis.com https://vision.googleapis.com https://www.googleapis.com",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
   ].join('; '),
+
 
   // HTTP Strict Transport Security - enforce HTTPS
   'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',

@@ -191,7 +191,25 @@ export function HeroSection() {
           {/* Glowing Aura Ring behind 3D Canvas */}
           <div className="absolute w-72 h-72 rounded-full bg-saffron/10 blur-3xl -z-10 animate-pulse" />
           
-          <div className="w-full aspect-square max-w-[380px] bg-gradient-to-b from-saffron/5 to-transparent rounded-full p-4 border border-saffron/10 shadow-inner flex items-center justify-center">
+          <div className="w-full aspect-square max-w-[380px] min-h-[280px] sm:min-h-[320px] bg-gradient-to-b from-saffron/5 to-transparent rounded-full p-4 border border-saffron/10 shadow-inner flex items-center justify-center relative">
+            {/* Static SVG Diya — visible fallback while 3D loads or if WebGL unavailable */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none" aria-hidden="true">
+              <svg viewBox="0 0 200 200" className="w-48 h-48 opacity-20" fill="none">
+                {/* Diya bowl */}
+                <ellipse cx="100" cy="140" rx="60" ry="18" fill="#8a4a2a" />
+                <path d="M40 140 Q45 110 100 105 Q155 110 160 140 Z" fill="#a0522d" />
+                {/* Oil surface */}
+                <ellipse cx="100" cy="112" rx="45" ry="10" fill="#4a3b1a" opacity="0.8" />
+                {/* Flame outer */}
+                <path d="M100 108 Q108 90 103 70 Q115 55 105 40 Q95 55 90 70 Q88 90 100 108Z" fill="#ffaa00" opacity="0.9" />
+                {/* Flame inner */}
+                <path d="M100 105 Q105 93 102 78 Q108 67 102 55 Q97 67 97 78 Q97 93 100 105Z" fill="#ffffff" opacity="0.8" />
+                {/* Sparks */}
+                <circle cx="88" cy="52" r="2" fill="#ff9900" opacity="0.7" />
+                <circle cx="112" cy="46" r="1.5" fill="#ffcc00" opacity="0.6" />
+                <circle cx="93" cy="38" r="1" fill="#ff7700" opacity="0.5" />
+              </svg>
+            </div>
             <DeepakViewer />
           </div>
           
