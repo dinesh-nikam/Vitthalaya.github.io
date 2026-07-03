@@ -33,7 +33,7 @@ export default async function ReadingListsPage({ searchParams }: SearchParams) {
       take: limit,
       skip: (page - 1) * limit,
       include: {
-        creator: { select: { id: true, name: true, imageUrl: true } },
+        user: { select: { id: true, name: true, imageUrl: true } },
         _count: { select: { compositions: true } },
       },
     }),
@@ -72,12 +72,12 @@ export default async function ReadingListsPage({ searchParams }: SearchParams) {
                 )}
                 <div className="flex items-center justify-between text-xs text-gray-400">
                   <span>{list._count.compositions} compositions</span>
-                  {list.creator?.name && (
+                  {list.user?.name && (
                     <span className="flex items-center gap-1">
                       <span className="w-5 h-5 bg-saffron-100 rounded-full flex items-center justify-center text-[10px] text-saffron-600 font-bold">
-                        {list.creator.name.charAt(0)}
+                        {list.user.name.charAt(0)}
                       </span>
-                      {list.creator.name}
+                      {list.user.name}
                     </span>
                   )}
                 </div>

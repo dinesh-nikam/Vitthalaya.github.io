@@ -41,7 +41,7 @@ export default async function ReadingListDetailPage({ params }: Props) {
           },
         },
       },
-      creator: { select: { id: true, name: true, imageUrl: true } },
+      user: { select: { id: true, name: true, imageUrl: true } },
     },
   });
 
@@ -63,9 +63,9 @@ export default async function ReadingListDetailPage({ params }: Props) {
           )}
           <div className="flex items-center gap-4 mt-4 text-sm text-sand-300">
             <span>{list.compositions.length} रचना</span>
-            {list.creator?.name && (
+            {list.user?.name && (
               <span className="flex items-center gap-1">
-                by {list.creator.name}
+                by {list.user.name}
               </span>
             )}
           </div>
