@@ -13,8 +13,8 @@ export default async function SearchPage({
   // Pre-fetch filter options (server-side)
   const [saints, deities, festivals] = await Promise.all([
     db.saint.findMany({ select: { nameMarathi: true, slug: true }, orderBy: { nameTranslit: 'asc' } }),
-    db.deity.findMany({ select: { nameMarathi: true, slug: true }, orderBy: { nameTranslit: 'asc' } }),
-    db.festival.findMany({ select: { nameMarathi: true, slug: true }, orderBy: { name: 'asc' } }),
+    db.deity.findMany({ select: { nameMarathi: true, nameTranslit: true }, orderBy: { nameTranslit: 'asc' } }),
+    db.festival.findMany({ select: { nameMarathi: true, nameTranslit: true }, orderBy: { nameTranslit: 'asc' } }),
   ]);
 
   const canonicalQueries = params.q ? [] : await getTopCanonicalQueries(24);
@@ -29,8 +29,8 @@ export default async function SearchPage({
         initialFestival={params.festival || ''}
         initialHasAudio={params.hasAudio === 'true'}
         saints={saints.map((s) => ({ name: s.nameMarathi, slug: s.slug }))}
-        deities={deities.map((d) => ({ name: d.nameMarathi, slug: d.slug }))}
-        festivals={festivals.map((f) => ({ name: f.nameMarathi, slug: f.slug }))}
+        deities={deities.map((d) => ({ name: d.nameMarathi, slug: d.nameTranslit.toLowerCase().replace(/\s+/g, '-') }))}
+        festivals={festivals.map((f) => ({ name: f.nameMarathi, slug: f.nameTranslit.toLowerCase().replace(/\s+/g, '-') }))}
         canonicalQueries={canonicalQueries.map((cq) => ({ label: cq.label, slug: cq.slug }))}
       />
     </Suspense>

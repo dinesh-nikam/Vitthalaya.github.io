@@ -1,0 +1,15 @@
+/*
+ * Custom Tailwind overrides and theme extensions.
+ * This file is imported from globals.css to resolve the missing
+ * tailwind.custom.css import error.
+ *
+ * Add any custom utilities, variant configurations, or
+ * theme extensions needed across the project here.
+ */
+
+/* Example: extend the color palette */
+:root {
+  --color-primary: #ff7a1a;
+  --color-secondary: #6b1e1e;
+  --color-accent: #c9a227;
+}

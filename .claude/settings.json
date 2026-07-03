@@ -1,9 +1,14 @@
 {
   "hooks": {
-    "AfterWrite": [
+    "PostToolUse": [
       {
-        "type": "command",
-        "command": "bun run typecheck $FILE || true"
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const d=JSON.parse(require('fs').readFileSync(0,'utf8'));const f=d.tool_input&&d.tool_input.file_path;if(f&&/\\.(ts|tsx)$/.test(f))require('child_process').execSync('bun run typecheck',{stdio:'inherit'})\""
+          }
+        ]
       }
     ]
   }

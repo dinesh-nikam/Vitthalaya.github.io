@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS saints (
     biography TEXT,
     region TEXT,
     image_url TEXT,
+    slug TEXT,
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now'))
 );

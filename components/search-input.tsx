@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, X, Loader2, User, Building2, BookOpen, Music, Tag, Calendar } from 'lucide-react';
+import { Search, X, Loader2, User, Building2, BookOpen, Music, Tag, Calendar, Mic, MicOff } from 'lucide-react';
 
 interface Suggestion {
   text: string;
@@ -131,6 +131,45 @@ export default function SearchInput({
     [navigateOnSubmit, onSearch, router]
   );
 
+  const [isListening, setIsListening] = useState(false);
+  const [recognition, setRecognition] = useState<any>(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const rec = new SpeechRecognition();
+      rec.continuous = false;
+      rec.interimResults = false;
+      rec.lang = 'mr-IN';
+
+      rec.onstart = () => setIsListening(true);
+      rec.onend = () => setIsListening(false);
+      rec.onerror = () => setIsListening(false);
+      rec.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        if (transcript) {
+          setQuery(transcript);
+          handleSubmit(transcript);
+        }
+      };
+      setRecognition(rec);
+    }
+  }, [handleSubmit]);
+
+  const toggleVoiceSearch = () => {
+    if (!recognition) return;
+    if (isListening) {
+      try {
+        recognition.stop();
+      } catch {}
+    } else {
+      try {
+        recognition.start();
+      } catch {}
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
@@ -196,6 +235,21 @@ export default function SearchInput({
             <Search className="w-5 h-5 text-saffron/60" />
           )}
         </div>
+
+        {/* Voice Search (Mic icon) */}
+        {recognition && (
+          <button
+            type="button"
+            onClick={toggleVoiceSearch}
+            className={`absolute inset-y-0 flex items-center text-muted-foreground hover:text-saffron transition-colors ${
+              query ? 'right-7 pr-1' : 'right-0 pr-3'
+            } ${isListening ? 'text-red-500 animate-pulse' : ''}`}
+            title="आवाजाद्वारे शोधा (Voice Search)"
+            aria-label="आवाजाद्वारे शोधा"
+          >
+            {isListening ? <MicOff className="w-4.5 h-4.5" /> : <Mic className="w-4.5 h-4.5" />}
+          </button>
+        )}
 
         {/* Clear button (right) */}
         {query && (

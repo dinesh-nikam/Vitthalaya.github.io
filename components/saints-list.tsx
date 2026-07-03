@@ -66,9 +66,9 @@ export function SaintsList({ initialSaints }: SaintsListProps) {
   }, [initialSaints, searchQuery, selectedRegion]);
 
   return (
-    <div className="space-y-8">
+    <div className="v4-list-space">
       {/* Filters Bar */}
-      <div className="flex flex-col sm:flex-row gap-4 glass-premium p-5 rounded-2xl border border-saffron/15 shadow-sm saffron-glow">
+      <div className="v4-filter-bar">
         {/* Search */}
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-saffron" />
@@ -77,7 +77,7 @@ export function SaintsList({ initialSaints }: SaintsListProps) {
             placeholder="संतांचे नाव किंवा चरित्र शोधा..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 border border-saffron/20 rounded-xl bg-background/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-saffron/30 focus:border-saffron text-sm font-marathi transition-all text-foreground"
+            className="v4-filter-input pl-10"
           />
         </div>
 
@@ -86,7 +86,7 @@ export function SaintsList({ initialSaints }: SaintsListProps) {
           <select
             value={selectedRegion}
             onChange={(e) => setSelectedRegion(e.target.value)}
-            className="w-full px-3 py-2.5 border border-saffron/20 rounded-xl bg-background/50 backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-saffron/30 focus:border-saffron text-sm font-marathi transition-all text-foreground"
+            className="v4-filter-input"
           >
             <option value="ALL">सर्व प्रांत / भाग (All Regions)</option>
             {regions.filter(r => r !== 'ALL').map(region => (
@@ -104,12 +104,12 @@ export function SaintsList({ initialSaints }: SaintsListProps) {
           <p className="text-muted-foreground text-md">माहिती आढळली नाही. कृपया वेगळा शोध घ्या.</p>
         </div>
       ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="v4-saint-grid">
           {filteredSaints.map((saint) => (
             <Link
               key={saint.id}
               href={`/sant/${saint.slug}`}
-              className="group block glass-premium rounded-2xl border border-saffron/15 hover:border-saffron/40 hover:shadow-lg hover:shadow-saffron/5 hover-card-premium transition-all duration-500 overflow-hidden focus:outline-none focus:ring-2 focus:ring-saffron"
+              className="group block v4-saint-card focus:outline-none focus:ring-2 focus:ring-saffron"
             >
               {/* Card Image Header */}
               <div className="relative h-56 w-full overflow-hidden bg-muted/20 border-b border-saffron/10">

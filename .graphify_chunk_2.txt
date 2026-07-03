@@ -1,0 +1,17 @@
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\.omx\plans\architect-scraper-expansion.md
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\.omx\plans\plan-scraper-expansion.md
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\.omx\reports\GO_LIVE_CHECKLIST.md
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\.omx\reports\LAUNCH_RISK_REPORT.md
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\.omx\reports\MISSING_FEATURES.md
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\.omx\reports\PROD_READINESS_REPORT.md
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\AGENTS.md
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\CLAUDE.md
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\PHASE0_PLAN.md
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\README.md
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\S CRAPING_POLICY.md
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\TESTING_STRATEGY.md
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\VALIDATION_REPORT.md
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\build_err.txt
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\build_out.txt
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\data\uploads\sample_abhang.txt
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\deployment\docker-compose.yml

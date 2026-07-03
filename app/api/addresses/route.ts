@@ -1,18 +1,19 @@
 import { NextResponse } from 'next/server';
-import { db } from '../../../src/db/client';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/src/lib/auth';
+import { db } from '@/src/db/client';
 
 /**
  * GET /api/addresses
- * Returns all addresses for the current user (or empty list).
+ * Returns all addresses for the current user.
  */
 export async function GET() {
   try {
-    // Phase 2: Replace with authenticated user from session
-    const userId = ''; // placeholder — requires auth integration
-
-    if (!userId) {
-      return NextResponse.json([]);
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    const userId = (session.user as any).id;
 
     const addresses = await db.address.findMany({
       where: { userId },
@@ -34,8 +35,11 @@ export async function GET() {
  */
 export async function POST(request: Request) {
   try {
-    // Phase 2: Replace with authenticated user
-    const userId = ''; // placeholder
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = (session.user as any).id;
 
     const body = await request.json();
 
@@ -44,7 +48,7 @@ export async function POST(request: Request) {
     }
 
     // If setting as default, unset other defaults
-    if (body.isDefault && userId) {
+    if (body.isDefault) {
       await db.address.updateMany({
         where: { userId, isDefault: true },
         data: { isDefault: false },
@@ -53,7 +57,7 @@ export async function POST(request: Request) {
 
     const address = await db.address.create({
       data: {
-        userId: userId || null,
+        userId,
         label: body.label,
         fullName: body.fullName,
         phone: body.phone,
@@ -79,11 +83,26 @@ export async function POST(request: Request) {
  */
 export async function DELETE(request: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userId = (session.user as any).id;
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
 
     if (!id) {
       return NextResponse.json({ error: 'Address id required' }, { status: 400 });
+    }
+
+    // Verify address ownership
+    const address = await db.address.findUnique({ where: { id } });
+    if (!address) {
+      return NextResponse.json({ error: 'Address not found' }, { status: 404 });
+    }
+    if (address.userId !== userId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     await db.address.delete({ where: { id } });
@@ -93,3 +112,4 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: 'Failed to delete address' }, { status: 500 });
   }
 }
+

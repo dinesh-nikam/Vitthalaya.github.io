@@ -1,5 +1,5 @@
-// @ts-nocheck
 #!/usr/bin/env bun
+// @ts-nocheck
 /**
  * Test runner script for Digital Pandharpur
  * Runs all test suites with appropriate timeouts and reporters

@@ -12,7 +12,7 @@ const SECURITY_HEADERS: Record<string, string> = {
   // Content Security Policy - restrict script sources
   'Content-Security-Policy': [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net", // unsafe-inline needed for Next.js inline scripts
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net", // unsafe-inline needed for Next.js inline scripts
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: https: blob:",
     "font-src 'self' https://fonts.gstatic.com https://fonts.googleapis.com",

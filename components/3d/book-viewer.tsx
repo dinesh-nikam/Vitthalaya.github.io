@@ -239,24 +239,31 @@ export function BookViewer3D({
       if (!pagesGroupRef.current) return;
       const index = pageIndexRef.current;
       const numPages = pagesGroupRef.current.children.length;
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
       if (index < numPages) {
         const page = pagesGroupRef.current.children[index];
         const targetRot = -Math.PI;
-        let rot = 0;
 
-        function flipAnimate() {
-          rot -= 0.08;
-          if (rot > targetRot) {
-            page.rotation.y = rot;
-            requestAnimationFrame(flipAnimate);
-          } else {
-            page.rotation.y = targetRot;
-            page.position.x = -0.02;
-            pageIndexRef.current++;
+        if (prefersReducedMotion) {
+          page.rotation.y = targetRot;
+          page.position.x = -0.02;
+          pageIndexRef.current++;
+        } else {
+          let rot = 0;
+          function flipAnimate() {
+            rot -= 0.08;
+            if (rot > targetRot) {
+              page.rotation.y = rot;
+              requestAnimationFrame(flipAnimate);
+            } else {
+              page.rotation.y = targetRot;
+              page.position.x = -0.02;
+              pageIndexRef.current++;
+            }
           }
+          flipAnimate();
         }
-        flipAnimate();
       }
     }
     renderer.domElement.addEventListener('click', handleClick);

@@ -96,6 +96,27 @@ services:
       - prometheus
 
   # Meilisearch service for fast search indexing
+  # Crawl4AI — Python-based intelligent web crawling for content acquisition
+  # Optional: only needed for the Crawl4AI extraction strategies.
+  # The Playwright engine works without this service.
+  crawl4ai:
+    image: unclecode/crawl4ai:latest
+    container_name: dp-crawl4ai
+    ports:
+      - "11235:8000"  # REST API (matches bridge.ts default port)
+    environment:
+      - MAX_CONCURRENT_TASKS=3
+      - CRAWL4AI_API_KEY=dev-key-change-in-prod
+    volumes:
+      - crawl4ai_data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
   meilisearch:
     image: getmeili/meilisearch:v1.6
     container_name: dp-meilisearch
@@ -113,5 +134,6 @@ volumes:
   opensearch_data:
   prometheus_data:
   grafana_data:
+  crawl4ai_data:
   meili_data:
 

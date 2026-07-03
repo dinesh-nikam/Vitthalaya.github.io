@@ -1,0 +1,61 @@
+@tailwind base;
+
+@layer base {
+  :root {
+    --scroll-progress: 0%;
+    --bg-texture: url('/bg-texture.svg');
+
+    /* Enhanced color palette for premium feel */
+    --primary: #FF7A1A; /* Saffron */
+    --primary-foreground: #FFFFFF;
+    --secondary: #C9A227; /* Temple Gold */
+    --secondary-foreground: #1C1C1C;
+    --muted: #F2E8D8;
+    --muted-foreground: #E8DCC9;
+    --border: #E2E8F0;
+    --ring: #FF7A1A;
+    --accent: #FF9E4D;
+    --accent-foreground: #1C1C1C;
+  }
+
+  .dark {
+    --primary: #FF9E4D;
+    --primary-foreground: #1C1C1C;
+    --secondary: #FF9E4D;
+    --secondary-foreground: #E8DCC9;
+    --muted: #2A2A2A;
+    --muted-foreground: #E8DCC9;
+    --border: #4A4A4A;
+    --ring: #FF9E4D;
+  }
+
+  /* Custom animations */
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(2deg); }
+  }
+
+  @keyframes sparkle {
+    0%, 100% { opacity: 0.2; transform: scale(0.8) rotate(0deg); }
+    50% { opacity: 1; transform: scale(1.2) rotate(5deg); }
+  }
+
+  @keyframes pulse-glow {
+    0% { box-shadow: 0 0 0 0 rgba(255, 122, 26, 0.7); }
+    70% { box-shadow: 0 0 0 12px rgba(255, 122, 26, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(255, 122, 26, 0); }
+  }
+
+  .text-saffron-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-saffron-500 to-saffron-600;
+  }
+
+  .shadow-saffron {
+    @apply shadow-[0_0_0_0_rgba(255,122,26,0.7)] rounded-full animate-pulse;
+  }
+
+  /* Scroll progress bar */
+  .scroll-progress {
+    @apply bg-saffron-600 h-full w-full absolute top-0 left-0 transition-all duration-300;
+  }
+}

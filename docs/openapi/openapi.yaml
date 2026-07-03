@@ -1,0 +1,179 @@
+openapi: 3.0.0
+info:
+  title: Vitthalaya (Digital Pandharpur) REST API
+  description: Production-ready REST APIs for authentication, search, AI assistant, and e-commerce.
+  version: 1.0.0
+servers:
+  - url: https://vitthalaya.org/api
+    description: Production Server
+  - url: http://localhost:3000/api
+    description: Local Dev Server
+paths:
+  /auth/register:
+    post:
+      summary: Register a new contributor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+              properties:
+                name:
+                  type: string
+                  example: ज्ञानेश्वर महाराज
+                email:
+                  type: string
+                  format: email
+                  example: dnyaneshwar@warkari.org
+                password:
+                  type: string
+                  format: password
+                  minLength: 6
+                  example: vitthal123
+      responses:
+        '201':
+          description: Contributor registered successfully, OTP sent to email.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  userId:
+                    type: string
+                  email:
+                    type: string
+        '400':
+          description: Validation errors (e.g. email already exists, weak password)
+        '500':
+          description: Server error
+
+  /auth/verify-email:
+    post:
+      summary: Verify email using OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - token
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: dnyaneshwar@warkari.org
+                token:
+                  type: string
+                  length: 6
+                  example: '123456'
+      responses:
+        '200':
+          description: Email verified successfully.
+        '400':
+          description: Invalid or expired OTP.
+
+  /auth/forgot-password:
+    post:
+      summary: Request password reset link
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: dnyaneshwar@warkari.org
+      responses:
+        '200':
+          description: Recovery link logged / sent.
+
+  /auth/reset-password:
+    post:
+      summary: Reset password with token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - token
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                token:
+                  type: string
+                password:
+                  type: string
+                  minLength: 6
+      responses:
+        '200':
+          description: Password reset successful.
+
+  /search:
+    get:
+      summary: Search compositions, categories, saints, and festivals
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+          example: माऊली
+        - name: mode
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [search, suggest]
+          example: search
+      responses:
+        '200':
+          description: Search results or suggestions retrieved successfully.
+
+  /ai/assistant:
+    post:
+      summary: Interact with the AI Devotional Assistant
+      security:
+        - CookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - query
+              properties:
+                query:
+                  type: string
+                  example: ज्ञानेश्वरांचे हरिपाठातील मुख्य तत्व काय आहे?
+      responses:
+        '200':
+          description: AI response retrieved successfully.
+        '429':
+          description: Rate limit exceeded (max 5 requests per minute).
+
+components:
+  securitySchemes:
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: next-auth.session-token

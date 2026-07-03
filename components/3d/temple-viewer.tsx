@@ -212,6 +212,7 @@ export function TempleViewer() {
     // 7. Animation Loop
     let clock = new THREE.Clock();
     let animationId: number;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     const animate = () => {
       animationId = requestAnimationFrame(animate);
@@ -219,13 +220,15 @@ export function TempleViewer() {
       const elapsedTime = clock.getElapsedTime();
 
       // If the user is not dragging, rotate the temple very slowly
-      if (!isDragging) {
+      if (!isDragging && !prefersReducedMotion) {
         templeGroup.rotation.y += 0.003;
       }
 
       // Waving flag effect (waving the vertexes/skewing or simple sine wave rotation)
-      flag.rotation.y = Math.sin(elapsedTime * 6) * 0.15;
-      flag.scale.x = 1.0 + Math.sin(elapsedTime * 8) * 0.05;
+      if (!prefersReducedMotion) {
+        flag.rotation.y = Math.sin(elapsedTime * 6) * 0.15;
+        flag.scale.x = 1.0 + Math.sin(elapsedTime * 8) * 0.05;
+      }
 
       renderer.render(scene, camera);
     };

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Reading mode / fullscreen icon -->
+  <rect x="8" y="8" width="48" height="48" rx="4" fill="none" stroke="#C9A227" stroke-width="2"/>
+  <line x1="14" y1="20" x2="50" y2="20" stroke="#C9A227" stroke-width="1.5" opacity="0.5"/>
+  <line x1="14" y1="28" x2="46" y2="28" stroke="#C9A227" stroke-width="1.5" opacity="0.4"/>
+  <line x1="14" y1="36" x2="48" y2="36" stroke="#C9A227" stroke-width="1.5" opacity="0.5"/>
+  <line x1="14" y1="44" x2="42" y2="44" stroke="#C9A227" stroke-width="1.5" opacity="0.3"/>
+  <!-- Expand arrows -->
+  <path d="M4 4 L12 4 L12 12" stroke="#FF7A1A" stroke-width="2" fill="none"/>
+  <path d="M60 4 L52 4 L52 12" stroke="#FF7A1A" stroke-width="2" fill="none"/>
+  <path d="M4 60 L12 60 L12 52" stroke="#FF7A1A" stroke-width="2" fill="none"/>
+  <path d="M60 60 L52 60 L52 52" stroke="#FF7A1A" stroke-width="2" fill="none"/>
+</svg>

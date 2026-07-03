@@ -6,6 +6,7 @@ import {
   type SearchFilters,
   type HighlightedSearchResult,
 } from '@/src/lib/search-client';
+import { hybridSearch } from '@/src/lib/semantic-search';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
@@ -43,7 +44,46 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
     const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '20', 10)));
 
-    const results = await searchCompositions(query, filters, { limit: page * limit, highlights: true }) as HighlightedSearchResult[];
+    // Enable semantic search by default (can be disabled via query param)
+    const useSemantic = searchParams.get('semantic') !== 'false';
+
+    let results: (HighlightedSearchResult | { id: string; titleMarathi: string; titleTranslit: string; fullText: string; type: string; slug: string; saintName: string | null; deityName: string | null; hasAudio: boolean })[];
+    let searchType: 'lexical' | 'hybrid' = 'lexical';
+
+    // Use hybrid search if semantic is enabled and we have enough query length
+    if (useSemantic && query.length >= 3) {
+      try {
+        const hybridResults = await hybridSearch(query, {
+          limit: page * limit,
+          type: filterType,
+          deityName,
+          saintName,
+          useSemantic: true,
+        });
+
+        results = hybridResults.map(r => ({
+          id: r.id,
+          titleMarathi: r.titleMarathi,
+          titleTranslit: r.titleTranslit,
+          fullText: r.fullText,
+          type: r.type,
+          slug: r.slug,
+          saintName: r.saintName,
+          deityName: r.deityName,
+          hasAudio: r.hasAudio,
+          // Preserve hybrid search metadata
+          _hybridScore: r.score,
+          _source: r.source,
+        }));
+        searchType = 'hybrid';
+      } catch {
+        // Fallback to lexical-only search
+        results = await searchCompositions(query, filters, { limit: page * limit, highlights: true }) as HighlightedSearchResult[];
+      }
+    } else {
+      // Use lexical-only search for short queries
+      results = await searchCompositions(query, filters, { limit: page * limit, highlights: true }) as HighlightedSearchResult[];
+    }
 
     const startIndex = (page - 1) * limit;
     const paginatedResults = results.slice(startIndex, startIndex + limit);
@@ -57,16 +97,19 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         slug: doc.slug,
         type: doc.type,
         saintName: doc.saintName,
-        saintTranslit: doc.saintTranslit,
+        saintTranslit: 'saintTranslit' in doc ? doc.saintTranslit : null,
         deityName: doc.deityName,
         hasAudio: doc.hasAudio,
         snippet: doc.fullText,
-        formatted: doc._formatted ? {
+        formatted: '_formatted' in doc && doc._formatted ? {
           titleMarathi: doc._formatted.titleMarathi,
           fullText: doc._formatted.fullText,
           saintName: doc._formatted.saintName,
           deityName: doc._formatted.deityName,
         } : undefined,
+        // Include hybrid search metadata if available
+        _score: '_hybridScore' in doc ? (doc as any)._hybridScore : undefined,
+        _source: '_source' in doc ? (doc as any)._source : undefined,
       })),
       pagination: {
         total,
@@ -74,6 +117,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         limit,
         totalPages: Math.ceil(total / limit),
       },
+      // Include search type in response for debugging/analytics
+      searchType,
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

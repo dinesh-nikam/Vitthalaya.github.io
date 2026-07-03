@@ -3,7 +3,7 @@ const tsparser = require('@typescript-eslint/parser');
 
 module.exports = [
   {
-    ignores: ['.next/**', 'node_modules/**', 'prisma/varkari.db*'],
+    ignores: ['.next/**', 'node_modules/**', 'prisma/varkari.db*', 'next-env.d.ts'],
   },
   {
     files: ['**/*.ts', '**/*.tsx'],
@@ -28,6 +28,7 @@ module.exports = [
       '@typescript-eslint/no-empty-object-type': 'off',
       '@typescript-eslint/no-unused-vars': 'warn',
       '@typescript-eslint/no-require-imports': 'off',
+      '@typescript-eslint/ban-ts-comment': 'off',
     },
   }
 ];

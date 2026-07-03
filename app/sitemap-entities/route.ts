@@ -138,6 +138,16 @@ async function generateStaticXml(): Promise<string> {
   const now = new Date().toISOString();
   const staticPages = [
     { loc: `${SITE_URL}/`, changefreq: STATIC_CHANGEFREQ, priority: 1.0 },
+    { loc: `${SITE_URL}/explore`, changefreq: STATIC_CHANGEFREQ, priority: 0.9 },
+    { loc: `${SITE_URL}/library`, changefreq: STATIC_CHANGEFREQ, priority: 0.9 },
+    { loc: `${SITE_URL}/saints`, changefreq: STATIC_CHANGEFREQ, priority: 0.8 },
+    { loc: `${SITE_URL}/sant`, changefreq: STATIC_CHANGEFREQ, priority: 0.8 },
+    { loc: `${SITE_URL}/wari`, changefreq: STATIC_CHANGEFREQ, priority: 0.8 },
+    { loc: `${SITE_URL}/learn`, changefreq: STATIC_CHANGEFREQ, priority: 0.7 },
+    { loc: `${SITE_URL}/store`, changefreq: STATIC_CHANGEFREQ, priority: 0.7 },
+    { loc: `${SITE_URL}/community`, changefreq: STATIC_CHANGEFREQ, priority: 0.7 },
+    { loc: `${SITE_URL}/category`, changefreq: STATIC_CHANGEFREQ, priority: 0.6 },
+    { loc: `${SITE_URL}/festival`, changefreq: STATIC_CHANGEFREQ, priority: 0.6 },
     { loc: `${SITE_URL}/search`, changefreq: STATIC_CHANGEFREQ, priority: 0.5 },
   ];
 

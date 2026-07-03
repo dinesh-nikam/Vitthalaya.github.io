@@ -16,11 +16,19 @@ export function PalkhiViewer({ scrollProgress = 0 }: PalkhiViewerProps) {
   React.useEffect(() => {
     if (!palkhiGroupRef.current) return;
     
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const group = palkhiGroupRef.current;
-    // Map scroll progress (0 to 1) to horizontal position and a slight bobbing sway
-    group.position.x = (scrollProgress - 0.5) * 4; // Moves from -2 to +2
-    group.position.y = Math.sin(scrollProgress * Math.PI * 4) * 0.15; // Bobbing up and down
-    group.rotation.y = (scrollProgress - 0.5) * 0.5 + Math.sin(scrollProgress * Math.PI * 8) * 0.05; // Slight yaw rotations
+    
+    if (prefersReducedMotion) {
+      group.position.x = (scrollProgress - 0.5) * 4;
+      group.position.y = 0;
+      group.rotation.y = 0;
+    } else {
+      // Map scroll progress (0 to 1) to horizontal position and a slight bobbing sway
+      group.position.x = (scrollProgress - 0.5) * 4; // Moves from -2 to +2
+      group.position.y = Math.sin(scrollProgress * Math.PI * 4) * 0.15; // Bobbing up and down
+      group.rotation.y = (scrollProgress - 0.5) * 0.5 + Math.sin(scrollProgress * Math.PI * 8) * 0.05; // Slight yaw rotations
+    }
   }, [scrollProgress]);
 
   React.useEffect(() => {
@@ -171,6 +179,12 @@ export function PalkhiViewer({ scrollProgress = 0 }: PalkhiViewerProps) {
     // 7. Animation Loop
     let clock = new THREE.Clock();
     let animationId: number;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (prefersReducedMotion) {
+      petalMat.opacity = 0; // Hide petals
+      petalMat.needsUpdate = true;
+    }
 
     const animate = () => {
       animationId = requestAnimationFrame(animate);
@@ -178,27 +192,32 @@ export function PalkhiViewer({ scrollProgress = 0 }: PalkhiViewerProps) {
       const elapsedTime = clock.getElapsedTime();
 
       // Gentle continuous rotation when not scrolled to keep view dynamic
-      if (scrollProgress === 0) {
+      if (scrollProgress === 0 && !prefersReducedMotion) {
         palkhiGroup.rotation.y = elapsedTime * 0.15;
         palkhiGroup.position.y = Math.sin(elapsedTime * 1.5) * 0.08;
+      } else if (prefersReducedMotion) {
+        palkhiGroup.rotation.y = 0;
+        palkhiGroup.position.y = 0;
       }
 
-      // Animate background marigold petals
-      const posArray = petals.geometry.attributes.position.array as Float32Array;
-      for (let i = 0; i < petalCount; i++) {
-        // Apply velocity
-        posArray[i * 3] += petalVelocities[i * 3];
-        posArray[i * 3 + 1] += petalVelocities[i * 3 + 1];
-        posArray[i * 3 + 2] += petalVelocities[i * 3 + 2];
+      if (!prefersReducedMotion) {
+        // Animate background marigold petals
+        const posArray = petals.geometry.attributes.position.array as Float32Array;
+        for (let i = 0; i < petalCount; i++) {
+          // Apply velocity
+          posArray[i * 3] += petalVelocities[i * 3];
+          posArray[i * 3 + 1] += petalVelocities[i * 3 + 1];
+          posArray[i * 3 + 2] += petalVelocities[i * 3 + 2];
 
-        // Reset if too low or out of bounds
-        if (posArray[i * 3 + 1] < -2.0) {
-          posArray[i * 3] = 2.5 + Math.random() * 2;
-          posArray[i * 3 + 1] = 1.5 + Math.random() * 1.5;
-          posArray[i * 3 + 2] = (Math.random() - 0.5) * 2;
+          // Reset if too low or out of bounds
+          if (posArray[i * 3 + 1] < -2.0) {
+            posArray[i * 3] = 2.5 + Math.random() * 2;
+            posArray[i * 3 + 1] = 1.5 + Math.random() * 1.5;
+            posArray[i * 3 + 2] = (Math.random() - 0.5) * 2;
+          }
         }
+        petals.geometry.attributes.position.needsUpdate = true;
       }
-      petals.geometry.attributes.position.needsUpdate = true;
 
       renderer.render(scene, camera);
     };

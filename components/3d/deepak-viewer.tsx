@@ -143,47 +143,63 @@ export function DeepakViewer() {
     // 10. Animation Loop
     let clock = new THREE.Clock();
     let animationId: number;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (prefersReducedMotion) {
+      particleMat.opacity = 0; // Hide embers
+      particleMat.needsUpdate = true;
+    }
 
     const animate = () => {
       animationId = requestAnimationFrame(animate);
 
       const elapsedTime = clock.getElapsedTime();
 
-      // Gentle diya rotation to see depth
-      diyaBowl.rotation.y = Math.sin(elapsedTime * 0.2) * 0.25;
-      oil.rotation.y = diyaBowl.rotation.y;
-      wick.rotation.y = diyaBowl.rotation.y;
+      if (!prefersReducedMotion) {
+        // Gentle diya rotation to see depth
+        diyaBowl.rotation.y = Math.sin(elapsedTime * 0.2) * 0.25;
+        oil.rotation.y = diyaBowl.rotation.y;
+        wick.rotation.y = diyaBowl.rotation.y;
 
-      // Flame physics (flicker and shape distortion)
-      const scaleX = 1 + Math.sin(elapsedTime * 25) * 0.08;
-      const scaleY = 1 + Math.cos(elapsedTime * 18) * 0.12;
-      const scaleZ = 1 + Math.sin(elapsedTime * 22) * 0.08;
-      flame.scale.set(scaleX, scaleY, scaleZ);
+        // Flame physics (flicker and shape distortion)
+        const scaleX = 1 + Math.sin(elapsedTime * 25) * 0.08;
+        const scaleY = 1 + Math.cos(elapsedTime * 18) * 0.12;
+        const scaleZ = 1 + Math.sin(elapsedTime * 22) * 0.08;
+        flame.scale.set(scaleX, scaleY, scaleZ);
 
-      // Organic wind wave tilt on the flame
-      flame.rotation.z = Math.sin(elapsedTime * 8) * 0.05;
+        // Organic wind wave tilt on the flame
+        flame.rotation.z = Math.sin(elapsedTime * 8) * 0.05;
 
-      // Light flicker intensity
-      flameLight.intensity = 2.0 + Math.sin(elapsedTime * 35) * 0.35 + Math.random() * 0.15;
+        // Light flicker intensity
+        flameLight.intensity = 2.0 + Math.sin(elapsedTime * 35) * 0.35 + Math.random() * 0.15;
 
-      // Update particle embers positions
-      const positionsArray = embers.geometry.attributes.position.array as Float32Array;
-      for (let i = 0; i < particleCount; i++) {
-        // Reset particles that die (rise too high)
-        if (positionsArray[i * 3 + 1] > 3.0) {
-          positionsArray[i * 3] = flame.position.x + (Math.random() - 0.5) * 0.1;
-          positionsArray[i * 3 + 1] = flame.position.y + 0.5;
-          positionsArray[i * 3 + 2] = flame.position.z + (Math.random() - 0.5) * 0.1;
-          life[i] = 0;
-        } else {
-          // Move particles
-          positionsArray[i * 3] += velocities[i * 3];
-          positionsArray[i * 3 + 1] += velocities[i * 3 + 1];
-          positionsArray[i * 3 + 2] += velocities[i * 3 + 2];
-          life[i] += 0.01;
+        // Update particle embers positions
+        const positionsArray = embers.geometry.attributes.position.array as Float32Array;
+        for (let i = 0; i < particleCount; i++) {
+          // Reset particles that die (rise too high)
+          if (positionsArray[i * 3 + 1] > 3.0) {
+            positionsArray[i * 3] = flame.position.x + (Math.random() - 0.5) * 0.1;
+            positionsArray[i * 3 + 1] = flame.position.y + 0.5;
+            positionsArray[i * 3 + 2] = flame.position.z + (Math.random() - 0.5) * 0.1;
+            life[i] = 0;
+          } else {
+            // Move particles
+            positionsArray[i * 3] += velocities[i * 3];
+            positionsArray[i * 3 + 1] += velocities[i * 3 + 1];
+            positionsArray[i * 3 + 2] += velocities[i * 3 + 2];
+            life[i] += 0.01;
+          }
         }
+        embers.geometry.attributes.position.needsUpdate = true;
+      } else {
+        // Static values for reduced motion
+        diyaBowl.rotation.y = 0;
+        oil.rotation.y = 0;
+        wick.rotation.y = 0;
+        flame.scale.set(1, 1, 1);
+        flame.rotation.z = 0;
+        flameLight.intensity = 2.0;
       }
-      embers.geometry.attributes.position.needsUpdate = true;
 
       // Render scene
       renderer.render(scene, camera);

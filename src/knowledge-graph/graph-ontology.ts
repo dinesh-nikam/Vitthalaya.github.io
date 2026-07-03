@@ -170,6 +170,8 @@ export interface EdgeInput {
   targetId: string;
   relationship: RelationshipType;
   weight?: number;
+  /** Confidence score 0.0–1.0: 1.0 = deterministic FK, lower = inferred/ML-derived */
+  confidence?: number;
   metadata?: Record<string, unknown>;
 }
 
@@ -184,6 +186,8 @@ export interface TraversalStep {
   direction: 'outgoing' | 'incoming';
   /** Score weight */
   weight: number;
+  /** Confidence score 0.0–1.0 */
+  confidence: number;
   /** Depth from origin (0 = origin) */
   depth: number;
 }

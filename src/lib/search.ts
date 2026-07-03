@@ -1,118 +1,51 @@
 /**
- * Typesense Search Client for Digital Pandharpur
- * Provides instant, typo-tolerant, transliteration-aware search
+ * Search client facade for Digital Pandharpur.
+ * Resolves to the active Meilisearch implementation with DB fallback.
  */
 
-interface CompositionDocument {
+import { searchCompositions, getSearchSuggestions } from './search-client';
+
+export interface CompositionDocument {
   id: string;
   title_marathi: string;
   title_transliteration: string;
   slug: string;
   type: string;
   full_text: string;
-  meaning: string;
-  saint_id: string;
-  saint_name: string;
-  saint_transliteration: string;
-  deity_name: string;
-  festival_names: string[];
+  meaning: string | null;
+  saint_id: string | null;
+  saint_name: string | null;
+  saint_transliteration: string | null;
+  deity_name: string | null;
   has_audio: boolean;
   popularity_score: number;
 }
 
-class SearchClient {
-  private client: unknown; // Typesense.Client
-
-  constructor() {
-    // Initialize Typesense client
-    // In production: use env vars for configuration
-    // this.client = new Typesense.Client({...})
-  }
-
-  async search(query: string): Promise<CompositionDocument[]> {
-    // Multi-field search supporting Devanagari + Latin transliteration
-    const searchParams = {
-      q: query,
-      queryBy: 'title_marathi,title_transliteration,full_text,saint_name,saint_transliteration',
-      sortBy: '_text_match:desc,popularity_score:desc',
-      numTypos: 2,
-      prefix: true,
-      // Enable transliteration matching
-      // "vitthal" -> "विठ्ठल", "tukaram" -> "तुकाराम"
-    };
-
-    // Mock results for now
-    return this.mockResults(query);
-  }
-
-  async searchWithFilters(
-    query: string,
-    filters: {
-      type?: string;
-      saint?: string;
-      deity?: string;
-      festival?: string;
-      has_audio?: boolean;
-    }
-  ): Promise<CompositionDocument[]> {
-    // Apply filters in addition to search
-    // Implementation with Typesense filter_by
-    return this.search(query);
-  }
-
-  async getSuggestions(partial: string): Promise<string[]> {
-    // Get search suggestions for autocomplete
-    // Could use Typesense's typo-tolerant prefix search
-    if (!partial) return [];
-
-    const commonSuggestions = [
-      'तुकाराम महाराज',
-      'विठ्ठल',
-      'हरिपाठ',
-      'आरती',
-      'देवी',
-      'शिव',
-      'गणपती',
-    ];
-
-    return commonSuggestions.filter((s) =>
-      s.toLowerCase().includes(partial.toLowerCase())
-    );
-  }
-
-  private mockResults(query: string): CompositionDocument[] {
-    // Mock data - replace with actual Typesense query
-    if (!query) return [];
-
-    return [
-      {
-        id: '1',
-        title_marathi: 'तुज रूप चिती राहो',
-        title_transliteration: 'Tuze Rup Chitti Rahō',
-        slug: 'tuze-rup-chitti-raho',
-        type: 'अभंग',
-        full_text: 'तुज रूप चिती राहो...',
-        meaning: 'विठ्ठलाच्या रूपाच्या विचारात राहणे...',
-        saint_id: '1',
-        saint_name: 'तुकाराम महाराज',
-        saint_transliteration: 'Tukaram Maharaj',
-        deity_name: 'विठ्ठल',
-        festival_names: ['आषाढी एकादशी'],
-        has_audio: true,
-        popularity_score: 95,
-      },
-    ];
-  }
+// Forward to active Meilisearch search client
+export async function searchServer(query: string): Promise<CompositionDocument[]> {
+  const hits = await searchCompositions(query);
+  return hits.map((hit: any) => ({
+    id: hit.id,
+    title_marathi: hit.titleMarathi,
+    title_transliteration: hit.titleTranslit,
+    slug: hit.slug,
+    type: hit.type,
+    full_text: hit.fullText,
+    meaning: hit.meaning || null,
+    saint_id: hit.saintId || null,
+    saint_name: hit.saintName || null,
+    saint_transliteration: hit.saintTranslit || null,
+    deity_name: hit.deityName || null,
+    has_audio: hit.hasAudio,
+    popularity_score: hit.popularityScore || 100,
+  }));
 }
 
-export const searchClient = new SearchClient();
-
-// Server-side search function for SSR
-export async function searchServer(query: string) {
-  return searchClient.search(query);
-}
-
-// Client-side search for instant results
 export function searchClientSide(query: string, callback: (results: CompositionDocument[]) => void) {
-  searchClient.search(query).then(callback);
+  searchServer(query).then(callback);
+}
+
+export async function getSuggestions(partial: string): Promise<string[]> {
+  const suggestions = await getSearchSuggestions(partial);
+  return suggestions.map((s) => s.text);
 }

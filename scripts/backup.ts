@@ -11,8 +11,9 @@
  */
 
 import { $ } from 'bun:shell';
-import { mkdir } from 'fs/promises';
+import { mkdir, writeFile, readFile } from 'fs/promises';
 import { join } from 'path';
+import { createHash } from 'crypto';
 
 const BACKUP_DIR = process.env.BACKUP_DIR || join(process.cwd(), 'backups');
 
@@ -21,6 +22,7 @@ interface BackupOptions {
   database: boolean;
   uploads: boolean;
   list: boolean;
+  verify: boolean;
 }
 
 function parseArgs(): BackupOptions {
@@ -30,11 +32,25 @@ function parseArgs(): BackupOptions {
     database: args.includes('--database'),
     uploads: args.includes('--uploads'),
     list: args.includes('--list'),
+    verify: args.includes('--verify'),
   };
 }
 
 function getTimestamp(): string {
   return new Date().toISOString().replace(/[:.]/g, '-');
+}
+
+async function computeChecksum(filePath: string): Promise<string> {
+  const fileBuffer = await readFile(filePath);
+  return createHash('sha256').update(fileBuffer).digest('hex');
+}
+
+async function writeChecksum(filePath: string): Promise<string> {
+  const hash = await computeChecksum(filePath);
+  const checksumPath = `${filePath}.sha256`;
+  const content = `${hash}  ${filePath.split('/').pop()}\n`;
+  await writeFile(checksumPath, content);
+  return hash;
 }
 
 async function runCommand(cmd: string, description: string): Promise<{ success: boolean; output: string }> {
@@ -74,7 +90,9 @@ async function backupDatabase(): Promise<string | null> {
   const result = await runCommand(cmd, 'Creating database backup');
 
   if (result.success) {
+    const hash = await writeChecksum(filepath);
     console.log(`✅ Database backup created: ${filepath}`);
+    console.log(`   SHA-256: ${hash}`);
     return filepath;
   } else {
     console.error(`❌ Database backup failed: ${result.output}`);
@@ -100,7 +118,9 @@ async function backupUploads(): Promise<string | null> {
   const result = await runCommand(cmd, 'Creating uploads backup');
 
   if (result.success) {
+    const hash = await writeChecksum(filepath);
     console.log(`✅ Uploads backup created: ${filepath}`);
+    console.log(`   SHA-256: ${hash}`);
     return filepath;
   } else {
     console.error(`❌ Uploads backup failed: ${result.output}`);
@@ -111,6 +131,44 @@ async function backupUploads(): Promise<string | null> {
 async function listBackups(): Promise<void> {
   const result = await runCommand(`ls -la ${BACKUP_DIR} 2>/dev/null || echo "No backups found"`, 'Listing backups');
   console.log(result.output);
+}
+
+async function verifyAllBackups(): Promise<void> {
+  console.log('🔍 Verifying backup integrity...\n');
+  const { readdir } = await import('fs/promises');
+  const files = await readdir(BACKUP_DIR).catch(() => []);
+  const checksumFiles = files.filter(f => f.endsWith('.sha256'));
+
+  if (checksumFiles.length === 0) {
+    console.log('No checksum files found. Run backup first.');
+    return;
+  }
+
+  let verified = 0;
+  let failed = 0;
+
+  for (const checksumFile of checksumFiles) {
+    const checksumPath = join(BACKUP_DIR, checksumFile);
+    const content = await readFile(checksumPath, 'utf-8');
+    const [expectedHash, filename] = content.trim().split(/\s+/);
+    const backupPath = join(BACKUP_DIR, filename);
+
+    try {
+      const actualHash = await computeChecksum(backupPath);
+      if (actualHash === expectedHash) {
+        console.log(`✅ ${filename} — integrity verified`);
+        verified++;
+      } else {
+        console.error(`❌ ${filename} — CHECKSUM MISMATCH!`);
+        failed++;
+      }
+    } catch {
+      console.error(`❌ ${filename} — file not found or unreadable`);
+      failed++;
+    }
+  }
+
+  console.log(`\n📋 Verification: ${verified} passed, ${failed} failed`);
 }
 
 async function cleanupOldBackups(maxAgeDays = 30): Promise<void> {
@@ -129,6 +187,11 @@ async function main(): Promise<void> {
 
   if (options.list) {
     await listBackups();
+    return;
+  }
+
+  if (options.verify) {
+    await verifyAllBackups();
     return;
   }
 

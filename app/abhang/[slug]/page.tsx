@@ -4,7 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/src/lib/auth';
 import { db } from '@/src/db/client';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600; // ISR: revalidate every 1 hour
 import { getFirstValidEmbed, hasAudioLinks } from '@/src/lib/youtube-embed';
 import { compositionSchema, canonicalMetadata } from '@/src/lib/seo';
 import { getGraphLinks } from '@/src/lib/cross-links';
@@ -38,7 +38,7 @@ export default async function CompositionPage({
 }) {
   const rawSlug = await params;
   const slug = decodeURIComponent(rawSlug.slug);
-  const session = await getServerSession(authOptions);
+  const session = await getServerSession(authOptions).catch(() => null);
 
   // Fetch from database
   const composition = await db.composition.findUnique({
@@ -383,4 +383,13 @@ export async function generateMetadata({
     },
     ...canonicalMetadata({ canonical: `/abhang/${slug}` }),
   };
+}
+
+export async function generateStaticParams() {
+  const compositions = await db.composition.findMany({
+    take: 50,
+    select: { slug: true },
+    orderBy: { updatedAt: 'desc' },
+  });
+  return compositions.map((c) => ({ slug: c.slug }));
 }

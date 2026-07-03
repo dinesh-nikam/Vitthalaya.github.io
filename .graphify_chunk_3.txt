@@ -1,0 +1,16 @@
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\deployment\prometheus.yml
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\design-system\digital-pandharpur\MASTER.md
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\design-system\digital-pandharpur\pages\hero.md
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\docs\ai-enrichment-flow.md
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\docs\autonomous-discovery-flow.md
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\docs\book-generation-commerce-flow.md
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\docs\canonical-deduplication-flow.md
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\docs\community-tip-submission-flow.md
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\docs\hagiographical-knowledge-graph-flow.md
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\image_replacement_references.md
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\prd.md
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\production_audit_report.md
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\src\discovery\ARCHITECTURE.md
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\public\icons\icon-192x192.png
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\public\icons\icon-384x384.png
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\public\icons\icon-512x512.png

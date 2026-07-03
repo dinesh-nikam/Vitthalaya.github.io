@@ -12,7 +12,9 @@ import {
   Music, 
   SkipForward, 
   SkipBack, 
-  ListMusic 
+  ListMusic,
+  GripVertical,
+  Trash2
 } from 'lucide-react';
 
 interface Track {
@@ -125,6 +127,26 @@ export function FloatingPlayer() {
     window.addEventListener('play-devotional-audio', handlePlayTrigger);
     return () => window.removeEventListener('play-devotional-audio', handlePlayTrigger);
   }, [playlist]);
+
+  // Listen to add-to-queue events from composition pages
+  React.useEffect(() => {
+    const handleAddToQueue = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const track: Track = customEvent.detail?.track;
+      if (!track) return;
+
+      // Deduplicate by id
+      setPlaylist(prev => {
+        if (prev.some(t => t.id === track.id)) return prev;
+        return [...prev, track];
+      });
+      setVisible(true);
+      setShowQueue(true);
+    };
+
+    window.addEventListener('add-to-queue', handleAddToQueue);
+    return () => window.removeEventListener('add-to-queue', handleAddToQueue);
+  }, []);
 
   // Audio elements event binding
   React.useEffect(() => {
@@ -267,6 +289,44 @@ export function FloatingPlayer() {
     audioRef.current.muted = nextMute;
   };
 
+  // Queue management: remove track
+  const removeFromQueue = (idx: number) => {
+    setPlaylist(prev => {
+      const next = prev.filter((_, i) => i !== idx);
+      // Adjust current index if needed
+      if (idx < currentTrackIndex) {
+        setCurrentTrackIndex(prev => prev - 1);
+      } else if (idx === currentTrackIndex && idx >= next.length) {
+        setCurrentTrackIndex(Math.max(0, next.length - 1));
+      }
+      return next.length > 0 ? next : DEFAULT_PLAYLIST;
+    });
+  };
+
+  // Queue management: move track up
+  const moveUp = (idx: number) => {
+    if (idx === 0) return;
+    setPlaylist(prev => {
+      const next = [...prev];
+      [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+      return next;
+    });
+    if (idx === currentTrackIndex) setCurrentTrackIndex(idx - 1);
+    else if (idx - 1 === currentTrackIndex) setCurrentTrackIndex(idx);
+  };
+
+  // Queue management: move track down
+  const moveDown = (idx: number) => {
+    setPlaylist(prev => {
+      if (idx >= prev.length - 1) return prev;
+      const next = [...prev];
+      [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+      return next;
+    });
+    if (idx === currentTrackIndex) setCurrentTrackIndex(idx + 1);
+    else if (idx + 1 === currentTrackIndex) setCurrentTrackIndex(idx);
+  };
+
   const formatTime = (secs: number) => {
     const minutes = Math.floor(secs / 60);
     const seconds = Math.floor(secs % 60);
@@ -363,18 +423,36 @@ export function FloatingPlayer() {
           {/* Playlist selector / Queue */}
           {showQueue && (
             <div className="bg-background rounded-xl p-2 border border-saffron/10 space-y-1">
-              <h5 className="text-[11px] font-bold text-muted-foreground px-2 pb-1 border-b border-border">पुढील गाणी (Queue)</h5>
+              <h5 className="text-[11px] font-bold text-muted-foreground px-2 pb-1 border-b border-border">
+                पुढील गाणी (Queue) · {playlist.length}
+              </h5>
               {playlist.map((track, idx) => (
-                <button
+                <div
                   key={track.id}
-                  onClick={() => setCurrentTrackIndex(idx)}
-                  className={`w-full text-left p-2 rounded text-xs font-marathi flex justify-between transition-colors ${
+                  className={`flex items-center gap-1 p-1.5 rounded text-xs font-marathi transition-colors group ${
                     idx === currentTrackIndex ? 'bg-saffron/10 text-saffron font-bold' : 'hover:bg-muted text-foreground'
                   }`}
                 >
-                  <span>{track.titleMarathi}</span>
-                  <span className="text-[10px] text-muted-foreground">{track.saintName.split(' ')[1]}</span>
-                </button>
+                  <button
+                    onClick={() => setCurrentTrackIndex(idx)}
+                    className="flex-1 text-left truncate min-w-0"
+                    title={track.titleMarathi}
+                  >
+                    <span className="block truncate">{track.titleMarathi}</span>
+                    <span className="text-[10px] text-muted-foreground block truncate">{track.saintName}</span>
+                  </button>
+                  <div className="flex items-center gap-0.5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => moveUp(idx)} className="p-0.5 hover:bg-saffron/10 rounded" title="वर स्थानांतरित करा">
+                      <ChevronUp className="w-3 h-3" />
+                    </button>
+                    <button onClick={() => moveDown(idx)} className="p-0.5 hover:bg-saffron/10 rounded" title="खाली स्थानांतरित करा">
+                      <ChevronDown className="w-3 h-3" />
+                    </button>
+                    <button onClick={() => removeFromQueue(idx)} className="p-0.5 hover:bg-red-500/10 rounded text-red-400" title="काढा">
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                </div>
               ))}
             </div>
           )}

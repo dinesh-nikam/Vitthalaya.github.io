@@ -15,7 +15,8 @@ import {
   Check, 
   Maximize2, 
   Minimize2, 
-  X 
+  X,
+  ListPlus
 } from 'lucide-react';
 import { BookmarkButton } from './bookmark-button';
 import { BellLikeButton } from './bell-like-button';
@@ -126,6 +127,22 @@ export function CompositionReader({
   const allLines = React.useMemo(() => {
     return fullText.split('\n').filter(line => line.trim().length > 0);
   }, [fullText]);
+
+  // Add to Queue handler
+  const handleAddToQueue = () => {
+    window.dispatchEvent(new CustomEvent('add-to-queue', {
+      detail: {
+        track: {
+          id: slug,
+          titleMarathi,
+          titleTranslit,
+          saintName: saint?.nameMarathi || 'अज्ञात संत',
+          audioUrl: embedUrl || '',
+          lyrics: fullText.split('\n').filter(Boolean).map((line, i) => ({ time: i * 10, text: line.trim() })),
+        },
+      },
+    }));
+  };
 
   // Handle line selection for quote card
   const toggleLineSelection = (line: string) => {
@@ -276,6 +293,18 @@ export function CompositionReader({
             <Download className="w-4 h-4" />
             <span>स्टेटस बनवा</span>
           </button>
+
+          {/* Add to Queue Button */}
+          {embedUrl && (
+            <button
+              onClick={handleAddToQueue}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-saffron/20 text-sm hover:bg-saffron/10 text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-saffron"
+              title="प्लेलिस्टमध्ये जोडा"
+            >
+              <ListPlus className="w-4 h-4 text-saffron" />
+              <span>प्लेलिस्टमध्ये जोडा</span>
+            </button>
+          )}
         </div>
 
         {/* Display Adjustments */}

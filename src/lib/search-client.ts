@@ -6,6 +6,7 @@
 import { Meilisearch } from 'meilisearch';
 import { db } from '@/src/db/client';
 import { expandTransliteration, getTransliterationSuggestions } from '@/src/lib/search-transliteration';
+import { expandPhoneticQuery } from '@/src/lib/search-phonetic';
 
 const client = new Meilisearch({
   host: process.env.MEILI_HOST || 'http://localhost:7700',
@@ -165,8 +166,9 @@ export async function searchCompositions(
   const searchFilters = buildFilters(filters);
 
   try {
-    const expandedQuery = expandTransliteration(query);
-    const searchQuery = expandedQuery !== query ? expandedQuery : query;
+    const translitExpanded = expandTransliteration(query);
+    const phoneticExpanded = expandPhoneticQuery(query);
+    const searchQuery = [translitExpanded, phoneticExpanded].filter(q => q !== query).join(' ') || query;
 
     const results = await index.search(searchQuery, {
       filter: searchFilters.length > 0 ? searchFilters : undefined,
@@ -183,8 +185,21 @@ export async function searchCompositions(
   } catch (error) {
     console.warn('Meilisearch failed, falling back to local database query:', error);
 
-    const expandedQuery = expandTransliteration(query);
-    const searchQuery = expandedQuery !== query ? expandedQuery : query;
+    const translitExpanded = expandTransliteration(query);
+    const phoneticExpanded = expandPhoneticQuery(query);
+    const searchQuery = [translitExpanded, phoneticExpanded].filter(q => q !== query).join(' ') || query;
+
+    // Build OR conditions for all expanded query variations
+    const expandedVariations = expandPhoneticQuery(query).split(' ');
+    const orConditions = [
+      { titleMarathi: { contains: query } },
+      { titleTranslit: { contains: query, mode: 'insensitive' as const } },
+      { fullText: { contains: query } },
+      { saint: { nameMarathi: { contains: query } } },
+      { saint: { nameTranslit: { contains: query, mode: 'insensitive' as const } } },
+      ...expandedVariations.map(v => ({ titleMarathi: { contains: v } })),
+      ...expandedVariations.map(v => ({ titleTranslit: { contains: v, mode: 'insensitive' as const } })),
+    ];
 
     const dbCompositions = await db.composition.findMany({
       where: {
@@ -192,16 +207,7 @@ export async function searchCompositions(
         type: filters?.type ? { contains: filters.type, mode: 'insensitive' } : undefined,
         saint: filters?.saintName ? { nameMarathi: { contains: filters.saintName } } : undefined,
         deity: filters?.deityName ? { nameMarathi: { contains: filters.deityName } } : undefined,
-        OR: [
-          { titleMarathi: { contains: query } },
-          { titleMarathi: { contains: searchQuery } },
-          { titleTranslit: { contains: query, mode: 'insensitive' } },
-          { fullText: { contains: query } },
-          { fullText: { contains: searchQuery } },
-          { saint: { nameMarathi: { contains: query } } },
-          { saint: { nameMarathi: { contains: searchQuery } } },
-          { saint: { nameTranslit: { contains: query, mode: 'insensitive' } } },
-        ],
+        OR: orConditions,
       },
       include: {
         saint: {

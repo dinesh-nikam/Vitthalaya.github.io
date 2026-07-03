@@ -1,0 +1,17 @@
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\.omo\evidence\task-1-playwright-version.txt
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\.omo\evidence\task-1-typecheck-pass.txt
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\.omo\evidence\task-10-readme-policy.txt
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\.omo\evidence\task-11-integration-test.txt
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\.omo\evidence\task-2-deviche-gane-enum.txt
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\.omo\evidence\task-2-sqlite-schema-valid.txt
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\.omo\evidence\task-3-dedup-test.txt
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\.omo\evidence\task-3-utils-typecheck.txt
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\.omo\evidence\task-4-tukaram-typecheck.txt
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\.omo\evidence\task-5-warkari-typecheck.txt
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\.omo\evidence\task-6-abhangin-typecheck.txt
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\.omo\evidence\task-7-db-layer.txt
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\.omo\evidence\task-8-cli-typecheck.txt
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\.omo\evidence\task-9-api-route.txt
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\.omo\plans\content-scraping-pipeline.md
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\.omo\plans\plan-architecture-migration.md
+C:\Users\Dinesh Nikam\Desktop\mirai\varkari\.omx\plans\architect-book-commerce-platform.md

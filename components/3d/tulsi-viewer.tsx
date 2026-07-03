@@ -168,26 +168,32 @@ export function TulsiViewer() {
     // 6. Animation Loop
     let clock = new THREE.Clock();
     let animationId: number;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     const animate = () => {
       animationId = requestAnimationFrame(animate);
 
       const elapsedTime = clock.getElapsedTime();
 
-      // Vrindavan slow base spin
-      vrindavanGroup.rotation.y = elapsedTime * 0.12;
+      if (!prefersReducedMotion) {
+        // Vrindavan slow base spin
+        vrindavanGroup.rotation.y = elapsedTime * 0.12;
 
-      // Simulated wind swaying the branches at slightly different rates
-      branches.forEach((branch, idx) => {
-        const windSpeed = 3.5;
-        const windIntensity = 0.04;
-        // Sway branch rotation dynamically using offset sines
-        branch.rotation.z += Math.sin(elapsedTime * windSpeed + idx) * windIntensity * 0.01;
-        branch.rotation.x += Math.cos(elapsedTime * windSpeed * 0.9 + idx) * windIntensity * 0.01;
-      });
+        // Simulated wind swaying the branches at slightly different rates
+        branches.forEach((branch, idx) => {
+          const windSpeed = 3.5;
+          const windIntensity = 0.04;
+          // Sway branch rotation dynamically using offset sines
+          branch.rotation.z += Math.sin(elapsedTime * windSpeed + idx) * windIntensity * 0.01;
+          branch.rotation.x += Math.cos(elapsedTime * windSpeed * 0.9 + idx) * windIntensity * 0.01;
+        });
 
-      // Subtle breath sway on the main plant group
-      plantGroup.rotation.z = Math.sin(elapsedTime * 2.0) * 0.02;
+        // Subtle breath sway on the main plant group
+        plantGroup.rotation.z = Math.sin(elapsedTime * 2.0) * 0.02;
+      } else {
+        vrindavanGroup.rotation.y = 0;
+        plantGroup.rotation.z = 0;
+      }
 
       renderer.render(scene, camera);
     };

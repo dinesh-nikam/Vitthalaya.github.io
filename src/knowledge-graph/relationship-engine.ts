@@ -25,6 +25,8 @@ export interface EdgeRecord {
   targetId: string;
   relationship: string;
   weight: number;
+  /** Confidence score 0.0–1.0 indicating how certain this edge is (1.0 = deterministic FK, lower = inferred/ML) */
+  confidence: number;
   metadata: Record<string, unknown> | null;
   createdAt: Date;
 }
@@ -38,6 +40,7 @@ function toEdgeRecord(e: any): EdgeRecord {
     targetId: e.targetId,
     relationship: e.relationship,
     weight: e.weight ?? 1.0,
+    confidence: e.confidence ?? 1.0,
     metadata: e.metadata ? (typeof e.metadata === 'string' ? JSON.parse(e.metadata) : e.metadata) : null,
     createdAt: e.createdAt,
   };
@@ -50,7 +53,7 @@ export async function createEdge(
   targetType: EntityType,
   targetId: string,
   relationship: RelationshipType,
-  options?: { weight?: number; metadata?: Record<string, unknown> }
+  options?: { weight?: number; confidence?: number; metadata?: Record<string, unknown> }
 ): Promise<EdgeRecord> {
   const edge = await db.entityGraphEdge.create({
     data: {
@@ -60,6 +63,7 @@ export async function createEdge(
       targetId,
       relationship,
       weight: options?.weight ?? 1.0,
+      confidence: options?.confidence ?? 1.0,
       metadata: options?.metadata ? JSON.stringify(options.metadata) : null,
     },
   });
@@ -73,13 +77,14 @@ export async function createBidirectionalEdge(
   targetType: EntityType,
   targetId: string,
   relationship: RelationshipType,
-  options?: { weight?: number; metadata?: Record<string, unknown> }
+  options?: { weight?: number; confidence?: number; metadata?: Record<string, unknown> }
 ): Promise<[EdgeRecord, EdgeRecord]> {
   const forward = await createEdge(sourceType, sourceId, targetType, targetId, relationship, options);
 
   const inverseRel = (INVERSE_RELATIONSHIP[relationship] ?? 'related_to') as RelationshipType;
   const reverse = await createEdge(targetType, targetId, sourceType, sourceId, inverseRel, {
     weight: options?.weight,
+    confidence: options?.confidence,
     metadata: options?.metadata,
   });
 
@@ -166,6 +171,7 @@ export interface TraversalOptions {
   relationships?: string[];
   targetTypes?: EntityType[];
   minWeight?: number;
+  minConfidence?: number;
   limit?: number;
 }
 
@@ -187,13 +193,13 @@ export async function traverseOneHop(
   }
 
   let sql = `
-    (SELECT source_type AS other_type, source_id AS other_id, relationship, 'incoming' AS direction, weight, created_at
+    (SELECT source_type AS other_type, source_id AS other_id, relationship, 'incoming' AS direction, weight, confidence, created_at
      FROM entity_graph_edges
      WHERE target_type = $1 AND target_id = $2
        AND relationship IN ('composed_by','dedicated_to','categorized_as','related_to_festival','recorded_in','published_in','related_to','worshipped_at','celebrated_in_festival','associated_region','held_at','located_in','dedicated_to_deity','observed_in_region','contains_composition','authored_by','published_in_region','region_associated_saint','associated_saint','contains_temple','recording_of','celebrates_deity','performed_by','composed','visited','born_in','associated_with','worshipped','related_to_saint','originates_from','located_in_stub')
     )
     UNION ALL
-    (SELECT target_type AS other_type, target_id AS other_id, relationship, 'outgoing' AS direction, weight, created_at
+    (SELECT target_type AS other_type, target_id AS other_id, relationship, 'outgoing' AS direction, weight, confidence, created_at
      FROM entity_graph_edges
      WHERE source_type = $1 AND source_id = $2
        AND relationship IN ('composed_by','dedicated_to','categorized_as','related_to_festival','recorded_in','published_in','related_to','worshipped_at','celebrated_in_festival','associated_region','held_at','located_in','dedicated_to_deity','observed_in_region','contains_composition','authored_by','published_in_region','region_associated_saint','associated_saint','contains_temple','recording_of','celebrates_deity','performed_by','composed','visited','born_in','associated_with','worshipped','related_to_saint','originates_from','located_in_stub')
@@ -213,6 +219,12 @@ export async function traverseOneHop(
     allParams.push(options.minWeight);
   }
 
+  if (options.minConfidence !== undefined) {
+    const paramIndex = allParams.length + 1;
+    sql += ` AND confidence >= $${paramIndex}`;
+    allParams.push(options.minConfidence);
+  }
+
   sql += ` ORDER BY weight DESC, created_at DESC`;
 
   if (options.limit !== undefined) {
@@ -230,6 +242,7 @@ export async function traverseOneHop(
       relationship: row.relationship,
       direction: row.direction as 'outgoing' | 'incoming',
       weight: row.weight ?? 1.0,
+      confidence: row.confidence ?? 1.0,
       depth: 1,
     });
   }
@@ -432,6 +445,7 @@ export async function bulkImportEdges(
     targetId: string;
     relationship: RelationshipType;
     weight?: number;
+    confidence?: number;
     metadata?: Record<string, unknown>;
   }>
 ): Promise<void> {
@@ -445,9 +459,105 @@ export async function bulkImportEdges(
           targetId: edge.targetId,
           relationship: edge.relationship,
           weight: edge.weight ?? 1.0,
+          confidence: edge.confidence ?? 1.0,
           metadata: edge.metadata ? JSON.stringify(edge.metadata) : null,
         },
       })
     )
   );
+}
+
+/**
+ * Automatically builds knowledge graph edges for a given composition.
+ * Can run inside an existing Prisma transaction if `tx` is passed.
+ */
+export async function buildEdgesForComposition(
+  compositionId: string,
+  tx?: any
+): Promise<void> {
+  const client = tx || db;
+
+  // 1. Fetch composition details
+  const comp = await client.composition.findUnique({
+    where: { id: compositionId },
+    include: {
+      categories: true,
+      festivals: true,
+    },
+  });
+
+  if (!comp) {
+    throw new Error(`Composition not found: ${compositionId}`);
+  }
+
+  const edgesToCreate: Array<{
+    sourceType: EntityType;
+    sourceId: string;
+    targetType: EntityType;
+    targetId: string;
+    relationship: RelationshipType;
+    weight?: number;
+    confidence?: number;
+  }> = [];
+
+  // 2. Composition ↔ Saint (composed_by / composed) — FK-based, confidence=1.0
+  if (comp.saintId) {
+    edgesToCreate.push(
+      { sourceType: 'composition', sourceId: comp.id, targetType: 'saint', targetId: comp.saintId, relationship: 'composed_by', confidence: 1.0 },
+      { sourceType: 'saint', sourceId: comp.saintId, targetType: 'composition', targetId: comp.id, relationship: 'composed', confidence: 1.0 }
+    );
+  }
+
+  // 3. Composition ↔ Deity (dedicated_to - self-inverse) — FK-based, confidence=1.0
+  if (comp.deityId) {
+    edgesToCreate.push(
+      { sourceType: 'composition', sourceId: comp.id, targetType: 'deity', targetId: comp.deityId, relationship: 'dedicated_to', confidence: 1.0 }
+    );
+  }
+
+  // 4. Composition ↔ Category (categorized_as - self-inverse) — Junction table, confidence=1.0
+  if (comp.categories && comp.categories.length > 0) {
+    for (const catComp of comp.categories) {
+      edgesToCreate.push(
+        { sourceType: 'composition', sourceId: comp.id, targetType: 'category', targetId: catComp.categoryId, relationship: 'categorized_as', confidence: 1.0 }
+      );
+    }
+  }
+
+  // 5. Composition ↔ Festival (related_to_festival / contains_composition) — Junction table, confidence=1.0
+  if (comp.festivals && comp.festivals.length > 0) {
+    for (const festComp of comp.festivals) {
+      edgesToCreate.push(
+        { sourceType: 'composition', sourceId: comp.id, targetType: 'festival', targetId: festComp.festivalId, relationship: 'related_to_festival', confidence: 1.0 },
+        { sourceType: 'festival', sourceId: festComp.festivalId, targetType: 'composition', targetId: comp.id, relationship: 'contains_composition', confidence: 1.0 }
+      );
+    }
+  }
+
+  // 6. Save unique edges that do not exist yet
+  for (const edge of edgesToCreate) {
+    const exists = await client.entityGraphEdge.count({
+      where: {
+        sourceType: edge.sourceType,
+        sourceId: edge.sourceId,
+        targetType: edge.targetType,
+        targetId: edge.targetId,
+        relationship: edge.relationship,
+      },
+    });
+
+    if (exists === 0) {
+      await client.entityGraphEdge.create({
+        data: {
+          sourceType: edge.sourceType,
+          sourceId: edge.sourceId,
+          targetType: edge.targetType,
+          targetId: edge.targetId,
+          relationship: edge.relationship,
+          weight: edge.weight ?? 1.0,
+          confidence: edge.confidence ?? 1.0,
+        },
+      });
+    }
+  }
 }

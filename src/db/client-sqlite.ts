@@ -41,6 +41,19 @@ function initDatabase(): Database {
     db.exec(schema);
   }
 
+  // Dynamic migration: Ensure saints table has slug column
+  const hasSaintsTable = db
+    .query("SELECT name FROM sqlite_master WHERE type='table' AND name='saints'")
+    .get();
+  if (hasSaintsTable) {
+    const cols = db.query('PRAGMA table_info(saints)').all() as any[];
+    const hasSlug = cols.some((c) => c.name === 'slug');
+    if (!hasSlug) {
+      db.exec('ALTER TABLE saints ADD COLUMN slug TEXT');
+      db.exec("UPDATE saints SET slug = lower(replace(replace(replace(name_transliteration, ' ', '-'), '.', ''), ',', ''))");
+    }
+  }
+
   return db;
 }
 
@@ -185,10 +198,34 @@ export const client = {
       skip?: number;
       take?: number;
       orderBy?: { id?: 'asc' | 'desc' };
-      where?: { saintId?: string; slug?: { not: string } };
+      where?: { saintId?: string; slug?: { not: string }; type?: string };
       select?: Record<string, boolean>;
     }): Promise<Composition[]> {
       let query = 'SELECT * FROM compositions';
+      const queryParams: any[] = [];
+      const whereClauses: string[] = [];
+
+      if (params?.where) {
+        if (params.where.saintId) {
+          whereClauses.push('saint_id = ?');
+          queryParams.push(params.where.saintId);
+        }
+        if (params.where.type) {
+          whereClauses.push('type = ?');
+          queryParams.push(params.where.type);
+        }
+        if (params.where.slug && typeof params.where.slug === 'object' && 'not' in params.where.slug) {
+          whereClauses.push('slug != ?');
+          queryParams.push(params.where.slug.not);
+        } else if (typeof params.where.slug === 'string') {
+          whereClauses.push('slug = ?');
+          queryParams.push(params.where.slug);
+        }
+      }
+
+      if (whereClauses.length > 0) {
+        query += ' WHERE ' + whereClauses.join(' AND ');
+      }
 
       if (params?.orderBy?.id) {
         query += ` ORDER BY id ${params.orderBy.id.toUpperCase()}`;
@@ -204,7 +241,7 @@ export const client = {
       }
 
       // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-      const rows = sqliteDb.query(query).all() as Record<string, unknown>[];
+      const rows = sqliteDb.query(query).all(...queryParams) as Record<string, unknown>[];
       return rows.map((r) => ({
         id: r.id as string,
         titleMarathi: r.title_marathi as string,
@@ -518,42 +555,164 @@ export const client = {
 
   // Placeholder models for API routes (stubs - minimal implementation)
   canonicalRecord: {
-    async findUnique(): Promise<unknown | null> {
-      return null;
-    },
+    async findUnique(): Promise<unknown | null> { return null; },
   },
 
   user: {
-    async findUnique(): Promise<unknown | null> {
-      return null;
-    },
-    async findMany(): Promise<unknown[]> {
-      return [];
-    },
+    async findUnique(): Promise<unknown | null> { return null; },
+    async findMany(): Promise<unknown[]> { return []; },
   },
 
   temple: {
-    async count(): Promise<number> {
-      return 0;
-    },
+    async count(): Promise<number> { return 0; },
   },
 
   region: {
-    async count(): Promise<number> {
-      return 0;
-    },
+    async count(): Promise<number> { return 0; },
   },
 
   audio: {
-    async count(): Promise<number> {
-      return 0;
-    },
+    async count(): Promise<number> { return 0; },
   },
 
   book: {
-    async count(): Promise<number> {
-      return 0;
+    async count(): Promise<number> { return 0; },
+  },
+
+  bookPublication: {
+    async count(): Promise<number> { return 2; },
+    async findMany(params?: any): Promise<any[]> {
+      return [
+        { id: 'bp-1', slug: 'tukaram-gatha-premium', titleMarathi: 'तुकाराम गाथा', titleEnglish: 'Tukaram Gatha', bookType: 'PREMIUM_HARDCOVER', totalCompositions: 150, totalPages: 320, createdAt: new Date(), editions: [{ format: 'DIGITAL_PDF', price: 299 }], _count: { orderItems: 0, compositions: 150 } },
+        { id: 'bp-2', slug: 'dnyaneshwari-standard', titleMarathi: 'ज्ञानेश्वरी', titleEnglish: 'Dnyaneshwari', bookType: 'STANDARD', totalCompositions: 120, totalPages: 280, createdAt: new Date(), editions: [{ format: 'DIGITAL_PDF', price: 199 }], _count: { orderItems: 0, compositions: 120 } }
+      ];
     },
+    async findUnique(params: any): Promise<any | null> {
+      return { id: 'bp-1', slug: 'tukaram-gatha-premium', titleMarathi: 'तुकाराम गाथा', titleEnglish: 'Tukaram Gatha', subtitle: 'संत वाङ्मय संग्रह', bookType: 'PREMIUM_HARDCOVER', curationType: 'SAINT_BASED', status: 'PUBLISHED', totalCompositions: 150, totalPages: 320, editions: [{ format: 'DIGITAL_PDF', price: 299, fileUrl: '/books/tukaram-gatha-premium/tukaram-gatha-premium.pdf', pageCount: 320 }], compositions: [], creator: { id: 'user-1', name: 'वारकरी योगदानकर्ता' }, _count: { orders: 0 } };
+    },
+    async create(params: any): Promise<any> {
+      return { id: 'bp-new', slug: 'new-book', titleMarathi: params.data.titleMarathi, titleEnglish: params.data.titleEnglish, status: 'DRAFT', createdAt: new Date() };
+    },
+    async update(params: any): Promise<any> {
+      return { id: params.where.id || 'bp-1', status: params.data.status || 'READY' };
+    }
+  },
+
+  bookEdition: {
+    async count(): Promise<number> { return 2; },
+    async findMany(): Promise<any[]> { return []; },
+    async createMany(): Promise<any> { return { count: 1 }; }
+  },
+
+  bookComposition: {
+    async count(): Promise<number> { return 100; },
+    async findMany(): Promise<any[]> { return []; },
+    async createMany(): Promise<any> { return { count: 1 }; }
+  },
+
+  userCollection: {
+    async count(): Promise<number> { return 0; },
+    async findMany(params?: any): Promise<any[]> { return []; },
+    async findUnique(): Promise<any | null> { return null; }
+  },
+
+  collectionComposition: {
+    async count(): Promise<number> { return 0; },
+    async findMany(): Promise<any[]> { return []; }
+  },
+
+  uploadedFile: {
+    async count(): Promise<number> { return 0; },
+    async findMany(): Promise<any[]> { return []; },
+    async findUnique(): Promise<any | null> { return null; },
+    async create(): Promise<any> { return { id: 'upload-1' }; }
+  },
+
+  uploadedFileVersion: {
+    async count(): Promise<number> { return 0; },
+    async findMany(): Promise<any[]> { return []; }
+  },
+
+  ocrConsensusResult: {
+    async count(): Promise<number> { return 0; },
+    async findMany(): Promise<any[]> { return []; }
+  },
+
+  moderationQueue: {
+    async count(): Promise<number> { return 0; },
+    async findMany(): Promise<any[]> { return []; },
+    async findUnique(): Promise<any | null> { return null; }
+  },
+
+  moderationReview: {
+    async count(): Promise<number> { return 0; },
+    async findMany(): Promise<any[]> { return []; }
+  },
+
+  moderationEditorialNote: {
+    async count(): Promise<number> { return 0; },
+    async findMany(): Promise<any[]> { return []; }
+  },
+
+  order: {
+    async count(): Promise<number> { return 0; },
+    async findMany(): Promise<any[]> { return []; },
+    async findUnique(): Promise<any | null> { return null; },
+    async create(): Promise<any> { return { id: 'order-1', total: 0 }; }
+  },
+
+  orderItem: {
+    async count(): Promise<number> { return 0; },
+    async findMany(): Promise<any[]> { return []; }
+  },
+
+  address: {
+    async count(): Promise<number> { return 0; },
+    async findMany(): Promise<any[]> { return []; }
+  },
+
+  userPreference: {
+    async findUnique(): Promise<any | null> { return null; }
+  },
+
+  userInteraction: {
+    async count(): Promise<number> { return 0; },
+    async create(): Promise<any> { return { id: 'ui-1' }; }
+  },
+
+  readingProgress: {
+    async findUnique(): Promise<any | null> { return null; },
+    async upsert(): Promise<any> { return { id: 'rp-1' }; }
+  },
+
+  userHighlight: {
+    async findMany(): Promise<any[]> { return []; }
+  },
+
+  dailyReadingStats: {
+    async findUnique(): Promise<any | null> { return null; }
+  },
+
+  analyticsEvent: {
+    async count(): Promise<number> { return 0; },
+    async create(): Promise<any> { return { id: 'ae-1' }; }
+  },
+
+  contentSource: {
+    async count(): Promise<number> { return 0; },
+    async findMany(): Promise<any[]> { return []; }
+  },
+
+  discoveryJob: {
+    async count(): Promise<number> { return 0; },
+    async findMany(): Promise<any[]> { return []; }
+  },
+
+  searchSyncJob: {
+    async count(): Promise<number> { return 0; },
+    async findFirst(): Promise<any | null> { return null; },
+    async findMany(): Promise<any[]> { return []; },
+    async create(): Promise<any> { return { id: 'ssj-1' }; }
   },
 
   // Raw SQL query support for relationship engine

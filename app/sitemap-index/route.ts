@@ -11,10 +11,11 @@ export async function GET() {
   const compositionChunks = Math.max(Math.ceil(totalCompositions / SITEMAP_URLS_PER_FILE), 1);
 
   // Count entities
-  const [totalSaints, totalCategories, totalFestivals] = await Promise.all([
+  const [totalSaints, totalCategories, totalFestivals, totalBooks] = await Promise.all([
     db.saint.count(),
     db.category.count(),
     db.festival.count(),
+    db.bookPublication.count({ where: { isPublic: true, status: 'PUBLISHED' } }),
   ]);
 
   const entries: { loc: string; lastmod?: string }[] = [];
@@ -36,6 +37,9 @@ export async function GET() {
   }
   if (totalFestivals > 0) {
     entries.push({ loc: `${SITE_URL}/sitemap-entities?type=festivals`, lastmod: now });
+  }
+  if (totalBooks > 0) {
+    entries.push({ loc: `${SITE_URL}/sitemap-entities?type=books`, lastmod: now });
   }
   entries.push({ loc: `${SITE_URL}/sitemap-entities?type=static`, lastmod: now });
   entries.push({ loc: `${SITE_URL}/sitemap-entities?type=canonical-search`, lastmod: now });

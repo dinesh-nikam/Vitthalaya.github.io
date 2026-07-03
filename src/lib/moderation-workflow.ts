@@ -1,6 +1,7 @@
 import { db } from '../db/client';
 import { resolveFreeConfig } from '../ai-enrichment/free-provider';
 import { v4 as uuidv4 } from 'uuid';
+import { buildEdgesForComposition } from '../knowledge-graph';
 
 /**
  * Submits a new text composition (from OCR or volunteer edit) into the moderation queue
@@ -356,6 +357,9 @@ async function promoteAndPublish(item: any): Promise<void> {
     }
 
     if (compositionId) {
+      // Auto-build knowledge graph edges
+      await buildEdgesForComposition(compositionId, tx);
+
       // Queue SearchSyncJob
       await tx.searchSyncJob.create({
         data: {

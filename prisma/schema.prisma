@@ -115,6 +115,11 @@ model Composition {
   bookEntries        BookComposition[]
   collectionEntries  CollectionComposition[]
 
+  // Personalization
+  interactions       UserInteraction[]
+  readingProgress    ReadingProgress[]
+  highlights         UserHighlight[]
+
   createdAt    DateTime   @default(now()) @map("created_at")
   updatedAt    DateTime   @updatedAt @map("updated_at")
 
@@ -566,6 +571,7 @@ model EntityGraphEdge {
   targetId     String   @map("target_id")
   relationship String
   weight       Float?   @default(1.0)
+  confidence   Float?   @default(1.0) @map("confidence") // 0.0–1.0: 1.0=deterministic FK, lower=inferred/ML
   metadata     String?  @map("metadata") // SQLite: JSON as string
   createdAt    DateTime @default(now()) @map("created_at")
 
@@ -649,6 +655,13 @@ model User {
   orders               Order[]
   addresses            Address[]
   collections          UserCollection[]
+
+  // Personalization
+  preferences          UserPreference?
+  interactions         UserInteraction[]
+  readingProgress      ReadingProgress[]
+  highlights           UserHighlight[]
+  dailyStats           DailyReadingStats[]
 
   createdAt           DateTime @default(now()) @map("created_at")
   @@map("users")
@@ -976,4 +989,246 @@ model AnalyticsEvent {
   @@index([createdAt])
   @@index([userId])
   @@map("analytics_events")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Content Discovery — Source Registry, Discovery Jobs, Health
+// ═══════════════════════════════════════════════════════════════
+
+/// Tracks content sources discovered or manually registered for automated scraping.
+model ContentSource {
+  id             String   @id @default(uuid())
+  name           String   @map("name")                // Human-readable name
+  type           String   @map("type")                 // SITEMAP | RSS | WEBSITE | YOUTUBE | COMMUNITY | SEARCH
+  url            String   @map("url")                  // Root URL
+  baseDomain     String   @map("base_domain")          // Extracted domain for grouping
+
+  // Scraping configuration
+  scraperType    String?  @map("scraper_type")         // Which scraper module to use (null = auto-detect)
+  scrapeInterval Int      @default(6) @map("scrape_interval")   // Hours between scrape runs
+  rateLimitMs    Int      @default(2000) @map("rate_limit_ms")  // Min ms between requests
+  robotsTxt      String?  @map("robots_txt")           // Cached robots.txt content
+  allowedPaths   String?  @map("allowed_paths")        // JSON array of allowed path globs
+  excludedPaths  String?  @map("excluded_paths")       // JSON array of excluded path globs
+
+  // Trust & Quality
+  trustScore          Float    @default(0.5) @map("trust_score")
+  totalCompositions   Int      @default(0) @map("total_compositions")
+  verifiedCompositions Int     @default(0) @map("verified_compositions")
+  errorRate           Float    @default(0.0) @map("error_rate")
+  lastFetchAt         DateTime? @map("last_fetch_at")
+  lastErrorAt         DateTime? @map("last_error_at")
+  lastErrorMessage    String?  @map("last_error_message")
+  consecutiveErrors   Int      @default(0) @map("consecutive_errors")
+
+  // Licensing
+  license             String?  @map("license")
+  requiresAttribution Boolean  @default(true) @map("requires_attribution")
+  attributionTemplate String?  @map("attribution_template")
+
+  // Status
+  status              String   @default("ACTIVE") @map("status")   // ACTIVE | PAUSED | DISABLED | BLOCKED
+  isAutoDiscovered    Boolean  @default(false) @map("is_auto_discovered")
+  discoveredById      String?  @map("discovered_by_id")
+  submittedById       String?  @map("submitted_by_id")
+
+  // Metadata
+  tags                String?  @map("tags")             // JSON array
+  language            String   @default("mr") @map("language")
+  region              String?  @map("region")
+  notes               String?  @map("notes")
+
+  // Relations
+  discoveryJobs       DiscoveryJob[] @relation("SourceDiscoveryJobs")
+
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([type])
+  @@index([baseDomain])
+  @@index([trustScore])
+  @@index([consecutiveErrors])
+  @@map("content_sources")
+}
+
+/// Each discovery run against a source, logging results and health metrics.
+model DiscoveryJob {
+  id            String   @id @default(uuid())
+  sourceId      String   @map("source_id")
+  source        ContentSource @relation("SourceDiscoveryJobs", fields: [sourceId], references: [id])
+
+  type          String   @map("type")              // FULL_SYNC | INCREMENTAL | HEALTH_CHECK | SOURCE_DISCOVERY
+  status        String   @default("PENDING") @map("status")  // PENDING | RUNNING | COMPLETED | FAILED
+  trigger       String   @default("SCHEDULED") @map("trigger") // SCHEDULED | MANUAL | WEBHOOK
+
+  itemsFound    Int      @default(0) @map("items_found")
+  itemsNew      Int      @default(0) @map("items_new")
+  itemsErrored  Int      @default(0) @map("items_errored")
+  itemsDuplicates Int    @default(0) @map("items_duplicates")
+  durationMs    Int      @default(0) @map("duration_ms")
+
+  errorLog      String?  @map("error_log")         // JSON array of error messages
+  resultSummary String?  @map("result_summary")    // Human-readable summary
+
+  startedAt     DateTime? @map("started_at")
+  completedAt   DateTime? @map("completed_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@index([sourceId])
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+  @@map("discovery_jobs")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Personalization — User Preferences & Interaction Tracking
+// ═══════════════════════════════════════════════════════════════
+
+/// User preferences for personalized experience
+model UserPreference {
+  id                  String   @id @default(uuid())
+  userId              String   @unique @map("user_id")
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  preferredLanguage   String   @default("mr") @map("preferred_language")
+  // mr = Marathi, hi = Hindi, en = English
+
+  favoriteSaints      String?  @map("favorite_saints")      // JSON array of saint IDs
+  favoriteDeities     String?  @map("favorite_deities")     // JSON array of deity IDs
+  favoriteCategories  String?  @map("favorite_categories")  // JSON array of category slugs
+
+  dailyAbhangEnabled  Boolean  @default(false) @map("daily_abhang_enabled")
+  dailyAbhangTime     String?  @map("daily_abhang_time")    // "06:00" for morning prayer
+  dailyAbhangSaintId  String?  @map("daily_abhang_saint_id")
+
+  readingGoalPerDay   Int?     @map("reading_goal_per_day") // Target compositions per day
+
+  notificationPush    Boolean  @default(true) @map("notification_push")
+  notificationEmail   Boolean  @default(false) @map("notification_email")
+
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+
+  @@map("user_preferences")
+}
+
+/// User interaction events for recommendation engine
+model UserInteraction {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  compositionId   String   @map("composition_id")
+  composition     Composition @relation(fields: [compositionId], references: [id], onDelete: Cascade)
+
+  interaction     String   @map("interaction")
+  // view = opened and viewed
+  // complete = read to end (scrolled past 80%)
+  // bookmark = saved to reading list
+  // share = shared with others
+  // listen = played audio
+
+  durationSeconds Int?     @map("duration_seconds") // Time spent
+  scrollPercent   Int?     @map("scroll_percent")   // How far scrolled (0-100)
+
+  metadata        String?  @map("metadata")          // JSON: device, referrer, etc.
+
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@index([compositionId, createdAt])
+  @@index([userId, interaction])
+  @@index([createdAt])
+  @@map("user_interactions")
+}
+
+/// User reading progress for continue reading feature
+model ReadingProgress {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  compositionId   String   @map("composition_id")
+  composition     Composition @relation(fields: [compositionId], references: [id], onDelete: Cascade)
+
+  scrollPosition  Int      @default(0) @map("scroll_position") // Pixels from top
+  scrollPercent   Int      @default(0) @map("scroll_percent")  // 0-100
+  completed       Boolean  @default(false) @map("completed")
+
+  lastReadAt      DateTime @default(now()) @map("last_read_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, compositionId])
+  @@index([userId, lastReadAt])
+  @@map("reading_progress")
+}
+
+/// User text highlights and notes on compositions
+model UserHighlight {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  compositionId   String   @map("composition_id")
+  composition     Composition @relation(fields: [compositionId], references: [id], onDelete: Cascade)
+
+  selectedText    String   @map("selected_text")
+  color           String   @default("saffron") @map("color") // saffron, blue, green, yellow
+  note            String?  @map("note")
+
+  startOffset     Int      @map("start_offset") // Character offset in fullText
+  endOffset       Int      @map("end_offset")
+
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([userId, compositionId])
+  @@index([userId, createdAt])
+  @@map("user_highlights")
+}
+
+/// Daily reading statistics for streaks and goals
+model DailyReadingStats {
+  id              String   @id @default(uuid())
+  userId          String   @map("user_id")
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  date            DateTime @map("date") // Date only (no time)
+
+  compositionsRead   Int   @default(0) @map("compositions_read")
+  compositionsCompleted Int @default(0) @map("compositions_completed")
+  totalMinutesRead   Int   @default(0) @map("total_minutes_read")
+  goalMet            Boolean @default(false) @map("goal_met")
+
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@unique([userId, date])
+  @@index([userId, date])
+  @@map("daily_reading_stats")
+}
+
+/// Backup audit trail — tracks every backup, verification, and restore event
+model BackupRecord {
+  id              String   @id @default(uuid())
+  type            String   @map("type") // "database", "uploads", "full"
+  status          String   @map("status") // "success", "failed", "verified", "restored"
+  filename        String   @map("filename")
+  checksumSha256  String?  @map("checksum_sha256")
+  checksumValid   Boolean? @map("checksum_valid")
+  fileSizeBytes   Int?     @map("file_size_bytes")
+  durationMs      Int?     @map("duration_ms")
+  errorMessage    String?  @map("error_message")
+  metadata        String?  @map("metadata") // JSON string for extra details
+
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+  @@map("backup_records")
 }

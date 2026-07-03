@@ -7,7 +7,7 @@
 
 import { db } from '../src/db/client';
 
-const TARGET_HOST = 'http://localhost:3000';
+const TARGET_HOST = process.env.TARGET_HOST || 'http://localhost:3001';
 
 interface PageTestResult {
   url: string;

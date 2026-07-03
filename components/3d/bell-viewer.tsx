@@ -166,6 +166,11 @@ export function BellViewer() {
 
     // Swing trigger function
     const triggerSwing = () => {
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (prefersReducedMotion) {
+        playChime();
+        return;
+      }
       // Add a sudden impulse (push the bell)
       swingVelocity = 12.0; // Angled velocity kick
       playChime();
@@ -181,7 +186,10 @@ export function BellViewer() {
     
     // Mouseenter hover trigger
     const onMouseEnter = () => {
-      triggerSwing();
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!prefersReducedMotion) {
+        triggerSwing();
+      }
     };
     domElement.addEventListener('mouseenter', onMouseEnter);
 

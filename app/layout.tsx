@@ -3,6 +3,8 @@ import { Inter, Noto_Sans_Devanagari, Tiro_Devanagari_Marathi } from 'next/font/
 import { websiteSchema } from '@/src/lib/seo';
 import { ConsentBanner } from '@/components/consent-banner';
 import { FloatingPlayer } from '@/components/floating-player';
+import { BottomTabBar } from '@/components/bottom-tab-bar';
+import { SearchOverlay } from '@/components/search-overlay';
 import './globals.css';
 
 const inter = Inter({
@@ -76,28 +78,39 @@ export default function RootLayout({
             __html: JSON.stringify(websiteSchema()),
           }}
         />
-        <div className="relative flex min-h-dvh flex-col">
-          <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-sm">
-            <div className="container mx-auto flex h-16 items-center justify-between px-4">
-              <a href="/" className="font-marathiHeading text-xl text-saffron">
-                डिजिटल पंढरपूर
-              </a>
-              <HeaderNav />
-            </div>
-          </header>
-          <main className="flex-1" id="main-content">
-            <Providers>{children}</Providers>
-          </main>
-          <footer className="border-t py-8 bg-saffron/5">
-            <div className="container mx-auto px-4 text-center">
-              <p className="text-sm text-muted-foreground">
-                © २०२६ डिजिटल पंढरपूर. मराठी भक्ती साहित्याचे डिजिटल संग्रह.
-              </p>
-            </div>
-          </footer>
-        </div>
+        <Providers>
+          <div className="relative flex min-h-dvh flex-col">
+            {/* Skip Navigation Link - WCAG 2.4.1 */}
+            <a
+              href="#main-content"
+              className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-lg focus:bg-saffron focus:px-4 focus:py-2 focus:text-white focus:outline-none focus:ring-2 focus:ring-white"
+            >
+              मुख्य सामग्रीवर जा
+            </a>
+            <header role="banner" className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-sm">
+              <div className="container mx-auto flex h-16 items-center justify-between px-4">
+                <a href="/" className="font-marathiHeading text-xl text-saffron">
+                  डिजिटल पंढरपूर
+                </a>
+                <HeaderNav />
+              </div>
+            </header>
+            <main role="main" aria-label="मुख्य सामग्री" className="flex-1 pb-16 lg:pb-0" id="main-content">
+              {children}
+            </main>
+            <footer role="contentinfo" className="border-t py-8 bg-saffron/5">
+              <div className="container mx-auto px-4 text-center">
+                <p className="text-sm text-muted-foreground">
+                  © २०२६ डिजिटल पंढरपूर. मराठी भक्ती साहित्याचे डिजिटल संग्रह.
+                </p>
+              </div>
+            </footer>
+          </div>
+        </Providers>
         <ConsentBanner />
         <FloatingPlayer />
+        <BottomTabBar />
+        <SearchOverlay />
         <script
           dangerouslySetInnerHTML={{
             __html: `

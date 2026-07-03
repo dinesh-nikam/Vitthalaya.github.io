@@ -6,15 +6,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // 1. Authenticate with WORKER_SECRET_KEY
     const authHeader = request.headers.get('authorization');
     const secretKey = (() => {
-    const key = process.env.WORKER_SECRET_KEY;
-    if (!key && process.env.NODE_ENV === 'production') {
-      throw new Error('FATAL: WORKER_SECRET_KEY is required in production. Set environment variable.');
-    }
-    if (!key) {
-      console.warn('⚠️ WORKER_SECRET_KEY not set. Worker endpoint will reject requests in production.');
-    }
-    return key || '';
-  })();
+      const key = process.env.WORKER_SECRET_KEY;
+      if ((!key || key.trim() === '') && process.env.NODE_ENV === 'production') {
+        throw new Error('FATAL: WORKER_SECRET_KEY is required in production. Set environment variable.');
+      }
+      if (!key || key.trim() === '') {
+        console.warn('⚠️ WORKER_SECRET_KEY not set. Using dev fallback secret key.');
+        return 'dev-worker-secret';
+      }
+      return key;
+    })();
 
     let token = '';
     if (authHeader && authHeader.startsWith('Bearer ')) {

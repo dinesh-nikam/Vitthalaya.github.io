@@ -33,6 +33,7 @@ export {
   getEdgeStatistics,
   getEdgesForEntity,
   bulkImportEdges,
+  buildEdgesForComposition,
 } from './relationship-engine';
 export type {
   EdgeRecord,
