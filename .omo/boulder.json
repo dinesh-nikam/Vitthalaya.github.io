@@ -9,7 +9,21 @@
   "session_origins": {
     "opencode:ses_0d965787fffeWjmBpVRSAUPrES": "direct"
   },
-  "task_sessions": {},
+  "task_sessions": {
+    "todo:1": {
+      "task_key": "todo:1",
+      "task_label": "1",
+      "task_title": "Git State Audit & Commit",
+      "session_id": "opencode:ses_0d94e89b5ffe6ba7Y0LLFyzj1h",
+      "agent": "Sisyphus-Junior",
+      "category": "quick",
+      "updated_at": "2026-07-03T07:34:55.156Z",
+      "started_at": "2026-07-03T06:36:41.806Z",
+      "status": "completed",
+      "ended_at": "2026-07-03T07:34:55.156Z",
+      "elapsed_ms": 3493350
+    }
+  },
   "schema_version": 2,
   "works": {
     "production-verification-legacy": {
@@ -17,7 +31,7 @@
       "active_plan": "C:\\Users\\Dinesh Nikam\\Desktop\\mirai\\varkari\\.omo\\plans\\production-verification.md",
       "plan_name": "production-verification",
       "started_at": "2026-07-03T06:31:09.938Z",
-      "updated_at": "2026-07-03T06:36:41.806Z",
+      "updated_at": "2026-07-03T07:34:55.156Z",
       "session_ids": [
         "opencode:ses_0d965787fffeWjmBpVRSAUPrES"
       ],
@@ -33,11 +47,15 @@
           "session_id": "opencode:ses_0d94e89b5ffe6ba7Y0LLFyzj1h",
           "agent": "Sisyphus-Junior",
           "category": "quick",
-          "updated_at": "2026-07-03T06:36:41.806Z",
+          "updated_at": "2026-07-03T07:34:55.156Z",
           "started_at": "2026-07-03T06:36:41.806Z",
-          "status": "running"
+          "status": "completed",
+          "ended_at": "2026-07-03T07:34:55.156Z",
+          "elapsed_ms": 3493350
         }
       }
     }
-  }
+  },
+  "active_work_id": "production-verification-legacy",
+  "updated_at": "2026-07-03T07:34:55.156Z"
 }
