@@ -151,7 +151,7 @@ export function VitthalayaShell({
       {/* Footer Navigation */}
       <footer className="pt-16 border-t pt-8">
         <div className="container mx-auto px-4 flex flex-wrap justify-between items-center gap-4">
-          {['Explore', 'Library', 'Saints', 'Festivals', 'Learn', 'Wari'].map((label) => {
+          {['Explore', 'Library', 'Saints', 'Festivals', 'Learn', 'Wari', 'About', 'Donate'].map((label) => {
             const href = label === 'Festivals' ? '/festival' : `/${label.toLowerCase()}`;
             return (
               <Link key={label} href={href} className="text-saffron-300 hover:text-saffron-400 transition-colors duration-300 text-sm flex items-center gap-1">

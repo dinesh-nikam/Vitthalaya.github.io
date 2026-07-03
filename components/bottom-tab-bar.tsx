@@ -31,6 +31,8 @@ const MORE_ITEMS = [
   { href: '/learn', icon: GraduationCap, label: 'शिका', desc: 'इतिहास आणि संस्कृती' },
   { href: '/community', icon: Users, label: 'समुदाय', desc: 'लीडरबोर्ड आणि योगदान' },
   { href: '/store', icon: ShoppingBag, label: 'भंडार', desc: 'पुस्तके आणि अधिक' },
+  { href: '/about', icon: BookOpen, label: 'बद्दल', desc: 'डिजिटल पंढरपूरबद्दल' },
+  { href: '/donate', icon: ExternalLink, label: 'सहयोग', desc: 'आमच्या कार्यात सहयोग करा' },
   { href: '/account', icon: ExternalLink, label: 'खाते', desc: 'प्रोफाइल आणि सेटिंग्ज' },
 ];
 

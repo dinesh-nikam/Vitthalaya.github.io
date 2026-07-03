@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Search, User, BookOpen, BarChart3, Settings, LogOut, ShoppingBag } from 'lucide-react';
 import { CartIcon } from './cart-icon';
+import { ThemeToggle } from './theme-toggle';
 
 const PILLAR_LINKS = [
   { href: '/explore', label: 'एक्सप्लोर' },
@@ -17,6 +18,8 @@ const PILLAR_LINKS = [
   { href: '/saints', label: 'संत' },
   { href: '/wari', label: 'वारी' },
   { href: '/learn', label: 'शिका' },
+  { href: '/about', label: 'बद्दल' },
+  { href: '/donate', label: 'सहयोग' },
 ];
 
 export function HeaderNav() {
@@ -87,6 +90,9 @@ export function HeaderNav() {
       {/* Cart */}
       <CartIcon />
 
+      {/* Theme Toggle */}
+      <ThemeToggle />
+
       {/* User Menu */}
       <div className="relative" ref={menuRef}>
         <button
@@ -130,6 +136,8 @@ export function HeaderNav() {
                   <UserMenuItem href="/reading-lists" icon={<BookOpen className="w-4 h-4" />} label="वाचन सूची" />
                   <UserMenuItem href="/orders" icon={<ShoppingBag className="w-4 h-4" />} label="ऑर्डर्स" />
                   <UserMenuItem href="/community" icon={<BarChart3 className="w-4 h-4" />} label="समुदाय" />
+                  <UserMenuItem href="/about" icon={<BookOpen className="w-4 h-4" />} label="बद्दल" />
+                  <UserMenuItem href="/donate" icon={<ShoppingBag className="w-4 h-4" />} label="सहयोग" />
                   {isAdmin && (
                     <UserMenuItem href="/admin" icon={<Settings className="w-4 h-4" />} label="प्रशासन" />
                   )}

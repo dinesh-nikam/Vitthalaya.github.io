@@ -1,7 +1,43 @@
 {
   "active_plan": "C:\\Users\\Dinesh Nikam\\Desktop\\mirai\\varkari\\.omo\\plans\\production-verification.md",
   "started_at": "2026-07-03T06:31:09.938Z",
-  "session_ids": ["ses_0d965787fffeWjmBpVRSAUPrES"],
+  "session_ids": [
+    "opencode:ses_0d965787fffeWjmBpVRSAUPrES"
+  ],
   "plan_name": "production-verification",
-  "worktree_path": null
+  "worktree_path": null,
+  "session_origins": {
+    "opencode:ses_0d965787fffeWjmBpVRSAUPrES": "direct"
+  },
+  "task_sessions": {},
+  "schema_version": 2,
+  "works": {
+    "production-verification-legacy": {
+      "work_id": "production-verification-legacy",
+      "active_plan": "C:\\Users\\Dinesh Nikam\\Desktop\\mirai\\varkari\\.omo\\plans\\production-verification.md",
+      "plan_name": "production-verification",
+      "started_at": "2026-07-03T06:31:09.938Z",
+      "updated_at": "2026-07-03T06:36:41.806Z",
+      "session_ids": [
+        "opencode:ses_0d965787fffeWjmBpVRSAUPrES"
+      ],
+      "session_origins": {
+        "opencode:ses_0d965787fffeWjmBpVRSAUPrES": "direct"
+      },
+      "worktree_path": null,
+      "task_sessions": {
+        "todo:1": {
+          "task_key": "todo:1",
+          "task_label": "1",
+          "task_title": "Git State Audit & Commit",
+          "session_id": "opencode:ses_0d94e89b5ffe6ba7Y0LLFyzj1h",
+          "agent": "Sisyphus-Junior",
+          "category": "quick",
+          "updated_at": "2026-07-03T06:36:41.806Z",
+          "started_at": "2026-07-03T06:36:41.806Z",
+          "status": "running"
+        }
+      }
+    }
+  }
 }

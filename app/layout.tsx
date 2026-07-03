@@ -48,6 +48,7 @@ export const metadata: Metadata = {
 
 import { Providers } from '@/components/providers';
 import { HeaderNav } from '@/components/header-nav';
+import { SiteFooter } from '@/components/site-footer';
 
 export default function RootLayout({
   children,
@@ -98,13 +99,7 @@ export default function RootLayout({
             <main role="main" aria-label="मुख्य सामग्री" className="flex-1 pb-16 lg:pb-0" id="main-content">
               {children}
             </main>
-            <footer role="contentinfo" className="border-t py-8 bg-saffron/5">
-              <div className="container mx-auto px-4 text-center">
-                <p className="text-sm text-muted-foreground">
-                  © २०२६ डिजिटल पंढरपूर. मराठी भक्ती साहित्याचे डिजिटल संग्रह.
-                </p>
-              </div>
-            </footer>
+            <SiteFooter />
           </div>
         </Providers>
         <ConsentBanner />
