@@ -11,7 +11,7 @@
 import { db } from '@/src/db/client';
 import { SourceRegistry } from './source-registry';
 import { TrustScorer } from './trust-scorer';
-import { parseSitemap, crawlLinkGraph, discoverYouTubePlaylists } from '../scraper/discovery';
+import { parseSitemap, crawlLinkGraph, discoverYouTubePlaylists } from './scraper-discovery';
 import type {
   ContentSource,
   DiscoveryJob,
@@ -246,6 +246,7 @@ export class DiscoveryWorker {
     try {
       // Dynamic import of scraper module by name
       const scraperModule = await import(
+        /* webpackIgnore: true */
         `../scraper/${source.scraperType}`
       ).catch(() => null);
 
