@@ -13,6 +13,7 @@ import {
   Sun
 } from 'lucide-react';
 import { V4PageShell, V4Section } from '@/components/v4-page-shell';
+import Image from 'next/image';
 
 export default function LearnPage() {
   const [activeSection, setActiveSection] = React.useState<'overview' | 'traditions' | 'concepts' | 'timeline'>('overview');
@@ -95,13 +96,31 @@ export default function LearnPage() {
 
           {/* Section 1: Overview */}
           {activeSection === 'overview' && (
-            <div className="space-y-6 animate-fadeIn">
+            <div className="space-y-6 animate-fadeIn text-left">
               <V4Section title="भक्ती चळवळ आणि वारकरी संप्रदाय">
-                <p className="text-foreground/80 leading-relaxed font-marathi text-base sm:text-lg">
-                  महाराष्ट्रातील भक्ती चळवळ ही केवळ एक धार्मिक चळवळ नव्हती, तर ती एक महान सांस्कृतिक आणि सामाजिक क्रांती होती. 
-                  १३व्या शतकात संत ज्ञानेश्वरांनी या चळवळीचा पाया घातला, तर १७व्या शतकात संत तुकारामांनी त्यावर कळस चढवला. 
-                  या संप्रदायाचे आराध्य दैवत पंढरपूरचे विठ्ठल (पांडुरंग) असून, लक्षावधी वारकरी वर्षानुवर्षे चंद्रभागेच्या काठावर जमा होतात.
-                </p>
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+                  <div className="md:col-span-7 space-y-4">
+                    <p className="text-foreground/80 leading-relaxed font-marathi text-base sm:text-lg">
+                      महाराष्ट्रातील भक्ती चळवळ ही केवळ एक धार्मिक चळवळ नव्हती, तर ती एक महान सांस्कृतिक आणि सामाजिक क्रांती होती. 
+                      १३व्या शतकात संत ज्ञानेश्वरांनी या चळवळीचा पाया घातला, तर १७व्या शतकात संत तुकारामांनी त्यावर कळस चढवला. 
+                      या संप्रदायाचे आराध्य दैवत पंढरपूरचे विठ्ठल (पांडुरंग) असून, लक्षावधी वारकरी वर्षानुवर्षे चंद्रभागेच्या काठावर जमा होतात.
+                    </p>
+                    <p className="text-foreground/80 leading-relaxed font-marathi text-base">
+                      संत ज्ञानेश्वर, संत नामदेव, संत तुकाराम आणि संत एकनाथांनी देवभाषा संस्कृतऐवजी लोकभाषा मराठीचा वापर करून अध्यात्माचे दरवाजे सर्वांसाठी खुले केले.
+                    </p>
+                  </div>
+                  <div className="md:col-span-5 relative aspect-[4/3] rounded-2xl overflow-hidden border border-saffron/20 shadow-xl">
+                    <Image
+                      src="/images/realistic/saint-devotional.jpg"
+                      alt="Saints Devotional Gathering"
+                      fill
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      className="object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  </div>
+                </div>
+
                 <div className="grid gap-6 sm:grid-cols-2 mt-8">
                   <div className="bg-saffron-50/10 rounded-2xl p-6 border border-saffron/10">
                     <Heart className="w-8 h-8 text-saffron mb-4" />

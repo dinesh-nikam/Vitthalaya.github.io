@@ -2,6 +2,14 @@
 
 import { VitthalayaShell } from '@/components/vitthalaya-shell';
 import Link from 'next/link';
+import Image from 'next/image';
+
+const CATEGORY_COVERS: Record<string, { img: string; en: string; count: string; label: string; slug: string }> = {
+  'abhang': { img: '/images/categories/abhang.jpg', en: 'Abhang', count: '५०,०००+', label: 'अभंग', slug: '/search?type=abhang' },
+  'aarti': { img: '/images/categories/aarti.jpg', en: 'Aarti', count: '५००+', label: 'आरत्या', slug: '/search?type=aarti' },
+  'stotra': { img: '/images/categories/stotra.jpg', en: 'Stotra', count: '१,०००+', label: 'स्तोत्रे', slug: '/search?type=stotra' },
+  'bhajan': { img: '/images/categories/bhajan.jpg', en: 'Bhajan', count: '२,०००+', label: 'भजन', slug: '/search?type=bhajan' },
+};
 
 export default function LibraryPage() {
   const CONTENT_TYPES = [
@@ -40,28 +48,51 @@ export default function LibraryPage() {
           साहित्य श्रेणींचे अन्वेषण करा
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {CONTENT_TYPES.map(({ type, label, icon, desc, count, slug }) => (
-            <Link key={type} href={slug} className="group bg-saffron-50/30 rounded-xl p-6 transition-all duration-300 hover:bg-saffron-100 flex flex-col items-start gap-3">
-              <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-saffron/10 flex items-center justify-center group-hover:bg-saffron/20 transition-colors">
-                {icon && <svg className="w-7 h-7 text-saffron" dangerouslySetInnerHTML={{ __html: icon }} />}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {Object.entries(CATEGORY_COVERS).map(([type, info]) => (
+            <Link
+              key={type}
+              href={info.slug}
+              className="group relative overflow-hidden rounded-2xl aspect-[4/3] flex flex-col justify-end p-5 border border-saffron/10 transition-all duration-300 hover:border-saffron/30 hover:shadow-2xl hover:-translate-y-1"
+            >
+              <div className="absolute inset-0 z-0">
+                <Image
+                  src={info.img}
+                  alt={info.label}
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent group-hover:via-saffron-950/20 group-hover:from-saffron-950/80 transition-colors duration-300" />
               </div>
-              <span className="text-saffron-300 text-sm tracking-wide mb-1 group-hover:text-saffron-500">सूचना</span>
-              <h3 className="text-saffron-500 text-xl font-medium group-hover:text-saffron-700 transition-colors">{label}</h3>
-              <span className="mt-2 text-saffron-400 text-lg font-medium flex items-center gap-1">
-                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} stroke="currentColor" d="M21 21l-4.35-4.35m2.15-5.15a7 7 0 1 1 9.9 0l-7.65 7.65m-4.35-4.35H9" />
-                </svg>
-                {count} पढा
-              </span>
+
+              <div className="relative z-10 space-y-1 text-left">
+                <span className="text-saffron text-[10px] font-bold uppercase tracking-wider">{info.en}</span>
+                <h3 className="text-white text-xl font-bold font-marathi">{info.label}</h3>
+                <p className="text-white/60 text-xs font-mono">{info.count} रचना</p>
+              </div>
             </Link>
           ))}
         </div>
 
-        <div className="mt-12">
-          <p className="text-saffron-100 text-lg line-clamp-3">
-            संग्रहातील सर्वात जाणिवेरी लेख आणि श्रावकांच्या अनामिकांच्या शब्दांचा अन्वेषण करा.
-          </p>
+        <div className="mt-12 grid grid-cols-1 md:grid-cols-12 gap-8 items-center bg-card rounded-2xl p-8 border border-saffron/10 text-left">
+          <div className="md:col-span-7 space-y-4">
+            <h3 className="text-xl font-marathiHeading font-bold text-saffron">वारकरी ग्रंथालय</h3>
+            <p className="text-saffron-100 text-base sm:text-lg leading-relaxed font-marathi">
+              ज्ञानेश्वरांच्या ज्ञानेश्वरीपासून, तुकारामांच्या गाथेपर्यंत आणि शेकडो वर्षांच्या हस्तलिखितांपर्यंतचा हा अमूल्य सांस्कृतिक आणि आध्यात्मिक वारसा आहे.
+              प्रत्येक रचना काळजीपूर्वक जतन केली गेली आहे जेणेकरून ज्ञान अखंड वाहत राहील.
+            </p>
+          </div>
+          <div className="md:col-span-5 relative aspect-[4/3] rounded-xl overflow-hidden border border-saffron/20 shadow-md">
+            <Image
+              src="/images/realistic/ancient-manuscript.jpg"
+              alt="Ancient Manuscript"
+              fill
+              sizes="(max-width: 768px) 100vw, 33vw"
+              className="object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+          </div>
         </div>
       </div>
     </VitthalayaShell>

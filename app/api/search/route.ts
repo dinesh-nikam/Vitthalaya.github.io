@@ -7,6 +7,12 @@ import {
   type HighlightedSearchResult,
 } from '@/src/lib/search-client';
 import { hybridSearch } from '@/src/lib/semantic-search';
+import {
+  errorResponse,
+  parsePagination,
+  buildPagination,
+  CORS_HEADERS,
+} from '@/src/lib/api-response';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
@@ -15,7 +21,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const mode = searchParams.get('mode') || 'search';
 
     if (!query || query.length < 1) {
-      return NextResponse.json({ results: [], pagination: { total: 0, page: 1, limit: 20, totalPages: 0 } });
+      return NextResponse.json(
+        { results: [], pagination: { total: 0, page: 1, limit: 20, totalPages: 0 } },
+        { headers: CORS_HEADERS }
+      );
     }
 
     // Mode: suggestions
@@ -24,9 +33,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         getSearchSuggestions(query),
         getEntitySuggestions(query),
       ]);
-      return NextResponse.json({
-        suggestions: [...searchSuggestions, ...entitySuggestions].slice(0, 12),
-      });
+      return NextResponse.json(
+        { suggestions: [...searchSuggestions, ...entitySuggestions].slice(0, 12) },
+        { headers: CORS_HEADERS }
+      );
     }
 
     // Build filters from query params
@@ -41,8 +51,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     if (hasAudio === 'true') filters.hasAudio = true;
 
     // Pagination
-    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
-    const limit = Math.min(50, Math.max(1, parseInt(searchParams.get('limit') || '20', 10)));
+    const { page, limit } = parsePagination(searchParams);
 
     // Enable semantic search by default (can be disabled via query param)
     const useSemantic = searchParams.get('semantic') !== 'false';
@@ -89,40 +98,38 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const paginatedResults = results.slice(startIndex, startIndex + limit);
     const total = results.length;
 
-    return NextResponse.json({
-      results: paginatedResults.map((doc) => ({
-        id: doc.id,
-        titleMarathi: doc.titleMarathi,
-        titleTranslit: doc.titleTranslit,
-        slug: doc.slug,
-        type: doc.type,
-        saintName: doc.saintName,
-        saintTranslit: 'saintTranslit' in doc ? doc.saintTranslit : null,
-        deityName: doc.deityName,
-        hasAudio: doc.hasAudio,
-        snippet: doc.fullText,
-        formatted: '_formatted' in doc && doc._formatted ? {
-          titleMarathi: doc._formatted.titleMarathi,
-          fullText: doc._formatted.fullText,
-          saintName: doc._formatted.saintName,
-          deityName: doc._formatted.deityName,
-        } : undefined,
-        // Include hybrid search metadata if available
-        _score: '_hybridScore' in doc ? (doc as any)._hybridScore : undefined,
-        _source: '_source' in doc ? (doc as any)._source : undefined,
-      })),
-      pagination: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
+    return NextResponse.json(
+      {
+        results: paginatedResults.map((doc) => ({
+          id: doc.id,
+          titleMarathi: doc.titleMarathi,
+          titleTranslit: doc.titleTranslit,
+          slug: doc.slug,
+          type: doc.type,
+          saintName: doc.saintName,
+          saintTranslit: 'saintTranslit' in doc ? doc.saintTranslit : null,
+          deityName: doc.deityName,
+          hasAudio: doc.hasAudio,
+          snippet: doc.fullText,
+          formatted: '_formatted' in doc && doc._formatted ? {
+            titleMarathi: doc._formatted.titleMarathi,
+            fullText: doc._formatted.fullText,
+            saintName: doc._formatted.saintName,
+            deityName: doc._formatted.deityName,
+          } : undefined,
+          // Include hybrid search metadata if available
+          _score: '_hybridScore' in doc ? (doc as any)._hybridScore : undefined,
+          _source: '_source' in doc ? (doc as any)._source : undefined,
+        })),
+        pagination: buildPagination(page, limit, total),
+        // Include search type in response for debugging/analytics
+        searchType,
       },
-      // Include search type in response for debugging/analytics
-      searchType,
-    });
+      { headers: CORS_HEADERS }
+    );
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error('Search API error:', err);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return errorResponse(msg, 500);
   }
 }

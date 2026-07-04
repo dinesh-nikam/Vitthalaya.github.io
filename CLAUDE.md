@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Common Development Commands
+## Development Commands
 
 - Development server: `bun dev`
 - Build for production: `bun build`
@@ -24,11 +24,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Architecture Overview
 
 - **Tech Stack**: Next.js 15 (App Router), React 19, TypeScript (strict mode)
-- **Database**: PostgreSQL via Prisma ORM
-- **Search**: Meilisearch with Devanagari and Roman transliteration support
-- **Runtime**: Bun (uses `Bun.env`, `Bun.file()`, `$` from `bun:shell`)
+- **Database**: PostgreSQL accessed via Prisma ORM
+- **Search**: Meilisearch with support for Devanagari and Roman transliteration
+- **Runtime**: Bun (utilizes `Bun.env`, `Bun.file()`, and `$` from `bun:shell`)
 
-- **Canonical Workflow**: Uses canonical IDs to deduplicate compositions from multiple sources. See `src/canonical/` for implementation.
+- **Canonical Workflow**: Uses canonical IDs to deduplicate compositions from multiple sources. Implementation located in `src/canonical/`.
 
 - **Data Model**: Core Prisma entities include Saint, Composition, Deity, Festival, Category, Temple, Book, and EntityGraphEdge for knowledge graph relationships.
 
@@ -43,7 +43,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **API Routes**: Key routes include `/api/search`, `/api/graph/*`, `/api/festival/current`, `/api/scrape` (disabled in early phases).
 
-- **Testing**: Uses `bun:test`; run a single test with `bun test path/to/file.test.ts`; all tests with `bun test`.
+- **Testing**: Uses `bun:test`; run a single test with `bun test path/to/file.test.ts`; run all tests with `bun test`.
 
 ## Typical Workflow
 

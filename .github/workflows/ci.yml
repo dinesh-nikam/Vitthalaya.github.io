@@ -1,46 +1,57 @@
-name: CI
+name: CI / CD Pipeline
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
-    branches: [main]
+    branches: [ main ]
 
 jobs:
-  lint:
-    name: Lint
+  build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-      - run: bun install --frozen-lockfile
-      - run: bun run lint
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-  typecheck:
-    name: Type Check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
         with:
-          bun-version: latest
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - run: bun install --frozen-lockfile
-      - run: bun run typecheck
+          node-version: '18.x'
 
-  test:
-    name: Unit Tests
-    runs-on: ubuntu-latest
-    env:
-      NODE_ENV: test
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint code
+        run: npm run lint
+
+      - name: Type check (tsc --noEmit)
+        run: npm run typecheck
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Build production bundle
+        run: npm run build
+
+      - name: Archive build artifacts
+        uses: actions/upload-artifact@v3
         with:
-          bun-version: latest
-      - run: bun install --frozen-lockfile
-      - run: bun test tests/unit/ --timeout 30000
+          name: nextjs-build
+          path: .next
+
+  # Deploy to Vercel on push to main
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout repository (for deployment)
+        uses: actions/checkout@v3
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: .

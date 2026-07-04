@@ -7,10 +7,10 @@ import { SAINTS_COLLECTION } from '@/src/lib/assets-registry';
 
 // Map slugs to curated images from SAINTS_COLLECTION for premium layout
 const SAINT_IMAGES: Record<string, string> = {
-  'tukaram-maharaj': SAINTS_COLLECTION[10]?.url || SAINTS_COLLECTION[0].url, // Dehu Woods / Meditation
-  'dnyaneshwar-maharaj': SAINTS_COLLECTION[0].url, // Meditation
-  'namdev-maharaj': SAINTS_COLLECTION[7]?.url || SAINTS_COLLECTION[0].url, // Reading scriptures
-  'eknath-maharaj': SAINTS_COLLECTION[3].url, // Light of knowledge
+  'tukaram-maharaj': '/images/saints/tukaram-birthplace.jpg',
+  'dnyaneshwar-maharaj': '/images/saints/dnyaneshwar.jpg',
+  'namdev-maharaj': '/images/registry/s18.jpg',
+  'eknath-maharaj': '/images/realistic/ancient-manuscript.jpg',
 };
 
 // Fallback generator if slug not in mapping

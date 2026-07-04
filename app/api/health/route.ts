@@ -8,6 +8,7 @@
 
 import { NextResponse } from 'next/server';
 import { db } from '@/src/db/client';
+import { CORS_HEADERS } from '@/src/lib/api-response';
 
 interface HealthCheckResult {
   status: 'healthy' | 'degraded' | 'unhealthy';
@@ -43,7 +44,7 @@ export async function GET(): Promise<NextResponse<HealthCheckResult>> {
   try {
     await db.$queryRaw`SELECT 1`;
     checks.database = 'ok';
-  } catch (err: any) {
+  } catch (err) {
     checks.database = 'error';
     status = 'unhealthy';
     console.error('[Health] Database check failed:', err);
@@ -130,5 +131,11 @@ export async function GET(): Promise<NextResponse<HealthCheckResult>> {
 
   const httpStatus = status === 'healthy' ? 200 : status === 'degraded' ? 200 : 503;
 
-  return NextResponse.json(result, { status: httpStatus });
+  return NextResponse.json(result, {
+    status: httpStatus,
+    headers: {
+      ...CORS_HEADERS,
+      'Cache-Control': 'no-cache',
+    },
+  });
 }

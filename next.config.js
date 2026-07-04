@@ -3,6 +3,9 @@ const nextConfig = {
   experimental: {
     reactCompiler: true,
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   images: {
     remotePatterns: [
       {

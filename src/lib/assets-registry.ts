@@ -933,6 +933,28 @@ export const HERITAGE_COLLECTION: ImageAsset[] = [
   }
 ];
 
+const LOCAL_REGISTRY_IDS = new Set([
+  's11', 's12', 's13', 's14', 's16', 's17', 's18',
+  'p1', 'p3', 'p5', 'p12', 'p17', 'p19',
+  'w1', 'w5', 'w6', 'w7', 'w12', 'w13', 'w16',
+  'f2', 'f18',
+  'h1', 'h13'
+]);
+
+const updateCollectionUrls = (collection: ImageAsset[]) => {
+  for (const item of collection) {
+    if (LOCAL_REGISTRY_IDS.has(item.id)) {
+      item.url = `/images/registry/${item.id}.jpg`;
+    }
+  }
+};
+
+updateCollectionUrls(SAINTS_COLLECTION);
+updateCollectionUrls(PANDHARPUR_COLLECTION);
+updateCollectionUrls(WARI_COLLECTION);
+updateCollectionUrls(FESTIVAL_COLLECTION);
+updateCollectionUrls(HERITAGE_COLLECTION);
+
 export const IMAGE_COLLECTIONS = {
   saints: SAINTS_COLLECTION,
   pandharpur: PANDHARPUR_COLLECTION,
@@ -940,3 +962,4 @@ export const IMAGE_COLLECTIONS = {
   festivals: FESTIVAL_COLLECTION,
   heritage: HERITAGE_COLLECTION
 };
+

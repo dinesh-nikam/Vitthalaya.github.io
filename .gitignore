@@ -9,6 +9,10 @@ bun.lockb
 # --- Next.js ---
 .next/
 out/
+.claude/
+.agents/
+.omo/
+.omx/
 
 # --- Build output ---
 dist/

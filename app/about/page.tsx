@@ -1,5 +1,6 @@
 import { canonicalMetadata } from '@/src/lib/seo';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export const metadata = {
   title: 'डिजिटल पंढरपूरबद्दल — About Digital Pandharpur',
@@ -74,22 +75,36 @@ export default function AboutPage() {
 
       {/* Mission */}
       <section className="mb-12 bg-card rounded-2xl p-8 border border-saffron/10">
-        <h2 className="text-2xl font-marathiHeading text-maroon dark:text-saffron font-bold mb-4">
-          आमचे ध्येय
-        </h2>
-        <div className="space-y-4 text-foreground/80 leading-relaxed">
-          <p>
-            डिजिटल पंढरपूर हा महाराष्ट्राच्या वारकरी संप्रदायाच्या समृद्ध साहित्यिक संपदेचा डिजिटल संग्रह आहे.
-            आमचे ध्येय म्हणजे हजारो वर्षांचे भक्ती साहित्य — अभंग, भजन, गौळणी, आरत्या आणि स्तोत्रे —
-            डिजिटल रूपात सुरक्षित करणे आणि सर्वांना सुलभ करणे.
-          </p>
-          <p>
-            हा प्लॅटफॉर्म केवळ व्यावसायिक नाही — हा एक सांस्कृतिक आणि आध्यात्मिक उपक्रम आहे.
-            प्रत्येक डिझाइन निर्णय पवित्रता, प्रामाणिकता आणि सांस्कृतिक अधिकारप्राप्तीला प्राधान्य देतो.
-          </p>
-          <p className="font-medium text-saffron dark:text-saffron-400">
-            "विठ्ठलाच्या चरणी अर्पण" — ही आमची प्रेरणा आणि दिशा आहे.
-          </p>
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center text-left">
+          <div className="md:col-span-7 space-y-4">
+            <h2 className="text-2xl font-marathiHeading text-maroon dark:text-saffron font-bold">
+              आमचे ध्येय
+            </h2>
+            <div className="space-y-4 text-foreground/80 leading-relaxed font-marathi text-sm sm:text-base">
+              <p>
+                डिजिटल पंढरपूर हा महाराष्ट्राच्या वारकरी संप्रदायाच्या समृद्ध साहित्यिक संपदेचा डिजिटल संग्रह आहे.
+                आमचे ध्येय म्हणजे हजारो वर्षांचे भक्ती साहित्य — अभंग, भजन, गौळणी, आरत्या आणि स्तोत्रे —
+                डिजिटल रूपात सुरक्षित करणे आणि सर्वांना सुलभ करणे.
+              </p>
+              <p>
+                हा प्लॅटफॉर्म केवळ व्यावसायिक नाही — हा एक सांस्कृतिक आणि आध्यात्मिक उपक्रम आहे.
+                प्रत्येक डिझाइन निर्णय पवित्रता, प्रामाणिकता आणि सांस्कृतिक अधिकारप्राप्तीला प्राधान्य देतो.
+              </p>
+              <p className="font-medium text-saffron dark:text-saffron-400">
+                "विठ्ठलाच्या चरणी अर्पण" — ही आमची प्रेरणा आणि दिशा आहे.
+              </p>
+            </div>
+          </div>
+          <div className="md:col-span-5 relative aspect-[4/3] rounded-xl overflow-hidden border border-saffron/20 shadow-lg">
+            <Image
+              src="/images/realistic/pandharpur-temple.jpg"
+              alt="Pandharpur Temple spire"
+              fill
+              sizes="(max-width: 768px) 100vw, 33vw"
+              className="object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+          </div>
         </div>
       </section>
 

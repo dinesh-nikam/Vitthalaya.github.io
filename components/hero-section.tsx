@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Search } from 'lucide-react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Dynamically import Three.js components to optimize loading performance (Lighthouse 95+)
 const DeepakViewer = dynamic(
@@ -19,7 +20,35 @@ const SEARCH_EXAMPLES = [
   'गणपती वंदन',
 ];
 
+const HERO_SLIDES = [
+  {
+    kicker: 'पायी पंढरीची वारी | The Pilgrimage',
+    titleLine1: 'महाराष्ट्राचे',
+    titleLine2: 'आध्यात्मिक दालन',
+    description: 'ज्ञानेश्वरांच्या हरिपाठापासून ते तुकारामांच्या गाथ्यापर्यंत, महाराष्ट्राच्या वारकरी संस्कृती आणि भक्ती परंपरेचा पवित्र डिजिटल संग्रह.',
+    video: '/videos/wari-loop.mp4',
+    fallbackImg: '/images/realistic/wari-procession.jpg'
+  },
+  {
+    kicker: 'काकड आरती व उपासना | The Temple Rituals',
+    titleLine1: 'पंढरीचे',
+    titleLine2: 'दिव्य दर्शन',
+    description: 'विठू माऊलीच्या चरणी अर्पण केलेल्या आरत्या, स्तोत्र आणि काकड आरती संग्रहाचा मनमोहक संग्रह, थेट मंदिराच्या गर्भगृहातून.',
+    video: '/videos/aarti-loop.mp4',
+    fallbackImg: '/images/realistic/temple-aarti.jpg'
+  },
+  {
+    kicker: 'कीर्तन आणि भजन संग्रह | The Devotional Chants',
+    titleLine1: 'टाळ-मृदंगाचा',
+    titleLine2: 'नादब्रह्म',
+    description: 'शतकांपासून घुमणाऱ्या अभंगांचा आणि भजनांचा स्वरसंग्रह, जो वारकरी भक्तांना विठ्ठलाच्या भक्तीत तल्लीन करतो.',
+    video: '/videos/bhajan-loop.mp4',
+    fallbackImg: '/images/categories/bhajan.jpg'
+  }
+];
+
 export function HeroSection() {
+  const [currentSlide, setCurrentSlide] = React.useState(0);
   const [placeholderIndex, setPlaceholderIndex] = React.useState(0);
   const [searchQuery, setSearchQuery] = React.useState('');
   const [prefersReducedMotion, setPrefersReducedMotion] = React.useState(false);
@@ -38,6 +67,14 @@ export function HeroSection() {
   }, []);
 
   React.useEffect(() => {
+    if (prefersReducedMotion) return;
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % HERO_SLIDES.length);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [prefersReducedMotion]);
+
+  React.useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     setPrefersReducedMotion(mediaQuery.matches);
   }, []);
@@ -51,7 +88,7 @@ export function HeroSection() {
           setCurrentFestival(data.nameMarathi);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   // Fetch suggestions
@@ -66,7 +103,7 @@ export function HeroSection() {
         .then((data) => {
           setSuggestions(data.suggestions || []);
         })
-        .catch(() => {});
+        .catch(() => { });
     }, 200);
 
     return () => clearTimeout(timeout);
@@ -94,12 +131,12 @@ export function HeroSection() {
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background">
       {/* Background Layers */}
       <div className="absolute inset-0 z-0">
-        <BackgroundLayers prefersReducedMotion={prefersReducedMotion} />
+        <BackgroundLayers currentSlide={currentSlide} prefersReducedMotion={prefersReducedMotion} />
       </div>
 
       {/* Main Content Overlay */}
       <div className="container mx-auto px-4 text-center relative z-10 grid md:grid-cols-12 gap-8 items-center max-w-6xl py-16">
-        
+
         {/* Left Column: Traditional typography & Search */}
         <div className="md:col-span-7 text-left space-y-6">
           {currentFestival && (
@@ -111,14 +148,46 @@ export function HeroSection() {
             </div>
           )}
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-marathiHeading text-maroon dark:text-saffron leading-tight drop-shadow-sm">
-            महाराष्ट्राचे <br />
-            <span className="text-saffron dark:text-gold font-bold">आध्यात्मिक दालन</span>
-          </h1>
+          {/* Animated Slide Copy Container */}
+          <div className="relative h-[220px] sm:h-[180px] md:h-[220px]">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentSlide}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.5, ease: 'easeInOut' }}
+                className="space-y-4 absolute inset-0 text-left"
+              >
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-saffron/10 border border-saffron/20 text-saffron text-xs font-bold tracking-wide uppercase font-sans">
+                  <span>🚩</span> {HERO_SLIDES[currentSlide].kicker}
+                </div>
 
-          <p className="text-base sm:text-lg md:text-xl text-foreground/80 leading-relaxed font-marathi max-w-xl">
-            ज्ञानेश्वरांच्या हरिपाठापासून ते तुकारामांच्या गाथ्यापर्यंत, महाराष्ट्राच्या वारकरी संस्कृती आणि भक्ती परंपरेचा पवित्र डिजिटल संग्रह.
-          </p>
+                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-marathiHeading text-maroon dark:text-saffron leading-tight drop-shadow-sm">
+                  {HERO_SLIDES[currentSlide].titleLine1} <br />
+                  <span className="text-saffron dark:text-gold font-bold">{HERO_SLIDES[currentSlide].titleLine2}</span>
+                </h1>
+
+                <p className="text-base sm:text-lg md:text-xl text-foreground/80 leading-relaxed font-marathi max-w-xl">
+                  {HERO_SLIDES[currentSlide].description}
+                </p>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Slide Indicators */}
+          <div className="flex items-center gap-2 pt-2">
+            {HERO_SLIDES.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setCurrentSlide(idx)}
+                className={`h-2 rounded-full transition-all duration-300 ${
+                  currentSlide === idx ? 'w-8 bg-saffron' : 'w-2 bg-saffron/30 hover:bg-saffron/65'
+                }`}
+                aria-label={`Slide ${idx + 1}`}
+              />
+            ))}
+          </div>
 
           {/* Search Box */}
           <div ref={searchRef} className="max-w-xl relative mt-8">
@@ -190,7 +259,7 @@ export function HeroSection() {
         <div className="md:col-span-5 flex flex-col items-center justify-center relative">
           {/* Glowing Aura Ring behind 3D Canvas */}
           <div className="absolute w-72 h-72 rounded-full bg-saffron/10 blur-3xl -z-10 animate-pulse" />
-          
+
           <div className="w-full aspect-square max-w-[380px] min-h-[280px] sm:min-h-[320px] bg-gradient-to-b from-saffron/5 to-transparent rounded-full p-4 border border-saffron/10 shadow-inner flex items-center justify-center relative">
             {/* Static SVG Diya — visible fallback while 3D loads or if WebGL unavailable */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none" aria-hidden="true">
@@ -212,7 +281,7 @@ export function HeroSection() {
             </div>
             <DeepakViewer />
           </div>
-          
+
           <div className="text-center mt-4">
             <p className="text-xs font-semibold text-saffron font-marathi uppercase tracking-wider">
               सजीव ३डी अनुभव
@@ -236,7 +305,7 @@ export function HeroSection() {
   );
 }
 
-function BackgroundLayers({ prefersReducedMotion }: { prefersReducedMotion: boolean }) {
+function BackgroundLayers({ currentSlide, prefersReducedMotion }: { currentSlide: number; prefersReducedMotion: boolean }) {
   if (prefersReducedMotion) {
     return (
       <div className="w-full h-full bg-cream dark:bg-[#121212] opacity-80" />
@@ -244,82 +313,48 @@ function BackgroundLayers({ prefersReducedMotion }: { prefersReducedMotion: bool
   }
 
   return (
-    <div className="relative w-full h-full overflow-hidden bg-gradient-to-b from-cream via-cream to-saffron/5 dark:from-[#121212] dark:to-[#1c1c1c]">
+    <div className="relative w-full h-full overflow-hidden bg-black">
+      {/* Background Videos cross-fading */}
+      {HERO_SLIDES.map((slide, index) => (
+        <div
+          key={index}
+          className="absolute inset-0 transition-opacity duration-1000 ease-in-out"
+          style={{ opacity: currentSlide === index ? 0.35 : 0 }}
+        >
+          <video
+            src={slide.video}
+            poster={slide.fallbackImg}
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover"
+          />
+        </div>
+      ))}
       
-      {/* Layer 1: Animated Stars/Particles (Sky) */}
-      <div className="absolute inset-0 opacity-40">
-        {Array.from({ length: 25 }).map((_, i) => (
-          <div
-            key={i}
-            className="absolute rounded-full bg-gold-400 animate-ping"
-            style={{
-              top: `${Math.random() * 60}%`,
-              left: `${Math.random() * 100}%`,
-              width: `${2 + Math.random() * 3}px`,
-              height: `${2 + Math.random() * 3}px`,
-              animationDuration: `${3 + Math.random() * 5}s`,
-              animationDelay: `${Math.random() * 3}s`
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Layer 2: Pandharpur Temple Silhouette in background */}
-      <div className="absolute bottom-0 right-0 left-0 h-[30vh] opacity-10 pointer-events-none select-none flex items-end">
-        <svg className="w-full h-full" viewBox="0 0 1200 400" preserveAspectRatio="none" fill="none">
-          <path
-            d="M0,400 Q150,300 300,400 T600,400 Q750,280 900,400 T1200,400 L1200,400 Z"
-            fill="#6B1E1E"
-          />
-          <path
-            d="M300,400 L350,250 L380,270 L420,180 L440,200 L470,120 L500,200 L520,180 L550,250 L580,270 L630,400 Z"
-            fill="#6B1E1E"
-          />
-        </svg>
-      </div>
-
-      {/* Layer 3: Moving Diyas (SVG water flow overlay) */}
-      <div className="absolute bottom-0 left-0 right-0 h-[15vh] opacity-25 select-none pointer-events-none">
-        <svg className="w-full h-full" viewBox="0 0 1200 200" preserveAspectRatio="none" fill="none">
-          {/* Waves */}
-          <path
-            d="M0,150 C200,120 400,170 600,140 C800,110 1000,170 1200,140 L1200,200 L0,200 Z"
-            fill="#1B6E8C"
-            opacity="0.5"
-          >
-            <animate
-              attributeName="d"
-              dur="12s"
-              repeatCount="indefinite"
-              values="
-                M0,150 C200,120 400,170 600,140 C800,110 1000,170 1200,140 L1200,200 L0,200 Z;
-                M0,140 C200,160 400,130 600,150 C800,170 1000,120 1200,140 L1200,200 L0,200 Z;
-                M0,150 C200,120 400,170 600,140 C800,110 1000,170 1200,140 L1200,200 L0,200 Z
-              "
-            />
-          </path>
-        </svg>
-      </div>
+      {/* Premium Dark Saffron & Gold Gradient Mask */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/85 via-saffron-950/20 to-black/95 mix-blend-multiply" />
+      <div className="absolute inset-0 bg-gradient-to-tr from-maroon/25 via-transparent to-gold/15" />
 
       {/* Floating Diya Sparks rising upwards */}
-      <div className="absolute inset-0 pointer-events-none z-0">
-        {Array.from({ length: 8 }).map((_, i) => (
+      <div className="absolute inset-0 pointer-events-none z-10">
+        {Array.from({ length: 12 }).map((_, i) => (
           <div
             key={i}
             className="absolute rounded-full bg-gradient-to-t from-saffron to-gold shadow-lg"
             style={{
               bottom: `${10 + Math.random() * 20}%`,
               left: `${15 + Math.random() * 70}%`,
-              width: `${8 + Math.random() * 12}px`,
-              height: `${8 + Math.random() * 12}px`,
-              opacity: 0.3 + Math.random() * 0.4,
+              width: `${6 + Math.random() * 8}px`,
+              height: `${6 + Math.random() * 8}px`,
+              opacity: 0.2 + Math.random() * 0.3,
               animation: `particle-drift ${15 + Math.random() * 10}s linear infinite`,
               animationDelay: `${Math.random() * 5}s`
             }}
           />
         ))}
       </div>
-
     </div>
   );
 }

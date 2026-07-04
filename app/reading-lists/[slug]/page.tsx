@@ -63,9 +63,9 @@ export default async function ReadingListDetailPage({ params }: Props) {
           )}
           <div className="flex items-center gap-4 mt-4 text-sm text-sand-300">
             <span>{list.compositions.length} रचना</span>
-            {list.user?.name && (
+            {(list.user?.name ?? list.creator?.name) && (
               <span className="flex items-center gap-1">
-                by {list.user.name}
+                by {list.user?.name ?? list.creator?.name}
               </span>
             )}
           </div>

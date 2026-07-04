@@ -1,6 +1,6 @@
 /**
  * Digital Pandharpur - Global Middleware
- * Applies security headers, CSRF protection, and request IDs to all responses
+ * Applies security headers, CSRF protection, CORS, and request IDs to all responses
  */
 
 import { NextResponse } from 'next/server';
@@ -15,8 +15,47 @@ const REDIRECTS: Record<string, string> = {
   '/leaderboard': '/community',
 };
 
+// CORS configuration
+const CORS_CONFIG = {
+  origin: '*',
+  methods: 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+  allowedHeaders: 'Content-Type, Authorization, X-API-Key, X-Request-Id',
+  maxAge: '86400',
+};
+
+// API route matcher
+function isApiRoute(pathname: string): boolean {
+  return pathname.startsWith('/api/');
+}
+
+// Handle CORS preflight requests
+function handleCorsOptions(): NextResponse {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': CORS_CONFIG.origin,
+      'Access-Control-Allow-Methods': CORS_CONFIG.methods,
+      'Access-Control-Allow-Headers': CORS_CONFIG.allowedHeaders,
+      'Access-Control-Max-Age': CORS_CONFIG.maxAge,
+    },
+  });
+}
+
+// Add CORS headers to API responses
+function addCorsHeaders(response: NextResponse): NextResponse {
+  response.headers.set('Access-Control-Allow-Origin', CORS_CONFIG.origin);
+  response.headers.set('Access-Control-Allow-Methods', CORS_CONFIG.methods);
+  response.headers.set('Access-Control-Allow-Headers', CORS_CONFIG.allowedHeaders);
+  return response;
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Handle CORS preflight for API routes
+  if (isApiRoute(pathname) && request.method === 'OPTIONS') {
+    return handleCorsOptions();
+  }
 
   // Apply 301 redirects for migrated routes
   const redirectTarget = REDIRECTS[pathname];
@@ -30,6 +69,11 @@ export async function middleware(request: NextRequest) {
 
   // Apply security headers
   applySecurityHeaders(response);
+
+  // Add CORS headers for API routes
+  if (isApiRoute(pathname)) {
+    addCorsHeaders(response);
+  }
 
   // Generate or propagate request ID for distributed tracing
   const requestId = request.headers.get('x-request-id') || crypto.randomUUID();

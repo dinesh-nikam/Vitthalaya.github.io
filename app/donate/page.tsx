@@ -1,5 +1,6 @@
 import { canonicalMetadata } from '@/src/lib/seo';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export const metadata = {
   title: 'सहयोग — Donate | डिजिटल पंढरपूर',
@@ -98,20 +99,34 @@ export default function DonatePage() {
 
       {/* Transparency */}
       <section className="mb-12 bg-card rounded-2xl p-8 border border-saffron/10">
-        <h2 className="text-2xl font-marathiHeading text-maroon dark:text-saffron font-bold mb-4">
-          पारदर्शकता
-        </h2>
-        <div className="space-y-4 text-foreground/80 leading-relaxed text-sm">
-          <p>
-            डिजिटल पंढरपूरला समर्थन देण्याचे सर्वोत्तम मार्ग म्हणजे <strong>तुमचा वेळ आणि ज्ञान</strong> दान करणे.
-            प्रत्येक सुधारणा, प्रत्येक नवीन रचना, प्रत्येक ऑडियो रेकॉर्डिंग — यामुळे हा संग्रह अधिक समृद्ध होतो.
-          </p>
-          <p>
-            तुम्ही GitHub वर सहयोग करू शकता, सुधारणा सूचना पाठवू शकता, किंवा तुमच्या समुदायात प्रचार करू शकता.
-          </p>
-          <p>
-            आम्ही सर्व योगदानकर्त्यांना <Link href="/community" className="text-saffron hover:underline">समुदाय पृष्ठावर</Link> मान्यता देतो.
-          </p>
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center text-left">
+          <div className="md:col-span-7 space-y-4">
+            <h2 className="text-2xl font-marathiHeading text-maroon dark:text-saffron font-bold">
+              पारदर्शकता
+            </h2>
+            <div className="space-y-4 text-foreground/80 leading-relaxed font-marathi text-sm">
+              <p>
+                डिजिटल पंढरपूरला समर्थन देण्याचे सर्वोत्तम मार्ग म्हणजे <strong>तुमचा वेळ आणि ज्ञान</strong> दान करणे.
+                प्रत्येक सुधारणा, प्रत्येक नवीन रचना, प्रत्येक ऑडियो रेकॉर्डिंग — यामुळे हा संग्रह अधिक समृद्ध होतो.
+              </p>
+              <p>
+                तुम्ही GitHub वर सहयोग करू शकता, सुधारणा सूचना पाठवू शकता, किंवा तुमच्या समुदायात प्रचार करू शकता.
+              </p>
+              <p>
+                आम्ही सर्व योगदानकर्त्यांना <Link href="/community" className="text-saffron hover:underline">समुदाय पृष्ठावर</Link> मान्यता देतो.
+              </p>
+            </div>
+          </div>
+          <div className="md:col-span-5 relative aspect-[4/3] rounded-xl overflow-hidden border border-saffron/20 shadow-lg">
+            <Image
+              src="/images/realistic/saint-devotional.jpg"
+              alt="Community Devotion"
+              fill
+              sizes="(max-width: 768px) 100vw, 33vw"
+              className="object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+          </div>
         </div>
       </section>
 

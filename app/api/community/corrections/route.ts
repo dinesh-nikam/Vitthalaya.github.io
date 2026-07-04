@@ -2,14 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/src/lib/auth';
 import { createCorrection, listCorrections, getCorrectionStats } from '@/src/community';
+import {
+  createdResponse,
+  errorResponse,
+  CORS_HEADERS,
+} from '@/src/lib/api-response';
 
 // ─── GET: List corrections (Secured) ─────────────────────────────────────────
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    const role = (session?.user as any)?.role || 'USER';
-    const sessionUserId = (session?.user as any)?.id;
+    const role = (session?.user as { role?: string })?.role || 'USER';
+    const sessionUserId = (session?.user as { id?: string })?.id;
 
     const status = request.nextUrl.searchParams.get('status') ?? undefined;
     const compositionId = request.nextUrl.searchParams.get('compositionId') ?? undefined;
@@ -20,27 +25,31 @@ export async function GET(request: NextRequest) {
     // If requesting stats, require admin/moderator
     if (request.nextUrl.searchParams.get('stats') === 'true') {
       if (role !== 'ADMIN' && role !== 'MODERATOR') {
-        return NextResponse.json({ error: 'Forbidden. Access restricted to moderators.' }, { status: 403 });
+        return errorResponse('Forbidden. Access restricted to moderators.', 403, {
+          code: 'FORBIDDEN',
+        });
       }
       const stats = await getCorrectionStats();
-      return NextResponse.json({ stats });
+      return NextResponse.json({ stats }, { headers: CORS_HEADERS });
     }
 
     // Role-based filtering: Regular users can only see their own suggestions
     let finalUserId = queryUserId;
     if (role !== 'ADMIN' && role !== 'MODERATOR') {
       if (!sessionUserId) {
-        return NextResponse.json({ error: 'Unauthorized. Please sign in.' }, { status: 401 });
+        return errorResponse('Unauthorized. Please sign in.', 401, {
+          code: 'UNAUTHORIZED',
+        });
       }
       finalUserId = sessionUserId;
     }
 
     const result = await listCorrections({ status, compositionId, userId: finalUserId, limit, offset });
-    return NextResponse.json(result);
+    return NextResponse.json(result, { headers: CORS_HEADERS });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to list corrections';
     console.error('[Community] List corrections error:', message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return errorResponse(message, 500);
   }
 }
 
@@ -50,9 +59,11 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || !session.user) {
-      return NextResponse.json({ error: 'Unauthorized. Please sign in.' }, { status: 401 });
+      return errorResponse('Unauthorized. Please sign in.', 401, {
+        code: 'UNAUTHORIZED',
+      });
     }
-    const sessionUserId = (session.user as any).id;
+    const sessionUserId = (session.user as { id: string }).id;
 
     const body = await request.json();
     const { compositionId, fieldPath, newValue, reason, diffJson } = body as {
@@ -64,41 +75,38 @@ export async function POST(request: NextRequest) {
     };
 
     // Validate required fields
+    const errors: Record<string, string> = {};
     if (!compositionId || typeof compositionId !== 'string') {
-      return NextResponse.json(
-        { error: 'compositionId is required (string)' },
-        { status: 400 }
-      );
+      errors.compositionId = 'compositionId is required (string)';
     }
-
     if (!fieldPath || typeof fieldPath !== 'string') {
-      return NextResponse.json(
-        { error: 'fieldPath is required (string)' },
-        { status: 400 }
-      );
+      errors.fieldPath = 'fieldPath is required (string)';
+    }
+    if (!newValue || typeof newValue !== 'string') {
+      errors.newValue = 'newValue is required (string)';
     }
 
-    if (!newValue || typeof newValue !== 'string') {
-      return NextResponse.json(
-        { error: 'newValue is required (string)' },
-        { status: 400 }
-      );
+    if (Object.keys(errors).length > 0) {
+      return errorResponse('Validation failed', 400, {
+        code: 'VALIDATION_ERROR',
+        details: errors,
+      });
     }
 
     // Create correction using secure sessionUserId to prevent impersonation
     const correction = await createCorrection({
-      compositionId,
+      compositionId: compositionId as string,
       userId: sessionUserId,
-      fieldPath,
-      newValue,
+      fieldPath: fieldPath as string,
+      newValue: newValue as string,
       reason,
       diffJson,
     });
 
-    return NextResponse.json(correction, { status: 201 });
+    return createdResponse(correction);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Failed to create correction';
     console.error('[Community] Create correction error:', message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return errorResponse(message, 500);
   }
 }
