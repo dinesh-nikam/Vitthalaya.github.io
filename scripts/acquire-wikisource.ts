@@ -28,18 +28,15 @@ import { AcquisitionPipeline } from '../src/crawl4ai/pipeline';
 const WIKISOURCE_API = 'https://mr.wikisource.org/w/api.php';
 const USER_AGENT = 'Vitthalaya/1.0 (content acquisition; contact@vitthalaya)';
 
-// Wikisource categories to acquire from
-const TARGET_CATEGORIES = [
-  'आरती',
-  'तुकाराम_गाथा',
-  'हरिपाठ',
-  'एकनाथ_हरिपाठ',
-  'तुकाराम_हरिपाठ',
-  'नामदेव_हरिपाठ',
-  'ज्ञानेश्वरी',
-  'भजन',
-  'स्तोत्र',
+// Wikisource categories to acquire from — names verified against
+// mr.wikisource.org (the wiki uses plural forms for most categories).
+export const TARGET_CATEGORIES = [
   'अभंग',
+  'हरिपाठ',
+  'ज्ञानेश्वरी',
+  'भजने',
+  'स्तोत्रे',
+  'गाथा',
 ] as const;
 
 // ─── Wikisource API Helpers ────────────────────────────────────
@@ -132,27 +129,57 @@ function wsUrl(title: string): string {
   return `https://mr.wikisource.org/wiki/${encodeURIComponent(title.replace(/ /g, '_'))}`;
 }
 
-// ─── Main ──────────────────────────────────────────────────────
+// ─── Reusable acquisition core ─────────────────────────────────
 
-async function main(): Promise<void> {
-  const args = process.argv.slice(2);
-  const dryRun = args.includes('--dry-run') || args.includes('--dryrun');
-  const limitArg = args.find((a) => a.startsWith('--limit='));
-  const maxPages = limitArg ? parseInt(limitArg.split('=')[1], 10) : Infinity;
+export interface WikisourceAcquireOptions {
+  dryRun?: boolean;
+  /** Cap on pages crawled (default: all discovered). */
+  maxPages?: number;
+  /** Optional category filter — only these categories are crawled. */
+  categories?: string[];
+  /** Skip the banner/phase logging (used when driven by the discovery worker). */
+  quiet?: boolean;
+}
 
-  console.log(`${'═'.repeat(60)}`);
-  console.log(`  Vitthalaya — Wikisource Bulk Acquisition`);
-  console.log(`${'═'.repeat(60)}`);
-  console.log(`  Dry run: ${dryRun ? 'YES' : 'NO'}`);
-  if (maxPages < Infinity) console.log(`  Page limit: ${maxPages}`);
-  console.log();
+export interface WikisourceAcquireResult {
+  itemsFound: number;
+  itemsNew: number;
+  itemsDuplicates: number;
+  itemsErrored: number;
+  pagesSucceeded: number;
+  pagesFailed: number;
+  durationMs: number;
+  pages: string[];
+}
+
+/**
+ * Run the Wikisource acquisition end-to-end and return real counts.
+ * Deduplication is handled by the pipeline's content-hash check, so
+ * itemsDuplicates reflects actual DB collisions, not an estimate.
+ */
+export async function acquireWikisource(options: WikisourceAcquireOptions = {}): Promise<WikisourceAcquireResult> {
+  const dryRun = options.dryRun ?? false;
+  const maxPages = options.maxPages ?? Infinity;
+  const categories = options.categories
+    ? TARGET_CATEGORIES.filter((c) => options.categories!.includes(c))
+    : [...TARGET_CATEGORIES];
+
+  if (!options.quiet) {
+    console.log(`${'═'.repeat(60)}`);
+    console.log(`  Vitthalaya — Wikisource Bulk Acquisition`);
+    console.log(`${'═'.repeat(60)}`);
+    console.log(`  Dry run: ${dryRun ? 'YES' : 'NO'}`);
+    if (maxPages < Infinity) console.log(`  Page limit: ${maxPages}`);
+    if (options.categories) console.log(`  Categories: ${categories.join(', ')}`);
+    console.log();
+  }
 
   // ─── Phase 1: Discover pages from Wikisource API ──────────
-  console.log(`📡 Phase 1: Discovering pages from ${TARGET_CATEGORIES.length} categories...`);
+  if (!options.quiet) console.log(`📡 Phase 1: Discovering pages from ${categories.length} categories...`);
 
   const allDiscovered: WsPageInfo[] = [];
 
-  for (const category of TARGET_CATEGORIES) {
+  for (const category of categories) {
     try {
       const pages = await getCategoryPages(category);
       console.log(`  📂 ${category}: ${pages.length} pages found`);
@@ -176,8 +203,10 @@ async function main(): Promise<void> {
   console.log();
 
   // ─── Phase 2: Note on deduplication ──────────────────────
-  console.log('🔍 Phase 2: Deduplication handled by pipeline (content hash)');
-  console.log(`  📄 Pages to crawl: ${uniquePages.length}`);
+  if (!options.quiet) {
+    console.log('🔍 Phase 2: Deduplication handled by pipeline (content hash)');
+    console.log(`  📄 Pages to crawl: ${uniquePages.length}`);
+  }
 
   // Apply limit
   const pagesToCrawl = maxPages < Infinity ? uniquePages.slice(0, maxPages) : uniquePages;
@@ -185,18 +214,29 @@ async function main(): Promise<void> {
   console.log(`  📄 Will crawl: ${pagesToCrawl.length} pages\n`);
 
   if (dryRun) {
-    console.log('─'.repeat(50));
-    console.log('  DRY RUN — Would crawl these pages:');
-    for (const page of pagesToCrawl) {
-      console.log(`  📄 ${page.title}`);
-      console.log(`     ${wsUrl(page.title)}`);
+    if (!options.quiet) {
+      console.log('─'.repeat(50));
+      console.log('  DRY RUN — Would crawl these pages:');
+      for (const page of pagesToCrawl) {
+        console.log(`  📄 ${page.title}`);
+        console.log(`     ${wsUrl(page.title)}`);
+      }
+      console.log(`\n  Total: ${pagesToCrawl.length} pages\n`);
     }
-    console.log(`\n  Total: ${pagesToCrawl.length} pages\n`);
-    return;
+    return {
+      itemsFound: pagesToCrawl.length,
+      itemsNew: pagesToCrawl.length,
+      itemsDuplicates: 0,
+      itemsErrored: 0,
+      pagesSucceeded: pagesToCrawl.length,
+      pagesFailed: 0,
+      durationMs: 0,
+      pages: pagesToCrawl.map((p) => p.title),
+    };
   }
 
   // ─── Phase 3: Initialize pipeline ─────────────────────────
-  console.log('⚙️  Phase 3: Initializing acquisition pipeline...');
+  if (!options.quiet) console.log('⚙️  Phase 3: Initializing acquisition pipeline...');
 
   const engine = new FetchCrawlerEngine({
     minDelayMs: 1500,
@@ -216,7 +256,7 @@ async function main(): Promise<void> {
   );
 
   // ─── Phase 4: Crawl each page through the pipeline ─────────
-  console.log('🕸️  Phase 4: Crawling pages...\n');
+  if (!options.quiet) console.log('🕸️  Phase 4: Crawling pages...\n');
 
   let totalCompositions = 0;
   let totalDuplicates = 0;
@@ -283,20 +323,56 @@ async function main(): Promise<void> {
   }
 
   // ─── Report ─────────────────────────────────────────────────
-  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+  const durationMs = Date.now() - startTime;
+  const elapsed = (durationMs / 1000).toFixed(1);
 
-  console.log(`${'═'.repeat(60)}`);
-  console.log(`  ACQUISITION COMPLETE`);
-  console.log(`${'═'.repeat(60)}`);
-  console.log(`  Pages:    ${pagesSucceeded} OK, ${pagesFailed} failed`);
-  console.log(`  Content:  ${totalCompositions} new compositions`);
-  console.log(`            ${totalDuplicates} duplicates skipped`);
-  console.log(`  Time:     ${elapsed}s`);
-  console.log(`  DB count: ${await db.composition.count()} total`);
-  console.log();
+  if (!options.quiet) {
+    console.log(`${'═'.repeat(60)}`);
+    console.log(`  ACQUISITION COMPLETE`);
+    console.log(`${'═'.repeat(60)}`);
+    console.log(`  Pages:    ${pagesSucceeded} OK, ${pagesFailed} failed`);
+    console.log(`  Content:  ${totalCompositions} new compositions`);
+    console.log(`            ${totalDuplicates} duplicates skipped`);
+    console.log(`  Time:     ${elapsed}s`);
+    console.log(`  DB count: ${await db.composition.count()} total`);
+    console.log();
+  }
+
+  return {
+    itemsFound: pagesToCrawl.length,
+    itemsNew: totalCompositions,
+    itemsDuplicates: totalDuplicates,
+    itemsErrored: pagesFailed,
+    pagesSucceeded,
+    pagesFailed,
+    durationMs,
+    pages: pagesToCrawl.map((p) => p.title),
+  };
 }
 
-main().catch((err) => {
-  console.error('Fatal:', err);
-  process.exit(1);
-});
+// ─── CLI Entry Point ───────────────────────────────────────────
+
+async function main(): Promise<void> {
+  const args = process.argv.slice(2);
+  const dryRun = args.includes('--dry-run') || args.includes('--dryrun');
+  const limitArg = args.find((a) => a.startsWith('--limit='));
+  const maxPages = limitArg ? parseInt(limitArg.split('=')[1], 10) : Infinity;
+  const categoriesArg = args.find((a) => a.startsWith('--categories='));
+  const categoryFilter: string[] | null = categoriesArg
+    ? categoriesArg.split('=')[1].split(',').map((c) => c.trim()).filter(Boolean)
+    : null;
+
+  await acquireWikisource({
+    dryRun,
+    maxPages: Number.isFinite(maxPages) ? maxPages : undefined,
+    categories: categoryFilter ?? undefined,
+  });
+}
+
+// Only run as the CLI entry when executed directly (not imported).
+if (import.meta.main) {
+  main().catch((err) => {
+    console.error('Fatal:', err);
+    process.exit(1);
+  });
+}
