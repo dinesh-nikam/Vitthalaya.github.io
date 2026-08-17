@@ -62,12 +62,13 @@ interface IaTarget {
   authorSignatures: string[];       // Lines that mark end of an abhang (e.g. "नामा ह्मणे")
   /** Parser strategy: 'marker' for "॥ NNNN ॥" boundaries, 'number-prefix' for "NNNN. " line-start boundaries */
   parserType?: 'marker' | 'number-prefix';
+  /** Skip on plain runs (duplicate corpus already in DB via another source). Force with --source=. */
+  optIn?: boolean;
 }
 
 const NAMDEV_ID = '3657990a-f0af-4661-b9f3-6de714af3571';
 const TUKARAM_ID = '4dbae91c-b434-434f-975d-8e4a8aa74a9b';
 const EKNATH_ID = '03f8d3ff-b04f-4b1b-af9d-fc32a779f385';
-const DNYANESHWAR_ID = '0ffe900b-dff0-4d94-ad27-ad43b08f5ca1';
 
 const TARGETS: IaTarget[] = [
   {
@@ -120,6 +121,13 @@ const TARGETS: IaTarget[] = [
     attribution: 'Internet Archive — Complete Sant Tukaram Gatha (Public Domain)',
     authorSignatures: ['तुका ह्मणे', 'तुका हणे', 'ह्मणे तुका', 'तुका म्हणे', 'तुका ह्मण'],
     parserType: 'number-prefix',
+    /**
+     * Skipped on plain runs: mr.wikisource.org already holds the curated
+     * Tukaram Gatha (4,583 abhangs). This OCR edition is the same corpus
+     * with different numbering, so importing it duplicates the database.
+     * Pass --source=tukaram explicitly to force the OCR edition in.
+     */
+    optIn: true,
   },
 ];
 
@@ -426,31 +434,72 @@ function abhangsToCompositions(abhangs: ParsedAbhang[], target: IaTarget, downlo
 
 // ─── Main ────────────────────────────────────────────────────────
 
-async function main(): Promise<void> {
-  const args = process.argv.slice(2);
-  const dryRun = args.includes('--dry-run') || args.includes('--dryrun');
-  const sourceFilter = args.find((a) => a.startsWith('--source='))?.split('=')[1];
-  const limitArg = args.find((a) => a.startsWith('--limit='));
-  const offsetArg = args.find((a) => a.startsWith('--offset='));
-  const maxCompositions = limitArg ? parseInt(limitArg.split('=')[1], 10) : Infinity;
-  const skipCount = offsetArg ? parseInt(offsetArg.split('=')[1], 10) : 0;
+// ─── Reusable acquisition core ─────────────────────────────────
 
-  console.log(`${'═'.repeat(60)}`);
-  console.log(`  Vitthalaya — Internet Archive OCR Acquisition`);
-  console.log(`${'═'.repeat(60)}`);
-  console.log(`  Dry run: ${dryRun ? 'YES' : 'NO'}`);
-  if (maxCompositions < Infinity) console.log(`  Composition limit: ${maxCompositions}`);
-  if (skipCount > 0) console.log(`  Skip offset: ${skipCount} abhangs`);
-  console.log();
+export interface ArchiveAcquireOptions {
+  dryRun?: boolean;
+  /** Filter targets by identifier/name substring. */
+  sourceFilter?: string;
+  /** Cap on compositions processed per target. */
+  maxCompositions?: number;
+  /** Skip N abhangs before processing (resume support). */
+  skipCount?: number;
+  /** Skip the banner logging (used when driven by the discovery worker). */
+  quiet?: boolean;
+}
+
+export interface ArchiveAcquireResult {
+  itemsFound: number;
+  itemsNew: number;
+  itemsDuplicates: number;
+  itemsErrored: number;
+  targetsProcessed: number;
+  durationMs: number;
+}
+
+/**
+ * Run the Internet Archive OCR acquisition end-to-end. Deduplication is
+ * real (pipeline content-hash check), so duplicates reflect DB collisions.
+ */
+export async function acquireInternetArchive(options: ArchiveAcquireOptions = {}): Promise<ArchiveAcquireResult> {
+  const dryRun = options.dryRun ?? false;
+  const sourceFilter = options.sourceFilter;
+  const maxCompositions = options.maxCompositions ?? Infinity;
+  const skipCount = options.skipCount ?? 0;
+
+  if (!options.quiet) {
+    console.log(`${'═'.repeat(60)}`);
+    console.log(`  Vitthalaya — Internet Archive OCR Acquisition`);
+    console.log(`${'═'.repeat(60)}`);
+    console.log(`  Dry run: ${dryRun ? 'YES' : 'NO'}`);
+    if (maxCompositions < Infinity) console.log(`  Composition limit: ${maxCompositions}`);
+    if (skipCount > 0) console.log(`  Skip offset: ${skipCount} abhangs`);
+    console.log();
+  }
 
   const targets = sourceFilter
     ? TARGETS.filter((t) => t.identifier.includes(sourceFilter) || t.name.toLowerCase().includes(sourceFilter.toLowerCase()))
-    : TARGETS;
+    : TARGETS.filter((t) => !t.optIn);
+
+  if (!sourceFilter && TARGETS.some((t) => t.optIn) && !options.quiet) {
+    console.log('  ⚠ Skipping opt-in targets (pass --source= to force): ' +
+      TARGETS.filter((t) => t.optIn).map((t) => t.identifier).join(', '));
+    console.log();
+  }
 
   if (targets.length === 0) {
-    console.error(`❌ No targets matching source filter: ${sourceFilter}`);
-    console.log(`  Available targets: ${TARGETS.map((t) => t.identifier).join(', ')}`);
-    process.exit(1);
+    if (!options.quiet) {
+      console.error(`❌ No targets matching source filter: ${sourceFilter}`);
+      console.log(`  Available targets: ${TARGETS.map((t) => t.identifier).join(', ')}`);
+    }
+    return {
+      itemsFound: 0,
+      itemsNew: 0,
+      itemsDuplicates: 0,
+      itemsErrored: 1,
+      targetsProcessed: 0,
+      durationMs: 0,
+    };
   }
 
   let totalNew = 0;
@@ -554,26 +603,59 @@ async function main(): Promise<void> {
   }
 
   // ─── Report ─────────────────────────────────────────────────
-  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+  const durationMs = Date.now() - startTime;
+  const elapsed = (durationMs / 1000).toFixed(1);
 
-  console.log(`${'═'.repeat(60)}`);
-  console.log(`  ACQUISITION COMPLETE`);
-  console.log(`${'═'.repeat(60)}`);
-  console.log(`  Target:    ${targets.map((t) => t.identifier).join(', ')}`);
-  console.log(`  New:       ${totalNew} compositions`);
-  console.log(`  Duplicate: ${totalDuplicates} skipped`);
-  console.log(`  Errors:    ${totalErrors}`);
-  console.log(`  Time:      ${elapsed}s`);
+  if (!options.quiet) {
+    console.log(`${'═'.repeat(60)}`);
+    console.log(`  ACQUISITION COMPLETE`);
+    console.log(`${'═'.repeat(60)}`);
+    console.log(`  Target:    ${targets.map((t) => t.identifier).join(', ')}`);
+    console.log(`  New:       ${totalNew} compositions`);
+    console.log(`  Duplicate: ${totalDuplicates} skipped`);
+    console.log(`  Errors:    ${totalErrors}`);
+    console.log(`  Time:      ${elapsed}s`);
 
-  if (!dryRun) {
-    const finalCount = await db.composition.count();
-    console.log(`  DB count:  ${finalCount} total`);
+    if (!dryRun) {
+      const finalCount = await db.composition.count();
+      console.log(`  DB count:  ${finalCount} total`);
+    }
+    console.log();
   }
 
-  console.log();
+  return {
+    itemsFound: targets.length,
+    itemsNew: totalNew,
+    itemsDuplicates: totalDuplicates,
+    itemsErrored: totalErrors,
+    targetsProcessed: targets.length,
+    durationMs,
+  };
 }
 
-main().catch((err) => {
-  console.error('Fatal:', err);
-  process.exit(1);
-});
+// ─── CLI Entry Point ───────────────────────────────────────────
+
+async function main(): Promise<void> {
+  const args = process.argv.slice(2);
+  const dryRun = args.includes('--dry-run') || args.includes('--dryrun');
+  const sourceFilter = args.find((a) => a.startsWith('--source='))?.split('=')[1];
+  const limitArg = args.find((a) => a.startsWith('--limit='));
+  const offsetArg = args.find((a) => a.startsWith('--offset='));
+  const maxCompositions = limitArg ? parseInt(limitArg.split('=')[1], 10) : Infinity;
+  const skipCount = offsetArg ? parseInt(offsetArg.split('=')[1], 10) : 0;
+
+  await acquireInternetArchive({
+    dryRun,
+    sourceFilter,
+    maxCompositions: Number.isFinite(maxCompositions) ? maxCompositions : undefined,
+    skipCount: skipCount > 0 ? skipCount : undefined,
+  });
+}
+
+// Only run as the CLI entry when executed directly (not imported).
+if (import.meta.main) {
+  main().catch((err) => {
+    console.error('Fatal:', err);
+    process.exit(1);
+  });
+}
