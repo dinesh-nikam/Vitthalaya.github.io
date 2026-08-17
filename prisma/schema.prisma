@@ -97,6 +97,8 @@ model Composition {
   region        String?
   source        String?         @map("source_attribution")
   audioLinks    String?         @map("audio_links") // SQLite: JSON string
+  // Alternate titles/identifiers, e.g. canonical Gatha numbers.
+  alternateTitles Json?          @map("alternate_titles")
   reviewed      Boolean         @default(false) @map("is_verified")
 
   canonicalId    String?        @map("canonical_id")
