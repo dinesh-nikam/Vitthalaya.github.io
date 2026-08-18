@@ -10,7 +10,7 @@
 import { PrismaClient } from '@prisma/client';
 import Database from 'bun:sqlite';
 
-const SQLITE_PATH = 'data/varkari.db';
+const SQLITE_PATH = process.env.SQLITE_SOURCE_PATH || 'prisma/varkari.db';
 const prisma = new PrismaClient();
 const sqlite = new Database(SQLITE_PATH, { readonly: true });
 

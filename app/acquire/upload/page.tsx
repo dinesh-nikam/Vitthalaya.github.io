@@ -20,10 +20,11 @@ import {
   X,
 } from 'lucide-react';
 import Link from 'next/link';
+import { AudioRecorder } from '@/components/audio-recorder';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// ─── Types ───────────────────────────────────────────────────
 
-type UploadTab = 'file' | 'youtube';
+type UploadTab = 'file' | 'youtube' | 'record';
 
 interface UploadResult {
   uploadId: string;
@@ -92,6 +93,9 @@ export default function UploadPage() {
   // YouTube state
   const [youtubeUrl, setYoutubeUrl] = React.useState('');
 
+  // Recording state
+  const [recordedBlob, setRecordedBlob] = React.useState<Blob | null>(null);
+
   // Processing state
   const [loading, setLoading] = React.useState(false);
   const [progressSteps, setProgressSteps] = React.useState<ProgressStep[]>([]);
@@ -123,10 +127,10 @@ export default function UploadPage() {
         { label: 'यूट्यूब मेटाडेटा मिळवत आहे...', status: 'pending' as const },
         { label: 'कॅप्शन / लिरिक्स काढत आहे...', status: 'pending' as const },
       );
-    } else if (format === 'audio') {
+    } else if (format === 'audio' || format === 'record') {
       base.push(
-        { label: 'ऑडिओ प्रक्रिया करत आहे...', status: 'pending' as const },
-        { label: 'स्पीच-टू-टेक्स्ट (व्हिस्पर)...', status: 'pending' as const },
+        { label: 'रेकॉर्डिंग सेव्‍ह करत आहे...', status: 'pending' as const },
+        { label: 'स्पीच-टू-टेक्स्ट (व्’हिस्पर)...', status: 'pending' as const },
         { label: 'श्लोक शोधत आहे...', status: 'pending' as const },
       );
     } else {
@@ -231,7 +235,7 @@ export default function UploadPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file && !youtubeUrl) return;
+    if (!file && !youtubeUrl && !recordedBlob) return;
 
     setLoading(true);
     setError(null);
@@ -239,7 +243,7 @@ export default function UploadPage() {
 
     try {
       const formData = new FormData();
-      const format = activeTab === 'youtube' ? 'youtube' : selectedFormat || 'document';
+      const format = activeTab === 'youtube' ? 'youtube' : activeTab === 'record' ? 'record' : selectedFormat || 'document';
 
       const steps = getProgressStepsForFormat(format);
       setProgressSteps(steps);
@@ -247,6 +251,9 @@ export default function UploadPage() {
 
       if (activeTab === 'youtube') {
         formData.append('url', youtubeUrl);
+      } else if (activeTab === 'record' && recordedBlob) {
+        formData.append('file', recordedBlob, `recording-${Date.now()}.webm`);
+        formData.append('isRecording', 'true');
       } else if (file) {
         formData.append('file', file);
       }
@@ -304,6 +311,7 @@ export default function UploadPage() {
     setError(null);
     setTitle('');
     setYoutubeUrl('');
+    setRecordedBlob(null);
     setSelectedFormat(null);
     setProgressSteps([]);
   };
@@ -397,6 +405,16 @@ export default function UploadPage() {
               <Youtube className="w-4 h-4" />
               <span>YouTube URL</span>
             </button>
+            <button
+              type="button"
+              onClick={() => { setActiveTab('record'); setError(null); }}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                activeTab === 'record' ? 'bg-saffron text-white shadow-md' : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <FileAudio className="w-4 h-4" />
+              <span>आवाज रेकॉर्ड करा</span>
+            </button>
           </div>
 
           {/* Tab: YouTube */}
@@ -418,6 +436,15 @@ export default function UploadPage() {
                 कोणत्याही YouTube व्हिडिओची लिंक टाका. AI आपोआप मेटाडेटा, कॅप्शन आणि लिरिक्स काढेल.
               </p>
             </div>
+          )}
+
+          {/* Tab: Record */}
+          {activeTab === 'record' && (
+            <AudioRecorder
+              disabled={loading}
+              onRecordingComplete={(blob) => setRecordedBlob(blob)}
+              onDiscard={() => setRecordedBlob(null)}
+            />
           )}
 
           {/* Tab: File */}
@@ -543,7 +570,7 @@ export default function UploadPage() {
 
           {/* Submit button */}
           <div className="flex justify-end gap-3">
-            {(file || youtubeUrl) && (
+            {(file || youtubeUrl || recordedBlob) && (
               <button
                 type="button"
                 onClick={handleReset}
@@ -558,7 +585,8 @@ export default function UploadPage() {
               disabled={
                 loading ||
                 (activeTab === 'file' && !file) ||
-                (activeTab === 'youtube' && !youtubeUrl)
+                (activeTab === 'youtube' && !youtubeUrl) ||
+                (activeTab === 'record' && !recordedBlob)
               }
               className="flex items-center gap-2 px-6 py-2.5 bg-saffron hover:bg-saffron/90 text-white font-semibold rounded-lg text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
             >

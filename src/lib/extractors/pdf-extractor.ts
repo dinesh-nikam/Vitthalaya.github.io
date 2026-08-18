@@ -159,7 +159,7 @@ export class PdfExtractor implements IExtractor {
    */
   private minimalPdfExtract(
     buffer: Buffer,
-    maxPages: number
+    _maxPages: number
   ): {
     pageCount: number;
     isEncrypted: boolean;

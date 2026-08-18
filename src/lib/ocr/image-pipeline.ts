@@ -34,7 +34,6 @@ export async function preprocessForOcr(
   options: OcrPreprocessOptions = {}
 ): Promise<{ buffer: Buffer; width: number; height: number }> {
   const {
-    deskew = true,
     denoise = true,
     enhance = true,
     threshold = 130,

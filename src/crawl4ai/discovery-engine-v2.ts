@@ -24,32 +24,8 @@
  */
 
 import { SourceRegistry } from '../discovery/source-registry';
-import type { DiscoveryCandidate, DiscoveryMethod, CrawlerTemplate } from './types';
+import type { DiscoveryCandidate, CrawlerTemplate } from './types';
 import type { CreateSourceInput } from '../discovery/types';
-
-// ─── Discovery Keywords ───────────────────────────────────────
-
-const MARATHI_DEVOTIONAL_QUERIES = [
-  'मराठी अभंग संग्रह',
-  'संत तुकाराम अभंग गाथा',
-  'मराठी आरती संग्रह',
-  'मराठी भजने',
-  'वारकरी साहित्य',
-  'संत साहित्य मराठी',
-  'हरिपाठ ज्ञानेश्वर',
-  'मराठी स्तोत्रे',
-  'नामस्मरण मराठी',
-  'भक्तीगीत मराठी',
-  'अभंगवाणी',
-  'तुकाराम गाथा ऑनलाइन',
-  'संत एकनाथ भारूड',
-  'समर्थ रामदास मनाचे श्लोक',
-  'मराठी कीर्तन संग्रह',
-  'गौळण मराठी',
-];
-
-const CRAWLABLE_EXTENSIONS = ['.html', '.htm', '.asp', '.php', ''];
-const EXCLUDED_EXTENSIONS = ['.pdf', '.zip', '.exe', '.doc', '.docx', '.jpg', '.png', '.gif', '.mp3', '.mp4'];
 
 export class DiscoveryEngineV2 {
   private discoveredUrls = new Set<string>();
@@ -60,7 +36,7 @@ export class DiscoveryEngineV2 {
    * Protected by a 60-second overall timeout to prevent hanging.
    */
   async discoverCycle(
-    existingTemplates: CrawlerTemplate[],
+    _existingTemplates: CrawlerTemplate[],
   ): Promise<DiscoveryCandidate[]> {
     // Overall timeout: abort the entire cycle after 60 seconds
     const controller = new AbortController();

@@ -24,7 +24,7 @@ export async function searchWithFallback(
   query: string,
   options: { limit?: number; indexName?: string } = {}
 ): Promise<SearchDocument[]> {
-  const { limit = 20, indexName = 'compositions' } = options;
+  const { limit = 20, indexName: _indexName = 'compositions' } = options;
 
   // Try Meilisearch through circuit breaker
   try {

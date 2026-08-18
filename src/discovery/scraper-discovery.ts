@@ -95,7 +95,7 @@ export async function checkRobotsTxt(urlStr: string, userAgent: string): Promise
     const parser = new RobotsParser(content, userAgent);
     const allowed = parser.isAllowed(parsedUrl.pathname);
     return { allowed, delayMs: parser.getCrawlDelay() || 1000 };
-  } catch (err) {
+  } catch {
     // If request fails (timeout or network error), allow with default delay
     return { allowed: true, delayMs: 1000 };
   }

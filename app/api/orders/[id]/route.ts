@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/src/db/client';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/src/lib/auth';
-import { createHmac } from 'crypto';
+import { canAccessOrder } from '@/src/lib/orders/order-access';
 
 export async function GET(
   _request: Request,
@@ -35,17 +35,18 @@ export async function GET(
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
     }
 
-    // Authorization: must be the order owner
-    const userId = session?.user ? (session.user as any).id : null;
-    const isOwner = order.userId === userId;
-
+    // Authorization: order owner (session), shareable link token, or the
+    // guest email used at checkout — same rules as the order detail page.
     const { searchParams } = new URL(_request.url);
-    const token = searchParams.get('token');
-    const secret = process.env.NEXTAUTH_SECRET || 'guest-secret-key';
-    const expectedToken = createHmac('sha256', secret).update(order.id).digest('hex');
-    const isGuestMatch = !userId && order.guestEmail && token === expectedToken;
+    const userId = session?.user ? (session.user as any).id : null;
+    const allowed = canAccessOrder({
+      order,
+      sessionUserId: userId,
+      token: searchParams.get('token'),
+      email: searchParams.get('email'),
+    });
 
-    if (!isOwner && !isGuestMatch) {
+    if (!allowed) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 

@@ -111,11 +111,6 @@ export class PlaywrightCrawlerEngine implements CrawlerEngine {
         ? await this.extractPageMetadata(page)
         : undefined;
 
-      // Get all links for future crawling
-      const links = config.mode === 'deep'
-        ? await this.extractLinks(page, url)
-        : [];
-
       this.pagesCrawled++;
 
       const result: CrawlResult = {
@@ -224,9 +219,6 @@ export class PlaywrightCrawlerEngine implements CrawlerEngine {
       return 'sitemap';
     }
 
-    // Get page content type
-    const contentType = await page.evaluate(() => document.contentType || '');
-
     // Check existing scrapers / known patterns via URL
     if (url.includes('youtube.com') || url.includes('youtu.be')) {
       return 'youtube';
@@ -296,9 +288,6 @@ export class PlaywrightCrawlerEngine implements CrawlerEngine {
       const links = Array.from(document.querySelectorAll('a[href]'))
         .map((a) => (a as HTMLAnchorElement).href)
         .filter((href) => href.startsWith('http'));
-
-      // Clean text content
-      const fullText = container?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
 
       // Remove excluded elements
       if (sel?.exclude) {

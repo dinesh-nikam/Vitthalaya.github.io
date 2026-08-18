@@ -48,7 +48,6 @@ describe('Festival Calculator - Edge Cases', () => {
 
   test('TC-DR-011: Timezone edge cases', () => {
     // India timezone (UTC+5:30)
-    const indiaOffset = 5.5 * 60; // minutes
     const IST = new Date(2026, 0, 1, 0, 0, 0);
     expect(IST).toBeDefined();
   });

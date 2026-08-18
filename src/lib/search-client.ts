@@ -185,10 +185,6 @@ export async function searchCompositions(
   } catch (error) {
     console.warn('Meilisearch failed, falling back to local database query:', error);
 
-    const translitExpanded = expandTransliteration(query);
-    const phoneticExpanded = expandPhoneticQuery(query);
-    const searchQuery = [translitExpanded, phoneticExpanded].filter(q => q !== query).join(' ') || query;
-
     // Build OR conditions for all expanded query variations
     const expandedVariations = expandPhoneticQuery(query).split(' ');
     const orConditions = [

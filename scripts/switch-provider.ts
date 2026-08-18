@@ -3,10 +3,11 @@ import path from 'path';
 
 const schemaPath = path.join(process.cwd(), 'prisma/schema.prisma');
 const dbUrl = process.env.DATABASE_URL || '';
-const isCockroach = dbUrl.includes('cockroach') || dbUrl.includes('26257');
-const targetProvider = isCockroach ? 'cockroachdb' : 'postgresql';
+const isSqlite = dbUrl.startsWith('file:') || dbUrl.startsWith('sqlite:');
+const isCockroach = !isSqlite && (dbUrl.includes('cockroach') || dbUrl.includes('26257'));
+const targetProvider = isSqlite ? 'sqlite' : (isCockroach ? 'cockroachdb' : 'postgresql');
 
-console.log(`[DB Provider Switcher] DATABASE_URL host check: ${isCockroach ? 'CockroachDB' : 'PostgreSQL'}`);
+console.log(`[DB Provider Switcher] DATABASE_URL check: ${isSqlite ? 'SQLite' : (isCockroach ? 'CockroachDB' : 'PostgreSQL')}`);
 console.log(`[DB Provider Switcher] Target provider: ${targetProvider}`);
 
 if (!fs.existsSync(schemaPath)) {
@@ -17,7 +18,7 @@ if (!fs.existsSync(schemaPath)) {
 const schema = fs.readFileSync(schemaPath, 'utf8');
 
 // Match only the provider definition within the datasource db block
-const datasourceRegex = /(datasource\s+db\s*\{[^}]*provider\s*=\s*["'])(postgresql|cockroachdb)(["'])/;
+const datasourceRegex = /(datasource\s+db\s*\{[^}]*provider\s*=\s*["'])(postgresql|cockroachdb|sqlite)(["'])/;
 
 if (!datasourceRegex.test(schema)) {
   console.error('[DB Provider Switcher] Error: Could not locate database provider in schema.prisma');

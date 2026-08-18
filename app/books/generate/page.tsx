@@ -92,7 +92,6 @@ export default function BookGeneratePage() {
 
   const [step, setStep] = useState<Step>(0);
   const [state, setState] = useState<WizardState>(INITIAL_STATE);
-  const [saintSearch, setSaintSearch] = useState('');
 
   const update = useCallback(
     (patch: Partial<WizardState>) => setState((s) => ({ ...s, ...patch })),

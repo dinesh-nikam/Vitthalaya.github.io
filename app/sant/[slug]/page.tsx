@@ -5,12 +5,7 @@ import { saintSchema, canonicalMetadata } from '@/src/lib/seo';
 import { ConchSoundButton } from '@/components/conch-sound-button';
 import { TempleViewerClient } from '@/components/temple-viewer-client';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
-
-interface Composition {
-  titleMarathi: string;
-  slug: string;
-  type: string;
-}
+import Image from 'next/image';
 
 function toDevanagariDigits(num: number): string {
   const devanagariDigits = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
@@ -98,6 +93,7 @@ export default async function SaintPage({
       slug: rel.related.slug,
     })),
     compositions: dbCompositions,
+    imageUrl: dbSaint.imageUrl,
   };
 
   // Structured timeline based on saint identity
@@ -176,6 +172,19 @@ export default async function SaintPage({
               <li className="text-foreground">{saint.name_marathi}</li>
             </ol>
           </nav>
+
+          {saint.imageUrl && (
+            <div className="relative w-32 h-32 sm:w-40 sm:h-40 mx-auto rounded-full overflow-hidden border-4 border-saffron/30 shadow-xl">
+              <Image
+                src={saint.imageUrl}
+                alt={`${saint.name_marathi} — ${saint.name_transliteration}`}
+                fill
+                sizes="160px"
+                className="object-cover"
+                priority
+              />
+            </div>
+          )}
 
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-marathiHeading text-maroon dark:text-saffron font-bold leading-tight">
             {saint.name_marathi}

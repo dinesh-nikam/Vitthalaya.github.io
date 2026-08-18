@@ -1,34 +1,11 @@
 'use client';
 
-/**
- * ThemeToggle — global dark/light mode toggle.
- * Uses localStorage + document.documentElement.classList for persistence.
- * Place in header-nav or mobile drawer for global access.
- */
 import * as React from 'react';
 import { Sun, Moon } from 'lucide-react';
+import { useTheme } from '@/src/lib/theme';
 
 export function ThemeToggle({ className = '' }: { className?: string }) {
-  const [isDark, setIsDark] = React.useState(false);
-  const [mounted, setMounted] = React.useState(false);
-
-  // Initialize from localStorage + HTML class on mount
-  React.useEffect(() => {
-    setMounted(true);
-    const stored = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const shouldBeDark = stored ? stored === 'dark' : prefersDark;
-
-    setIsDark(shouldBeDark);
-    document.documentElement.classList.toggle('dark', shouldBeDark);
-  }, []);
-
-  const toggle = () => {
-    const next = !isDark;
-    setIsDark(next);
-    document.documentElement.classList.toggle('dark', next);
-    localStorage.setItem('theme', next ? 'dark' : 'light');
-  };
+  const { isDark, toggleTheme, mounted } = useTheme();
 
   // Prevent hydration mismatch — render neutral icon until mounted
   if (!mounted) {
@@ -45,7 +22,7 @@ export function ThemeToggle({ className = '' }: { className?: string }) {
 
   return (
     <button
-      onClick={toggle}
+      onClick={toggleTheme}
       className={`p-2 rounded-lg text-muted-foreground hover:text-saffron hover:bg-saffron/10 transition-colors ${className}`}
       aria-label={isDark ? 'उजळ मोड बदला' : 'गडद मोड बदला'}
       title={isDark ? 'उजळ मोड' : 'गडद मोड'}

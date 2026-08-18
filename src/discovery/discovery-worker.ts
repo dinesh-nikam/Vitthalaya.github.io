@@ -11,7 +11,8 @@
 import { db } from '@/src/db/client';
 import { SourceRegistry } from './source-registry';
 import { TrustScorer } from './trust-scorer';
-import { parseSitemap, crawlLinkGraph, discoverYouTubePlaylists } from './scraper-discovery';
+import { runAcquisitionForSource } from './acquire-runner';
+import { selectDueSources } from './due-sources';
 import type {
   ContentSource,
   DiscoveryJob,
@@ -72,12 +73,13 @@ export class DiscoveryWorker {
     let itemsDuplicates = 0;
     let itemsErrored = 0;
     let errorMessage: string | null = null;
+    let resultSummary: string | null = null;
 
     // Create the job record
     const job = await db.discoveryJob.create({
       data: {
         sourceId,
-        type: 'FULL_SYNC',
+        type: trigger === 'SCHEDULED' ? 'INCREMENTAL' : 'FULL_SYNC',
         status: 'RUNNING',
         trigger,
         itemsFound: 0,
@@ -90,17 +92,23 @@ export class DiscoveryWorker {
     }) as unknown as DiscoveryJob;
 
     try {
-      // 1. Resolve scraper module
-      const scraper = await this.resolveScraper(source);
+      // 1. Route to the matching acquisition implementation (wikisource /
+      // archive / generic pipeline) and get REAL dedup counts.
+      // Scheduled cycles crawl incrementally (skip pages whose wikitext didn't
+      // change, per the importer's persisted revision state); manual runs do a
+      // full re-crawl so the admin "run" button always sees the freshest data.
+      const result = await runAcquisitionForSource(source, {
+        incremental: trigger === 'SCHEDULED',
+      });
 
-      if (!scraper) {
-        // Auto-detect scraper based on source type
-        const discoveredItems = await this.autoDiscover(source);
+      itemsFound = result.itemsFound;
+      itemsNew = result.itemsNew;
+      itemsDuplicates = result.itemsDuplicates;
+      itemsErrored = result.itemsErrored;
+      resultSummary = result.summary;
 
-        itemsFound = discoveredItems.totalFound;
-        itemsNew = discoveredItems.totalNew;
-        itemsDuplicates = discoveredItems.duplicates;
-        itemsErrored = discoveredItems.errors;
+      if (result.status === 'FAILED') {
+        throw new Error(result.error ?? 'Acquisition failed');
       }
 
       // 2. Update source health on success
@@ -126,6 +134,7 @@ export class DiscoveryWorker {
         itemsErrored,
         durationMs,
         errorLog: errorMessage ? JSON.stringify([errorMessage]) : null,
+        resultSummary,
         completedAt: new Date(),
       },
     });
@@ -172,7 +181,14 @@ export class DiscoveryWorker {
     trigger: string = 'SCHEDULED',
     concurrency: number = 3,
   ): Promise<DiscoveryReport> {
-    const activeSources = await SourceRegistry.getActive();
+    const allSources = await SourceRegistry.getAll({ limit: 10000, status: 'ACTIVE' });
+
+    // Per-source due selection: only sources whose scrapeInterval has elapsed
+    // (or never fetched), ordered by quality score so high-quality sources
+    // crawl first under the concurrency budget.
+    const activeSources = selectDueSources(allSources as unknown as ContentSource[], new Date())
+      .map((d) => d.source);
+
     const startTime = Date.now();
 
     const results: WorkerResult[] = [];
@@ -230,187 +246,6 @@ export class DiscoveryWorker {
     }
 
     return report;
-  }
-
-  // ─── Scraper Resolution ───────────────────────────────────────
-
-  /**
-   * Try to resolve a scraper module for the given source.
-   * Returns null if no specific scraper exists (fall back to auto-discover).
-   */
-  private static async resolveScraper(
-    source: ContentSource,
-  ): Promise<{ name: string; scrape: (url: string) => Promise<any> } | null> {
-    if (!source.scraperType) return null;
-
-    try {
-      // Dynamic import of scraper module by name
-      const scraperModule = await import(
-        /* webpackIgnore: true */
-        `../scraper/${source.scraperType}`
-      ).catch(() => null);
-
-      if (scraperModule?.scrape) {
-        return {
-          name: source.scraperType,
-          scrape: scraperModule.scrape,
-        };
-      }
-
-      return null;
-    } catch {
-      return null;
-    }
-  }
-
-  /**
-   * Auto-discover content from a source when no specific scraper exists.
-   * Uses generic techniques: sitemap parsing, RSS feed reading, BFS crawling.
-   */
-  private static async autoDiscover(
-    source: ContentSource,
-  ): Promise<{ totalFound: number; totalNew: number; duplicates: number; errors: number }> {
-    const userAgent = 'DigitalPandharpur/1.0 (Vitthalaya Discovery Engine)';
-    let foundUrls: string[] = [];
-
-    switch (source.type) {
-      case 'SITEMAP': {
-        // Try common sitemap paths
-        const sitemapPaths = [
-          '/sitemap.xml',
-          '/sitemap_index.xml',
-          '/sitemap/sitemap.xml',
-          '/sitemaps/sitemap.xml',
-          '/sitemap/sitemap-index.xml',
-        ];
-
-        for (const path of sitemapPaths) {
-          const sitemapUrl = `${source.url.replace(/\/$/, '')}${path}`;
-          const urls = await parseSitemap(sitemapUrl, userAgent);
-          if (urls.length > 0) {
-            foundUrls = urls;
-            console.log(`[DiscoveryWorker] Sitemap ${path} returned ${urls.length} URLs for ${source.name}`);
-            break;
-          }
-        }
-
-        // If no common sitemap path worked, try the root URL itself
-        if (foundUrls.length === 0) {
-          const rootSitemap = await parseSitemap(source.url, userAgent);
-          if (rootSitemap.length > 0) {
-            foundUrls = rootSitemap;
-          }
-        }
-        break;
-      }
-
-      case 'RSS':
-      case 'WEBSITE': {
-        // Try RSS/Atom feeds first
-        const feedPaths = ['/feed.xml', '/rss.xml', '/feed/', '/rss/', '/atom.xml', '/feeds/latest'];
-
-        for (const path of feedPaths) {
-          try {
-            const feedUrl = `${source.url.replace(/\/$/, '')}${path}`;
-            const res = await fetch(feedUrl, {
-              headers: { 'User-Agent': userAgent },
-              signal: AbortSignal.timeout(5000),
-            });
-
-            if (res.ok) {
-              const text = await res.text();
-              // Extract URLs from RSS <link> or Atom <link href="...">
-              const linkRegex = /<link[^>]*href="([^"]+)"[^>]*\/?>|<link>([^<]+)<\/link>/g;
-              let match;
-              while ((match = linkRegex.exec(text)) !== null) {
-                const url = match[1] || match[2];
-                if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-                  foundUrls.push(url);
-                }
-              }
-              if (foundUrls.length > 0) break;
-            }
-          } catch {
-            // Feed not found at this path — try next
-          }
-        }
-
-        // Fall back to BFS crawling if feeds didn't work
-        if (foundUrls.length === 0) {
-          const allowedPaths = source.allowedPaths
-            ? (JSON.parse(source.allowedPaths) as string[])
-            : undefined;
-
-          const discovered = await crawlLinkGraph(source.url, {
-            maxPages: 50,
-            maxDepth: 2,
-            userAgent,
-            domainRestricted: true,
-          });
-
-          foundUrls = discovered.map((d) => d.url);
-
-          // Filter by allowed/excluded paths if configured
-          if (allowedPaths && allowedPaths.length > 0) {
-            foundUrls = foundUrls.filter((u) =>
-              allowedPaths.some((p) => u.includes(p)),
-            );
-          }
-
-          if (source.excludedPaths) {
-            const excluded = JSON.parse(source.excludedPaths) as string[];
-            if (excluded.length > 0) {
-              foundUrls = foundUrls.filter(
-                (u) => !excluded.some((p) => u.includes(p)),
-              );
-            }
-          }
-        }
-        break;
-      }
-
-      case 'YOUTUBE': {
-        const queries = source.tags
-          ? (JSON.parse(source.tags) as string[])
-          : ['marathi abhang', 'marathi aarti', 'sant tukaram', 'varkari'];
-
-        const discovered = await discoverYouTubePlaylists(queries);
-        foundUrls = discovered.map((d) => d.url);
-        break;
-      }
-
-      case 'COMMUNITY':
-      case 'SEARCH':
-        // Community and search sources are handled by the upload pipeline
-        // and search engine queries respectively — not auto-discovered here.
-        break;
-
-      default:
-        break;
-    }
-
-    // Deduplicate URLs
-    foundUrls = [...new Set(foundUrls)];
-
-    // Filter out already-known URLs by checking against source history
-    const existingJobs = await db.discoveryJob.findMany({
-      where: { sourceId: source.id },
-      orderBy: { createdAt: 'desc' },
-      take: 1,
-    }) as unknown as DiscoveryJob[];
-
-    const alreadySeen = existingJobs.length > 0 && existingJobs[0].itemsFound > 0;
-
-    const totalFound = foundUrls.length;
-    const duplicates = alreadySeen ? Math.max(0, totalFound - Math.floor(totalFound * 0.7)) : 0;
-    const errors = 0;
-    const totalNew = totalFound - duplicates;
-
-    console.log(
-      `[DiscoveryWorker] Auto-discover for ${source.name}: ${totalFound} found, ${totalNew} new, ${duplicates} duplicates`,
-    );
-
-    return { totalFound, totalNew, duplicates, errors };
   }
 }
 

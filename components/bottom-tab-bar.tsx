@@ -8,7 +8,8 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Search, BookOpen, User, Menu, X, Compass, Map, GraduationCap, Users, ShoppingBag, ExternalLink } from 'lucide-react';
+import { Home, Search, BookOpen, User, Menu, X, Compass, Map, GraduationCap, Users, ShoppingBag, ExternalLink, ListMusic, Mic, Sparkles } from 'lucide-react';
+import { LanguageSwitcher } from './language-switcher';
 
 interface Tab {
   href: string;
@@ -26,7 +27,10 @@ const PRIMARY_TABS: Tab[] = [
 ];
 
 const MORE_ITEMS = [
+  { href: '/daily', icon: Sparkles, label: 'आजचे भक्ती', desc: 'रोजचे अभंग आणि चिंतन' },
   { href: '/explore', icon: Compass, label: 'एक्सप्लोर', desc: 'नवीन साहित्य शोधा' },
+  { href: '/playlists', icon: ListMusic, label: 'प्लेलिस्ट', desc: 'माझ्या ऑडिओ प्लेलिस्ट' },
+  { href: '/library/recordings', icon: Mic, label: 'माझ्या रेकॉर्डिंग्ज', desc: 'रेकॉर्ड केलेले ऑडिओ' },
   { href: '/wari', icon: Map, label: 'वारी', desc: 'पवित्र प्रवास' },
   { href: '/learn', icon: GraduationCap, label: 'शिका', desc: 'इतिहास आणि संस्कृती' },
   { href: '/community', icon: Users, label: 'समुदाय', desc: 'लीडरबोर्ड आणि योगदान' },
@@ -129,6 +133,10 @@ export function BottomTabBar() {
                     <span className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">{desc}</span>
                   </Link>
                 ))}
+              </div>
+              <div className="mt-4 px-1 flex items-center justify-between">
+                <span className="text-xs font-semibold text-muted-foreground">भाषा</span>
+                <LanguageSwitcher />
               </div>
             </div>
           </div>

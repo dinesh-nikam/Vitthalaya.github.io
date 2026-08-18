@@ -240,7 +240,7 @@ export class ScraperMonitor {
       return failedJobs.map((j) => ({
         at: j.createdAt,
         type: j.type,
-        message: j.errorLog ? j.errorLog.slice(0, 200) : 'Unknown error',
+        message: j.errorLog ? String(j.errorLog).slice(0, 200) : 'Unknown error',
       }));
     } catch {
       return [];

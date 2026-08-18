@@ -1,7 +1,7 @@
 // Quick preview of the new lyrics generator BEFORE running the full reseed
 // This lets you verify variety is correct before committing 686 seconds
 
-import { createHash } from 'crypto';
+import 'crypto';
 
 const V1_SECOND = [
   'भक्तांच्या मनोरथा पूर्ण करी हरी',

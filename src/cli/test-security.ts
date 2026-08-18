@@ -20,7 +20,7 @@ async function runSecurityTests() {
     } else {
       console.log('❌ FAIL: Unauthenticated GET allowed or wrong error message');
     }
-  } catch (err: any) {
+  } catch {
     console.log('⚠️ Could not connect to local server. Make sure "bun dev" or local server is running to test live HTTP requests.');
   }
 
@@ -44,7 +44,7 @@ async function runSecurityTests() {
     } else {
       console.log('❌ FAIL: Unauthenticated POST allowed');
     }
-  } catch (err: any) {
+  } catch {
     // Fail silently if server not active
   }
 
@@ -66,7 +66,7 @@ async function runSecurityTests() {
     } else {
       console.log('❌ FAIL: Unauthenticated review action allowed');
     }
-  } catch (err: any) {
+  } catch {
     // Fail silently
   }
 

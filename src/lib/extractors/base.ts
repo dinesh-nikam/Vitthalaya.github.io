@@ -29,6 +29,15 @@ export interface ExtractionOptions {
   extractStructure?: boolean;
   /** Language hints for OCR/ASR */
   language?: string[];
+  /**
+   * When captions/subtitles are unavailable for a YouTube source, download
+   * the audio track and run it through speech-to-text as a fallback.
+   * Defaults to FALSE: yt-dlp + Whisper can take minutes, so the request
+   * path returns immediately with `needsAudioProcessing` instead, and the
+   * background worker (src/lib/audio-processing.ts) performs the fallback
+   * with this option explicitly enabled.
+   */
+  transcribeAudioFallback?: boolean;
 }
 
 export interface IExtractor {

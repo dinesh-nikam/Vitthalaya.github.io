@@ -96,9 +96,9 @@ module.exports = {
         },
       },
       fontFamily: {
-        marathi: ['Noto Sans Devanagari', 'sans-serif'],
-        marathiHeading: ['Tiro Devanagari Marathi', 'serif'],
-        sans: ['Inter', 'sans-serif'],
+        marathi: ['var(--font-devanagari)'],
+        marathiHeading: ['var(--font-devanagari-heading)'],
+        sans: ['var(--font-inter)'],
       },
       fontSize: {
         reading: ['1.25rem', { lineHeight: '1.8', fontWeight: '400' }],

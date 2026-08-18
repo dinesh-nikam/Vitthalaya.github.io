@@ -16,7 +16,7 @@
 
 import { db } from '../db/client';
 import { reEnrichWithFeedback } from './enricher';
-import { enqueueComposition } from './queue';
+import './queue';
 import type { EnrichmentInput } from './enricher';
 
 // ─── Types ──────────────────────────────────────────────────────────────────

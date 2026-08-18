@@ -173,7 +173,7 @@ describe('SourceRegistry (static logic)', () => {
   it('extractDomain handles various URL formats', async () => {
     // Test the private extractDomain helper via SourceRegistry.submitCommunityTip
     // which calls extractDomain internally
-    const { SourceRegistry } = await import('./source-registry');
+    const { SourceRegistry: _SourceRegistry } = await import('./source-registry');
 
     // We can't easily test the private extractDomain directly,
     // but we can verify submitCommunityTip fails gracefully when DB is down

@@ -49,7 +49,6 @@ export default async function OrdersPage() {
         ) : (
           <div className="space-y-4">
             {orders.map((order) => {
-              const totalItems = order.items.reduce((s, i) => s + i.quantity, 0);
               return (
                 <Link key={order.id} href={`/orders/${order.id}`}
                   className="block bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition-shadow">

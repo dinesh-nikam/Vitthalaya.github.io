@@ -2,17 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/src/lib/auth';
 import { db } from '@/src/db/client';
+import { ApiErrors, errorResponse } from '@/src/lib/api-response';
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized. Please sign in.' }, { status: 401 });
+      return ApiErrors.UNAUTHORIZED('Unauthorized. Please sign in.');
     }
 
     const role = (session.user as any).role;
     if (!['MODERATOR', 'ADMIN'].includes(role)) {
-      return NextResponse.json({ error: 'Forbidden. Restricted to moderators and admins.' }, { status: 403 });
+      return ApiErrors.FORBIDDEN('Forbidden. Restricted to moderators and admins.');
     }
 
     const userId = (session.user as any).id;
@@ -20,11 +21,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const { queueIds, action, notes } = body;
 
     if (!Array.isArray(queueIds) || queueIds.length === 0) {
-      return NextResponse.json({ error: '"queueIds" must be a non-empty array.' }, { status: 400 });
+      return ApiErrors.BAD_REQUEST('"queueIds" must be a non-empty array.');
     }
 
     if (!['approve', 'reject', 'flag'].includes(action)) {
-      return NextResponse.json({ error: '"action" must be "approve", "reject", or "flag".' }, { status: 400 });
+      return ApiErrors.BAD_REQUEST('"action" must be "approve", "reject", or "flag".');
     }
 
     await db.$transaction(async (tx) => {
@@ -64,6 +65,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error('Batch moderation API error:', err);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return errorResponse(msg, 500, { code: 'INTERNAL_ERROR' });
   }
 }

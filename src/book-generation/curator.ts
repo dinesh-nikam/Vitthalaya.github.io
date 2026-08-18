@@ -146,7 +146,7 @@ function computeComposite(scores: CurationScore['scores']): number {
 
 function buildSections(
   selected: CompositionRow[],
-  criteria: CurationCriteria,
+  _criteria: CurationCriteria,
 ): BookSection[] {
   // Group by composition type, preserving order of priority
   const typeOrder: CompositionType[] = [

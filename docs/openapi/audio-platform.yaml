@@ -1,0 +1,811 @@
+openapi: 3.0.0
+info:
+  title: Vitthalaya Audio Platform REST API
+  description: |
+    Recording, enhancement, transcription correction, personal library,
+    playlists, model governance, and discovery endpoints of the audio
+    platform. Auth is the NextAuth session cookie; admin routes additionally
+    require an ADMIN/MODERATOR role. Owner-gated routes return 404 (not 403)
+    for foreign or missing resources.
+
+    See docs/audio-platform-api.md for the full reference.
+  version: 1.0.0
+servers:
+  - url: https://vitthalaya.org/api
+    description: Production Server
+  - url: http://localhost:3000/api
+    description: Local Dev Server
+security:
+  - CookieAuth: []
+tags:
+  - name: Upload & Pipeline
+  - name: Library
+  - name: Playlists
+  - name: Admin Audio
+  - name: Admin Models
+  - name: Admin Discovery
+paths:
+  /acquire/upload:
+    post:
+      tags: [Upload & Pipeline]
+      summary: Upload a file or YouTube URL (auth required)
+      operationId: acquireUpload
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file: { type: string, format: binary, description: "Any supported format; audio/webm accepted" }
+                url: { type: string, description: "YouTube URL; exactly one of file/url required" }
+                title: { type: string }
+                isRecording: { type: string, description: "'true' for in-browser recorder output" }
+                rightsStatus: { type: string }
+                consentGranted: { type: string }
+                publicationPermission: { type: string }
+                attribution: { type: string }
+      responses:
+        '200': { description: Upload accepted / queued for processing }
+        '400': { description: Missing file and url, or invalid input }
+        '401': { description: Unauthenticated }
+        '500': { description: Processing error }
+  /acquire/uploads:
+    get:
+      tags: [Upload & Pipeline]
+      summary: List my uploads (owner-gated)
+      operationId: listUploads
+      responses:
+        '200':
+          description: Upload list (audio/recordings first, take 50)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  uploads:
+                    type: array
+                    items: { $ref: '#/components/schemas/UploadSummary' }
+        '401': { description: Unauthenticated }
+  /acquire/upload/{id}:
+    get:
+      tags: [Upload & Pipeline]
+      summary: Upload status with matches, rights, and correction (owner-gated)
+      operationId: getUploadStatus
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Full status payload
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UploadStatus' }
+        '401': { description: Unauthenticated }
+        '404': { description: Not found (also for foreign uploads) }
+  /acquire/upload/{id}/correction:
+    post:
+      tags: [Upload & Pipeline]
+      summary: Submit a manual transcript correction (owner-gated)
+      operationId: submitCorrection
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [correctedText]
+              properties:
+                correctedText: { type: string, description: "Non-empty edited transcript" }
+      responses:
+        '200':
+          description: Fresh correction payload (original ASR preserved verbatim)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CorrectionPayload' }
+        '400': { description: Empty correctedText, or no original transcript }
+        '401': { description: Unauthenticated }
+        '404': { description: Not found (also for foreign uploads) }
+  /acquire/match:
+    post:
+      tags: [Upload & Pipeline]
+      summary: Confirm or reject a composition match (owner-gated)
+      operationId: confirmCompositionMatch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [uploadId, compositionId, action]
+              properties:
+                uploadId: { type: string }
+                compositionId: { type: string }
+                action: { type: string, enum: [confirm, reject] }
+      responses:
+        '200': { description: Match confirmed/rejected; correction rerun on confirm }
+        '400': { description: Missing fields or invalid action }
+        '401': { description: Unauthenticated }
+        '404': { description: Not found }
+  /acquire/classify:
+    post:
+      tags: [Upload & Pipeline]
+      summary: AI classification of extracted text (auth required)
+      operationId: classifyContent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text: { type: string, minLength: 10 }
+                title: { type: string }
+                fileId: { type: string }
+      responses:
+        '200': { description: "{ success: true, result: ClassificationResult }" }
+        '400': { description: Text too short }
+        '401': { description: Unauthenticated }
+  /acquire/moderation/list:
+    get:
+      tags: [Upload & Pipeline]
+      summary: List moderation queue items (moderator/admin)
+      operationId: listModerationQueue
+      parameters:
+        - { name: page, in: query, schema: { type: integer, default: 1 } }
+        - { name: limit, in: query, schema: { type: integer, default: 20 } }
+        - { name: status, in: query, schema: { type: string, enum: [pending, approved, rejected, flagged] } }
+        - { name: sourceType, in: query, schema: { type: string, enum: [ocr, suggestion] } }
+        - { name: q, in: query, schema: { type: string } }
+        - { name: sortBy, in: query, schema: { type: string, enum: [createdAt, tier, consensusScore] } }
+        - { name: sortOrder, in: query, schema: { type: string, enum: [asc, desc] } }
+      responses:
+        '200': { description: "{ success, items, pagination } — defaults to pending + flagged" }
+        '401': { description: Unauthenticated }
+        '403': { description: Not a moderator/admin }
+  /acquire/moderation/batch:
+    post:
+      tags: [Upload & Pipeline]
+      summary: Batch approve/reject/flag queue items (moderator/admin)
+      operationId: batchModerate
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [queueIds, action]
+              properties:
+                queueIds: { type: array, items: { type: string } }
+                action: { type: string, enum: [approve, reject, flag] }
+                notes: { type: string }
+      responses:
+        '200': { description: "{ success, summary }" }
+        '400': { description: Empty queueIds or invalid action }
+        '401': { description: Unauthenticated }
+        '403': { description: Not a moderator/admin }
+        '500': { description: "Transaction error (e.g. already voted on an item)" }
+  /acquire/moderation/vote:
+    post:
+      tags: [Upload & Pipeline]
+      summary: Submit a peer-review vote on a queue item (auth required)
+      operationId: voteModeration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [queueId, vote]
+              properties:
+                queueId: { type: string }
+                vote: { type: string, enum: [approve, reject, flag] }
+                notes: { type: string }
+      responses:
+        '200': { description: "{ success, message }" }
+        '400': { description: Missing queueId/vote or invalid vote }
+        '401': { description: Unauthenticated }
+        '500': { description: Vote registration failed }
+  /acquire/moderation/history:
+    get:
+      tags: [Upload & Pipeline]
+      summary: Reviewed items history with reviews (moderator/admin)
+      operationId: moderationHistory
+      parameters:
+        - { name: page, in: query, schema: { type: integer, default: 1 } }
+        - { name: limit, in: query, schema: { type: integer, default: 20 } }
+        - { name: status, in: query, schema: { type: string, enum: [approved, rejected, flagged] } }
+        - { name: q, in: query, schema: { type: string } }
+        - { name: sortOrder, in: query, schema: { type: string, enum: [asc, desc] } }
+      responses:
+        '200': { description: "{ success, items, pagination }" }
+        '401': { description: Unauthenticated }
+        '403': { description: Not a moderator/admin }
+  /acquire/moderation/stats:
+    get:
+      tags: [Upload & Pipeline]
+      summary: Moderation queue/activity stats and top reviewers (moderator/admin)
+      operationId: moderationStats
+      responses:
+        '200': { description: "{ success, stats: { queue, activity, reviewers, dailyTrend } }" }
+        '401': { description: Unauthenticated }
+        '403': { description: Not a moderator/admin }
+  /acquire/moderation/notes:
+    get:
+      tags: [Upload & Pipeline]
+      summary: Editorial notes for a queue item (moderator/admin)
+      operationId: listModerationNotes
+      parameters:
+        - { name: queueId, in: query, required: true, schema: { type: string } }
+      responses:
+        '200': { description: "{ success, notes }" }
+        '400': { description: queueId required }
+        '401': { description: Unauthenticated }
+        '403': { description: Not a moderator/admin }
+    post:
+      tags: [Upload & Pipeline]
+      summary: Create an editorial note (moderator/admin)
+      operationId: createModerationNote
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [queueId, content]
+              properties:
+                queueId: { type: string }
+                content: { type: string }
+                parentNoteId: { type: string }
+      responses:
+        '201': { description: "{ success, note }" }
+        '400': { description: Missing fields or parent mismatch }
+        '401': { description: Unauthenticated }
+        '403': { description: Not a moderator/admin }
+        '404': { description: Queue item not found }
+    delete:
+      tags: [Upload & Pipeline]
+      summary: Delete a note (author or admin only)
+      operationId: deleteModerationNote
+      parameters:
+        - { name: id, in: query, required: true, schema: { type: string } }
+      responses:
+        '200': { description: "{ success, message }" }
+        '400': { description: id required or note has replies }
+        '401': { description: Unauthenticated }
+        '403': { description: Not the author or an admin }
+        '404': { description: Note not found }
+  /library/recordings:
+    get:
+      tags: [Library]
+      summary: List my recordings with playable version URLs (owner-gated)
+      operationId: listRecordings
+      responses:
+        '200':
+          description: Recording list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  recordings:
+                    type: array
+                    items: { $ref: '#/components/schemas/RecordingItem' }
+        '401': { description: Unauthenticated }
+  /library/recordings/{id}:
+    patch:
+      tags: [Library]
+      summary: Rename a recording (owner-gated)
+      operationId: renameRecording
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+      responses:
+        '200':
+          description: "{ originalName }"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  originalName: { type: string }
+        '400': { description: Invalid name }
+        '401': { description: Unauthenticated }
+        '404': { description: Not found }
+    delete:
+      tags: [Library]
+      summary: Delete a recording and all derived audio (owner-gated)
+      operationId: deleteRecording
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: "{ ok: true }" }
+        '401': { description: Unauthenticated }
+        '404': { description: Not found }
+        '500': { description: Delete failed }
+  /library/recordings/{id}/bookmark:
+    post:
+      tags: [Library]
+      summary: Toggle bookmark (owner-gated)
+      operationId: toggleBookmark
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: "{ bookmarked: boolean }" }
+        '401': { description: Unauthenticated }
+        '404': { description: Not found }
+  /library/recordings/{id}/playback:
+    post:
+      tags: [Library]
+      summary: Record a play (owner-gated)
+      operationId: recordPlayback
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                durationSeconds: { type: number }
+                completed: { type: boolean }
+      responses:
+        '200': { description: "{ ok: true, historyId }" }
+        '401': { description: Unauthenticated }
+        '404': { description: Not found }
+  /playlists:
+    get:
+      tags: [Playlists]
+      summary: List my playlists (auth)
+      operationId: listPlaylists
+      responses:
+        '200': { description: "{ playlists }" }
+        '401': { description: Unauthenticated }
+    post:
+      tags: [Playlists]
+      summary: Create a playlist (auth)
+      operationId: createPlaylist
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+      responses:
+        '201': { description: "{ playlist }" }
+        '400': { description: Missing name }
+        '401': { description: Unauthenticated }
+  /playlists/{id}:
+    get:
+      tags: [Playlists]
+      summary: Playlist detail (owner-gated)
+      operationId: getPlaylist
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: "{ playlist }" }
+        '401': { description: Unauthenticated }
+        '404': { description: Not found }
+    patch:
+      tags: [Playlists]
+      summary: Rename playlist (owner-gated)
+      operationId: renamePlaylist
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+      responses:
+        '200': { description: "{ playlist }" }
+        '400': { description: Invalid body / name }
+        '401': { description: Unauthenticated }
+        '404': { description: Not found }
+    delete:
+      tags: [Playlists]
+      summary: Delete playlist (owner-gated)
+      operationId: deletePlaylist
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: "{ ok: true }" }
+        '401': { description: Unauthenticated }
+        '404': { description: Not found }
+  /playlists/{id}/items:
+    post:
+      tags: [Playlists]
+      summary: Add item — composition OR recording, never both (owner-gated)
+      operationId: addPlaylistItem
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                compositionId: { type: string }
+                uploadedFileId: { type: string }
+      responses:
+        '201': { description: "{ item }" }
+        '400': { description: Ambiguous or duplicate target }
+        '401': { description: Unauthenticated }
+        '404': { description: Not found }
+  /playlists/{id}/items/{itemId}:
+    delete:
+      tags: [Playlists]
+      summary: Remove item (owner-gated)
+      operationId: removePlaylistItem
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+        - { name: itemId, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: "{ ok: true }" }
+        '401': { description: Unauthenticated }
+        '404': { description: Not found }
+  /playlists/{id}/reorder:
+    put:
+      tags: [Playlists]
+      summary: Reorder items (owner-gated)
+      operationId: reorderPlaylistItems
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [itemIds]
+              properties:
+                itemIds: { type: array, items: { type: string } }
+      responses:
+        '200': { description: "{ ok: true }" }
+        '400': { description: itemIds must be an array of strings }
+        '401': { description: Unauthenticated }
+        '404': { description: Not found }
+  /admin/audio:
+    get:
+      tags: [Admin Audio]
+      summary: Audio dashboard aggregate (admin)
+      operationId: adminAudioDashboard
+      responses:
+        '200': { description: Recording + processing queues, rights, corrections, models, quality snapshot }
+        '401': { description: Unauthenticated or not admin }
+  /admin/audio/retry:
+    post:
+      tags: [Admin Audio]
+      summary: Retry a processing job (admin)
+      operationId: adminRetryAudioJob
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [jobId]
+              properties:
+                jobId: { type: string }
+      responses:
+        '200': { description: Job reset to pending }
+        '400': { description: jobId required }
+        '401': { description: Unauthenticated or not admin }
+        '404': { description: Job not found }
+  /admin/audio/corrections/{id}/verify:
+    post:
+      tags: [Admin Audio]
+      summary: Approve/reject a transcript correction (admin)
+      operationId: verifyTranscriptCorrection
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action: { type: string, enum: [approve, reject] }
+                notes: { type: string }
+      responses:
+        '200':
+          description: "{ success, correctionId, status, verifier } — approve writes an EvaluationDataset sample"
+        '400': { description: action must be approve or reject }
+        '401': { description: Unauthenticated or not admin }
+        '404': { description: Correction not found }
+  /admin/models:
+    get:
+      tags: [Admin Models]
+      summary: Model registry, datasets, recent runs (admin)
+      operationId: adminModelRegistry
+      responses:
+        '200': { description: Registry + datasets + recent EvaluationRun rows + gate thresholds }
+        '401': { description: Unauthenticated or not admin }
+  /admin/models/lifecycle:
+    post:
+      tags: [Admin Models]
+      summary: Register / activate / rollback / retire / seed a model (admin)
+      operationId: adminModelLifecycle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action: { type: string, enum: [register, activate, rollback, retire, seed] }
+                modelVersionId: { type: string }
+                modelName: { type: string }
+                modelType: { type: string }
+                version: { type: string }
+                provider: { type: string }
+                config: { type: object }
+                notes: { type: string }
+      responses:
+        '200': { description: "Lifecycle result; activate refused unless latest run passed" }
+        '400': { description: Invalid action or payload }
+        '401': { description: Unauthenticated or not admin }
+  /admin/models/evaluate:
+    post:
+      tags: [Admin Models]
+      summary: Run a gated WER/CER evaluation (admin)
+      operationId: adminEvaluateModel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [modelVersionId, mode]
+              properties:
+                modelVersionId: { type: string }
+                mode: { type: string, enum: [golden, regression] }
+                datasetId: { type: string }
+                hypotheses: { type: object, additionalProperties: { type: string } }
+                notes: { type: string }
+      responses:
+        '200':
+          description: EvaluationSummary (aggregate WER/CER, gate, A/B, per-sample)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EvaluationSummary' }
+        '400': { description: Invalid payload }
+        '401': { description: Unauthenticated or not admin }
+  /admin/discovery/stats:
+    get:
+      tags: [Admin Discovery]
+      summary: Discovery registry + job summary (admin)
+      operationId: adminDiscoveryStats
+      responses:
+        '200': { description: Sources + DiscoveryJob stats }
+        '401': { description: Unauthenticated or not admin }
+  /admin/discovery/run:
+    post:
+      tags: [Admin Discovery]
+      summary: Trigger a discovery cycle (admin)
+      operationId: adminRunDiscovery
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sourceId: { type: string }
+      responses:
+        '200':
+          description: "{ cycleType: single|full, result|report } with itemsFound/new/duplicates"
+        '401': { description: Unauthenticated or not admin }
+        '500': { description: Cycle failed }
+  /admin/discovery/alerts:
+    get:
+      tags: [Admin Discovery]
+      summary: Active discovery alerts — failing sources, low trust, high error rates (admin)
+      operationId: discoveryAlerts
+      responses:
+        '200': { description: "{ alerts, summary: { critical, warning, info, total } }" }
+        '401': { description: Unauthenticated or not admin }
+  /admin/discovery/docs:
+    get:
+      tags: [Admin Discovery]
+      summary: Docs tree + file contents for the discovery documentation viewer (admin)
+      operationId: discoveryDocs
+      responses:
+        '200': { description: "{ tree, files }" }
+        '401': { description: Unauthenticated or not admin }
+  /admin/discovery/history:
+    get:
+      tags: [Admin Discovery]
+      summary: Discovery job run history with filters (admin)
+      operationId: discoveryHistory
+      parameters:
+        - { name: sourceId, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { type: string } }
+        - { name: type, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, default: 50 } }
+        - { name: offset, in: query, schema: { type: integer, default: 0 } }
+      responses:
+        '200': { description: "{ jobs, total, limit, offset }" }
+        '401': { description: Unauthenticated or not admin }
+  /admin/discovery/sources:
+    get:
+      tags: [Admin Discovery]
+      summary: List ContentSource registry entries with filters (admin)
+      operationId: listDiscoverySources
+      parameters:
+        - { name: status, in: query, schema: { type: string } }
+        - { name: type, in: query, schema: { type: string } }
+        - { name: search, in: query, schema: { type: string } }
+        - { name: trustScoreMin, in: query, schema: { type: number } }
+        - { name: limit, in: query, schema: { type: integer } }
+        - { name: offset, in: query, schema: { type: integer } }
+      responses:
+        '200': { description: "{ sources, total }" }
+        '401': { description: Unauthenticated or not admin }
+    post:
+      tags: [Admin Discovery]
+      summary: Create a ContentSource (admin)
+      operationId: createDiscoverySource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, url, type, baseDomain]
+              properties:
+                name: { type: string }
+                url: { type: string }
+                type: { type: string }
+                baseDomain: { type: string }
+      responses:
+        '201': { description: "{ source }" }
+        '400': { description: Missing required fields }
+        '401': { description: Unauthenticated or not admin }
+  /admin/discovery/sources/{id}:
+    get:
+      tags: [Admin Discovery]
+      summary: Source detail with health metrics (admin)
+      operationId: getDiscoverySource
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: "{ source, health }" }
+        '401': { description: Unauthenticated or not admin }
+        '404': { description: Source not found }
+    put:
+      tags: [Admin Discovery]
+      summary: Update a ContentSource (admin)
+      operationId: updateDiscoverySource
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                url: { type: string }
+                status: { type: string }
+                trustScore: { type: number }
+      responses:
+        '200': { description: "{ source }" }
+        '401': { description: Unauthenticated or not admin }
+        '500': { description: Update failed }
+    delete:
+      tags: [Admin Discovery]
+      summary: Delete a ContentSource (admin)
+      operationId: deleteDiscoverySource
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: "{ success: true }" }
+        '401': { description: Unauthenticated or not admin }
+        '500': { description: Delete failed }
+components:
+  securitySchemes:
+    CookieAuth:
+      type: apiKey
+      in: cookie
+      name: next-auth.session-token
+  schemas:
+    UploadSummary:
+      type: object
+      properties:
+        id: { type: string }
+        originalName: { type: string }
+        format: { type: string }
+        mimeType: { type: string }
+        sizeBytes: { type: integer }
+        processingStatus: { type: string }
+        extractedText: { type: string, nullable: true }
+        extractionConfidence: { type: number, nullable: true }
+        extractedMetadata: { type: object, nullable: true }
+        createdAt: { type: string, format: date-time }
+    CorrectionPayload:
+      type: object
+      properties:
+        id: { type: string }
+        originalAsr: { type: string }
+        correctedText: { type: string }
+        canonicalText: { type: string }
+        diffJson:
+          type: object
+          properties:
+            version: { type: integer }
+            alignedLines: { type: array, items: { type: object } }
+            stats: { type: object }
+        confidence: { type: number }
+        errorType: { type: string }
+        modelVersion: { type: string, nullable: true }
+        status: { type: string }
+        createdAt: { type: string, format: date-time }
+    UploadStatus:
+      type: object
+      properties:
+        uploadId: { type: string }
+        originalName: { type: string }
+        format: { type: string }
+        processingStatus: { type: string }
+        processingSteps: { type: array, items: { type: object } }
+        extractedText: { type: string, nullable: true }
+        extractionConfidence: { type: number, nullable: true }
+        audioUrl: { type: string, nullable: true }
+        job: { type: object, nullable: true }
+        moderation: { type: object, nullable: true }
+        rights: { type: object, nullable: true }
+        matches: { type: array, items: { type: object } }
+        correction: { $ref: '#/components/schemas/CorrectionPayload' }
+    RecordingItem:
+      type: object
+      properties:
+        id: { type: string }
+        originalName: { type: string }
+        processingStatus: { type: string }
+        extractionConfidence: { type: number, nullable: true }
+        audioUrl: { type: string, nullable: true }
+        versions: { type: array, items: { type: object } }
+        transcript: { type: string, nullable: true }
+        bookmarked: { type: boolean }
+        lastPlayedAt: { type: string, format: date-time, nullable: true }
+    EvaluationSummary:
+      type: object
+      properties:
+        runId: { type: string }
+        status: { type: string, enum: [passed, failed, inconclusive] }
+        aggregate:
+          type: object
+          properties:
+            wer: { type: number }
+            cer: { type: number }
+            samplesEvaluated: { type: integer }
+            samplesSkipped: { type: integer }
+        gate:
+          type: object
+          properties:
+            passed: { type: boolean }
+            reasons: { type: array, items: { type: string } }
+        ab: { type: object, nullable: true }
+        samples: { type: array, items: { type: object } }

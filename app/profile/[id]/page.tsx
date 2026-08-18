@@ -6,7 +6,7 @@ export async function generateMetadata({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
+  const { id: _id } = await params;
   return {
     title: 'वापरकर्ता प्रोफाइल - डिजिटल पंढरपूर',
     description: `वापरकर्ता प्रोफाइल आणि योगदाने - डिजिटल पंढरपूर`,

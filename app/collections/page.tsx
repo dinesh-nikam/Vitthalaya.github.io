@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Bookmark, Trash2, Library, Users, ArrowRight, Heart } from 'lucide-react';
+import { Bookmark, Library, ArrowRight, Trash2 } from 'lucide-react';
 import { getBookmarks, clearBookmarks } from '@/src/db/bookmark';
 import { V4PageShell, V4ArtifactLink } from '@/components/v4-page-shell';
 
@@ -19,21 +19,24 @@ export default function CollectionsPage() {
 
   React.useEffect(() => {
     // 1. Load local bookmarks
-    try {
-      const stored = getBookmarks();
-      setBookmarks(stored);
-      setCompositions(
-        stored.map((b) => ({
-          slug: b.slug,
-          titleMarathi: b.title,
-          titleTranslit: b.slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
-        }))
-      );
-    } catch (e) {
-      console.error('Failed to load bookmarks:', e);
-    } finally {
-      setLoadingLocal(false);
-    }
+    const loadBookmarks = async () => {
+      try {
+        const stored = await getBookmarks();
+        setBookmarks(stored);
+        setCompositions(
+          stored.map((b) => ({
+            slug: b.slug,
+            titleMarathi: b.title,
+            titleTranslit: b.slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+          }))
+        );
+      } catch (e) {
+        console.error('Failed to load bookmarks:', e);
+      } finally {
+        setLoadingLocal(false);
+      }
+    };
+    loadBookmarks();
 
     // 2. Load public lists
     fetchPublicLists();
@@ -55,9 +58,9 @@ export default function CollectionsPage() {
     }
   };
 
-  const handleClearAll = () => {
+  const handleClearAll = async () => {
     if (confirm('सर्व बुकमार्क कायमचे हटवायचे आहेत का?')) {
-      clearBookmarks();
+      await clearBookmarks();
       setBookmarks([]);
       setCompositions([]);
     }

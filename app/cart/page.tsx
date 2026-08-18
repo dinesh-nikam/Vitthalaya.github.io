@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import type { CartItem } from '../../src/lib/orders/cart';
 import { getCart, removeFromCart, updateQuantity, getCartSummary } from '../../src/lib/orders/cart';
+import { calculateTax } from '../../src/lib/orders/pricing';
+import { PriceBreakdown } from '@/components/price-breakdown';
 
 export default function CartPage() {
   const [cart, setCart] = useState<ReturnType<typeof getCart>>({ items: [], updatedAt: '' });
@@ -31,6 +32,12 @@ export default function CartPage() {
   if (!mounted) return null;
 
   const { subtotal, itemCount } = getCartSummary(cart);
+
+  // Same subtotal / shipping / GST / total breakdown as the checkout page —
+  // shipping is free, matching /api/orders/create.
+  const shippingCost: number = 0;
+  const tax = calculateTax(subtotal);
+  const total = subtotal + shippingCost + tax;
 
   return (
     <div className="min-h-screen bg-cream-50 py-8">
@@ -76,8 +83,8 @@ export default function CartPage() {
             {/* Summary */}
             <div className="bg-white rounded-xl shadow-sm p-6 space-y-3">
               <div className="flex justify-between text-sm"><span>एकूण वस्तू</span><span>{itemCount}</span></div>
-              <div className="flex justify-between text-lg font-bold border-t pt-3">
-                <span>एकूण रक्कम</span><span>₹{subtotal}</span>
+              <div className="border-t pt-3">
+                <PriceBreakdown subtotal={subtotal} shippingCost={shippingCost} tax={tax} total={total} />
               </div>
               <Link href="/checkout"
                 className="block w-full text-center py-3 bg-saffron text-white rounded-lg hover:bg-saffron-600 font-medium transition-colors">

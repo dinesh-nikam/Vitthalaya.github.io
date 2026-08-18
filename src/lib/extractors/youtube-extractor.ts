@@ -14,6 +14,7 @@
  */
 
 import type { IExtractor, ExtractionResult, ExtractionOptions } from './base';
+import { AudioExtractor } from './audio-extractor';
 
 export interface YouTubeMetadata {
   videoId: string;
@@ -66,7 +67,7 @@ export class YouTubeExtractor implements IExtractor {
    * Extract from a YouTube URL (passed as the "filename" with special prefix).
    * The URL can be passed in the buffer as the URL string in utf-8.
    */
-  async extract(buffer: Buffer, url: string, _options?: ExtractionOptions): Promise<ExtractionResult> {
+  async extract(buffer: Buffer, url: string, options?: ExtractionOptions): Promise<ExtractionResult> {
     const videoId = YouTubeExtractor.extractVideoId(url);
 
     if (!videoId) {
@@ -87,9 +88,24 @@ export class YouTubeExtractor implements IExtractor {
 
       // Step 2: Fetch captions/transcript
       const captions = await this.fetchCaptions(videoId);
+      let captionText = captions ?? '';
+      let transcriptionMethod: string | null = captionText ? 'captions' : null;
+      let audioUrl: string | null = null;
 
-      // Step 3: If no captions, try audio transcription hint
-      const captionText = captions ?? '';
+      // Step 3: No captions available — optionally fall back to downloading
+      // the audio track and running it through speech-to-text. This is
+      // OFF by default: yt-dlp + Whisper can take minutes, so the request
+      // path returns immediately with needsAudioProcessing instead, and the
+      // background worker (src/lib/audio-processing.ts) performs the fallback
+      // with transcribeAudioFallback: true.
+      if (!captionText && options?.transcribeAudioFallback) {
+        const fallback = await this.transcribeWithAudioFallback(videoId, options?.language ?? ['mr', 'hi', 'en']);
+        if (fallback) {
+          captionText = fallback.text;
+          transcriptionMethod = fallback.method;
+          audioUrl = fallback.audioUrl;
+        }
+      }
 
       // Step 4: Build the extracted text
       const textParts: string[] = [];
@@ -103,7 +119,7 @@ export class YouTubeExtractor implements IExtractor {
         textParts.push(captionText);
       }
 
-      // If no captions and no useful description, mark for audio processing
+      // If still no text and no useful description, flag for manual review
       const needsAudioProcessing = !captionText && (!metadata?.description || metadata.description.length < 100);
 
       const combinedText = textParts.join('\n\n').trim() || '';
@@ -123,8 +139,10 @@ export class YouTubeExtractor implements IExtractor {
           publishedAt: metadata?.publishedAt ?? null,
           language: metadata?.language ?? null,
           needsAudioProcessing,
+          transcriptionMethod,
+          audioUrl,
         },
-        confidence: combinedText.length > 50 ? 0.8 : 0.3,
+        confidence: transcriptionMethod === 'captions' ? 0.8 : (combinedText.length > 50 ? 0.65 : 0.3),
       };
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -137,6 +155,44 @@ export class YouTubeExtractor implements IExtractor {
         confidence: 0,
         error: `YouTube extraction failed: ${msg}`,
       };
+    }
+  }
+
+  /**
+   * Download the video's audio track (yt-dlp) and run it through the
+   * speech-to-text pipeline (OpenAI/Groq Whisper — same engine used for
+   * direct audio uploads).
+   *
+   * This is the expensive path (audio download + transcription can take
+   * minutes), so it is invoked off the request path by the background worker
+   * (see src/lib/audio-processing.ts). Returns null — never throws — when
+   * yt-dlp is unavailable, the download fails, or no usable speech is
+   * detected, so callers can degrade gracefully.
+   */
+  async transcribeWithAudioFallback(
+    videoId: string,
+    language: string[] = ['mr', 'hi', 'en']
+  ): Promise<{ text: string; method: string; audioUrl: string | null } | null> {
+    try {
+      const downloaded = await this.downloadAudio(videoId);
+      if (!downloaded) return null;
+
+      const audioExtractor = new AudioExtractor();
+      const transcribed = await audioExtractor.transcribeBuffer(downloaded.buffer, language);
+
+      if (!transcribed.text || transcribed.text.trim().length < 10) {
+        return null;
+      }
+
+      return {
+        text: transcribed.text.trim(),
+        method: transcribed.method,
+        audioUrl: downloaded.storedUrl ?? null,
+      };
+    } catch (audioErr) {
+      // Best-effort — the caller decides how to handle empty text.
+      console.warn(`[YouTubeExtractor] Audio fallback failed for ${videoId}:`, audioErr);
+      return null;
     }
   }
 
@@ -296,5 +352,71 @@ export class YouTubeExtractor implements IExtractor {
     }
 
     return null;
+  }
+
+  /**
+   * Download the best available audio track for a video using yt-dlp, for
+   * use as speech-to-text input when no captions exist. Requires yt-dlp to
+   * be installed on the host (same tool already used for caption fetching
+   * above). Returns null (rather than throwing) when yt-dlp is unavailable
+   * or the download fails, so callers can fall back gracefully.
+   */
+  private async downloadAudio(videoId: string): Promise<{ buffer: Buffer; storedUrl: string | null } | null> {
+    const { execFileSync } = await import('node:child_process');
+    const fs = await import('node:fs');
+    const os = await import('node:os');
+    const path = await import('node:path');
+
+    try {
+      execFileSync('yt-dlp', ['--version'], { stdio: 'pipe', timeout: 5000 });
+    } catch {
+      console.warn('[YouTubeExtractor] yt-dlp is not installed — cannot download audio for transcription fallback.');
+      return null;
+    }
+
+    const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'yt-audio-'));
+    const outputTemplate = path.join(tmpDir, `${videoId}.%(ext)s`);
+
+    try {
+      execFileSync(
+        'yt-dlp',
+        [
+          '--no-playlist',
+          '-f', 'bestaudio',
+          '--extract-audio',
+          '--audio-format', 'mp3',
+          '--audio-quality', '5',
+          '-o', outputTemplate,
+          `https://www.youtube.com/watch?v=${videoId}`,
+        ],
+        { stdio: 'pipe', timeout: 120000 }
+      );
+
+      const files = await fs.promises.readdir(tmpDir);
+      const audioFile = files.find((f) => f.endsWith('.mp3'));
+      if (!audioFile) return null;
+
+      const fullPath = path.join(tmpDir, audioFile);
+      const buffer = await fs.promises.readFile(fullPath);
+
+      // Persist the downloaded audio so a listenable link can be attached
+      // to the composition later (best-effort — transcription still proceeds
+      // even if this fails).
+      let storedUrl: string | null = null;
+      try {
+        const { storage } = await import('../storage');
+        const storagePath = await storage.save(`youtube-${videoId}.mp3`, buffer, 'audio/mpeg');
+        storedUrl = storage.getUrl(storagePath);
+      } catch (storeErr) {
+        console.warn(`[YouTubeExtractor] Failed to persist downloaded audio for ${videoId}:`, storeErr);
+      }
+
+      return { buffer, storedUrl };
+    } catch (err) {
+      console.warn(`[YouTubeExtractor] yt-dlp audio download failed for ${videoId}:`, err);
+      return null;
+    } finally {
+      await fs.promises.rm(tmpDir, { recursive: true, force: true }).catch(() => {});
+    }
   }
 }

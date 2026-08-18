@@ -38,7 +38,7 @@ export default function ForgotPasswordPage() {
       } else {
         setSuccess(data.message || 'पासवर्ड रिसेट लिंक पाठवली आहे. कृपया ईमेल तपासा.');
       }
-    } catch (err) {
+    } catch {
       setError('पासवर्ड रिसेट विनंती करताना तांत्रिक अडचण आली. कृपया पुन्हा प्रयत्न करा.');
     } finally {
       setLoading(false);

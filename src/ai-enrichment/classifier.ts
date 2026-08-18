@@ -14,9 +14,9 @@
  * Results are later fed into the full enrichment pipeline for refinement.
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+
+
+
 
 import { resolveFreeConfig } from './free-provider';
 import { buildClassifyPrompt } from './classify-prompt';

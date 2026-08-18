@@ -6,17 +6,13 @@
  */
 
 // Dynamic import to avoid Next.js build-time resolution
-// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-var-requires
 type Database = any;
 
 const DB_PATH = process.cwd() + '/prisma/varkari.db';
 
 function initDatabase(): Database {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { existsSync, mkdirSync, readFileSync } = require('fs');
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { dirname } = require('path');
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const Database = require('bun:sqlite').Database;
 
   const dbDir = dirname(DB_PATH);
@@ -29,14 +25,13 @@ function initDatabase(): Database {
   db.exec('PRAGMA foreign_keys=ON');
 
   // Run schema if tables don't exist
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+
   const hasTable = db
     .query("SELECT name FROM sqlite_master WHERE type='table' AND name='compositions'")
     .get();
 
   if (!hasTable) {
     const schemaPath = 'src/db/init.sql';
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const schema = readFileSync(schemaPath, 'utf-8');
     db.exec(schema);
   }
@@ -132,7 +127,7 @@ export const client = {
       };
       select?: Record<string, boolean>;
     }): Promise<Composition | null> {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+
       const row = sqliteDb
         .query(
           `SELECT c.*, s.name_marathi as saint_name_marathi, s.name_transliteration as saint_name_transliteration,
@@ -240,7 +235,7 @@ export const client = {
         }
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+
       const rows = sqliteDb.query(query).all(...queryParams) as Record<string, unknown>[];
       return rows.map((r) => ({
         id: r.id as string,
@@ -264,7 +259,7 @@ export const client = {
     },
 
     async count(): Promise<number> {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+
       const result = sqliteDb
         .query('SELECT COUNT(*) as cnt FROM compositions')
         .get() as { cnt: number };
@@ -274,7 +269,7 @@ export const client = {
 
   saint: {
     async findUnique(params: { where: { slug: string } }): Promise<Saint | null> {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+
       const row = sqliteDb
         .query('SELECT * FROM saints WHERE slug = ?')
         .get(params.where.slug) as Record<string, unknown> | undefined;
@@ -299,7 +294,7 @@ export const client = {
         query += ` ORDER BY slug ${params.orderBy.slug.toUpperCase()}`;
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+
       const rows = sqliteDb.query(query).all() as Record<string, unknown>[];
       return rows.map((r) => {
         const s: Saint = {
@@ -317,7 +312,7 @@ export const client = {
     },
 
     async count(): Promise<number> {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+
       const result = sqliteDb.query('SELECT COUNT(*) as cnt FROM saints').get() as { cnt: number };
       return result.cnt;
     },
@@ -325,7 +320,7 @@ export const client = {
 
   deity: {
     async findUnique(params: { where: { nameTranslit: string } }): Promise<Deity | null> {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+
       const row = sqliteDb
         .query('SELECT * FROM deities WHERE name_transliteration = ?')
         .get(params.where.nameTranslit) as Record<string, unknown> | undefined;
@@ -339,7 +334,7 @@ export const client = {
     },
 
     async count(): Promise<number> {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+
       const result = sqliteDb.query('SELECT COUNT(*) as cnt FROM deities').get() as { cnt: number };
       return result.cnt;
     },
@@ -353,12 +348,12 @@ export const client = {
       let row: Record<string, unknown> | undefined;
 
       if (params.where.slug) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+
         row = sqliteDb
           .query('SELECT * FROM festivals WHERE slug = ?')
           .get(params.where.slug) as Record<string, unknown> | undefined;
       } else if (params.where.nameTranslit) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+
         row = sqliteDb
           .query('SELECT * FROM festivals WHERE name_transliteration = ?')
           .get(params.where.nameTranslit) as Record<string, unknown> | undefined;
@@ -374,7 +369,7 @@ export const client = {
       };
 
       if (params.include?.compositions && row.id) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+
         const compRows = sqliteDb
           .query(
             `SELECT c.id, c.title_marathi, c.title_transliteration, c.slug, c.type, c.audio_links
@@ -408,7 +403,7 @@ export const client = {
         query += ` ORDER BY name_transliteration ${params.orderBy.nameTranslit.toUpperCase()}`;
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+
       const rows = sqliteDb.query(query).all() as Record<string, unknown>[];
       return rows.map((r) => ({
         id: r.id as string,
@@ -419,7 +414,7 @@ export const client = {
     },
 
     async count(): Promise<number> {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+
       const result = sqliteDb.query('SELECT COUNT(*) as cnt FROM festivals').get() as { cnt: number };
       return result.cnt;
     },
@@ -435,7 +430,7 @@ export const client = {
         query += ` ORDER BY slug ${params.orderBy.slug.toUpperCase()}`;
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+
       const rows = sqliteDb.query(query).all() as Record<string, unknown>[];
       return rows.map((r) => ({
         slug: r.slug as string,
@@ -449,7 +444,7 @@ export const client = {
       where: { compositionId: string };
       select?: Record<string, boolean>;
     }): Promise<AiEnrichmentResult | null> {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+
       const row = sqliteDb
         .query(
           'SELECT summary, meaning, keywords, confidence_summary, reviewed, review_approved FROM ai_enrichment_results WHERE composition_id = ? LIMIT 1',
@@ -495,20 +490,20 @@ export const client = {
         query += ` LIMIT ${params.take}`;
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+
       const rows = sqliteDb.query(query).all() as Record<string, unknown>[];
 
       // For each job, get composition and result
       const jobs = await Promise.all(
         rows.map(async (job) => {
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+
           const composition = sqliteDb
             .query('SELECT title_marathi, type FROM compositions WHERE id = ?')
             .get(job.composition_id as string) as
             | { title_marathi: string; type: string }
             | undefined;
 
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+
           const result = sqliteDb
             .query(
               'SELECT id, confidence_summary, reviewed, review_approved FROM ai_enrichment_results WHERE composition_id = ?',
@@ -571,6 +566,48 @@ export const client = {
     async count(): Promise<number> { return 0; },
   },
 
+  wariStop: {
+    async findMany(params?: { orderBy?: { sortOrder?: 'asc' | 'desc' } }): Promise<
+      Array<{
+        id: string;
+        nameMarathi: string;
+        nameTranslit: string;
+        slug: string;
+        distanceKm: number;
+        description: string;
+        icon: string | null;
+        sortOrder: number;
+      }>
+    > {
+      const hasTable = sqliteDb
+        .query("SELECT name FROM sqlite_master WHERE type='table' AND name='wari_stops'")
+        .get();
+      if (!hasTable) return [];
+      const dir = params?.orderBy?.sortOrder === 'desc' ? 'DESC' : 'ASC';
+      const rows = sqliteDb
+        .query(`SELECT * FROM wari_stops ORDER BY sort_order ${dir}`)
+        .all() as Record<string, unknown>[];
+      return rows.map((r) => ({
+        id: r.id as string,
+        nameMarathi: r.name_marathi as string,
+        nameTranslit: r.name_transliteration as string,
+        slug: r.slug as string,
+        distanceKm: r.distance_km as number,
+        description: r.description as string,
+        icon: (r.icon as string | null) ?? null,
+        sortOrder: r.sort_order as number,
+      }));
+    },
+    async count(): Promise<number> {
+      const hasTable = sqliteDb
+        .query("SELECT name FROM sqlite_master WHERE type='table' AND name='wari_stops'")
+        .get();
+      if (!hasTable) return 0;
+      const result = sqliteDb.query('SELECT COUNT(*) as cnt FROM wari_stops').get() as { cnt: number };
+      return result.cnt;
+    },
+  },
+
   audio: {
     async count(): Promise<number> { return 0; },
   },
@@ -581,13 +618,13 @@ export const client = {
 
   bookPublication: {
     async count(): Promise<number> { return 2; },
-    async findMany(params?: any): Promise<any[]> {
+    async findMany(_params?: any): Promise<any[]> {
       return [
         { id: 'bp-1', slug: 'tukaram-gatha-premium', titleMarathi: 'तुकाराम गाथा', titleEnglish: 'Tukaram Gatha', bookType: 'PREMIUM_HARDCOVER', totalCompositions: 150, totalPages: 320, createdAt: new Date(), editions: [{ format: 'DIGITAL_PDF', price: 299 }], _count: { orderItems: 0, compositions: 150 } },
         { id: 'bp-2', slug: 'dnyaneshwari-standard', titleMarathi: 'ज्ञानेश्वरी', titleEnglish: 'Dnyaneshwari', bookType: 'STANDARD', totalCompositions: 120, totalPages: 280, createdAt: new Date(), editions: [{ format: 'DIGITAL_PDF', price: 199 }], _count: { orderItems: 0, compositions: 120 } }
       ];
     },
-    async findUnique(params: any): Promise<any | null> {
+    async findUnique(_params: any): Promise<any | null> {
       return { id: 'bp-1', slug: 'tukaram-gatha-premium', titleMarathi: 'तुकाराम गाथा', titleEnglish: 'Tukaram Gatha', subtitle: 'संत वाङ्मय संग्रह', bookType: 'PREMIUM_HARDCOVER', curationType: 'SAINT_BASED', status: 'PUBLISHED', totalCompositions: 150, totalPages: 320, editions: [{ format: 'DIGITAL_PDF', price: 299, fileUrl: '/books/tukaram-gatha-premium/tukaram-gatha-premium.pdf', pageCount: 320 }], compositions: [], creator: { id: 'user-1', name: 'वारकरी योगदानकर्ता' }, _count: { orders: 0 } };
     },
     async create(params: any): Promise<any> {
@@ -612,7 +649,7 @@ export const client = {
 
   userCollection: {
     async count(): Promise<number> { return 0; },
-    async findMany(params?: any): Promise<any[]> { return []; },
+    async findMany(_params?: any): Promise<any[]> { return []; },
     async findUnique(): Promise<any | null> { return null; }
   },
 
@@ -716,7 +753,7 @@ export const client = {
   },
 
   // Raw SQL query support for relationship engine
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   $queryRawUnsafe: sqliteDb.query.bind(sqliteDb),
 };
 

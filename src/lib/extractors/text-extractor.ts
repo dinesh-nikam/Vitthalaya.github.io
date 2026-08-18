@@ -24,7 +24,7 @@ export class TextExtractor implements IExtractor {
     return mimes.includes(mimeType) || exts.includes(extension.toLowerCase());
   }
 
-  async extract(buffer: Buffer, filename: string, options?: ExtractionOptions): Promise<ExtractionResult> {
+  async extract(buffer: Buffer, filename: string, _options?: ExtractionOptions): Promise<ExtractionResult> {
     const ext = filename.split('.').pop()?.toLowerCase();
 
     try {

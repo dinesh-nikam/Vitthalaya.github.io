@@ -102,7 +102,6 @@ function tryMinimalZipParse(buffer: Buffer, targetPath: string): string | null {
       }
       // Compressed — try zlib inflate
       try {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const zlib = require('zlib');
         const decompressed = zlib.inflateRawSync(
           buffer.subarray(dataStart, dataStart + compressedSize)

@@ -47,7 +47,7 @@ export function AIChat() {
           sources: data.sources,
         },
       ]);
-    } catch (error) {
+    } catch {
       setMessages((prev) => [
         ...prev,
         {

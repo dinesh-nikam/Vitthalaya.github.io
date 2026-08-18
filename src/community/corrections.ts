@@ -13,7 +13,7 @@
 
 import { db } from '@/src/db/client';
 import type { Prisma } from '@prisma/client';
-import { createCompositionVersion } from './versions';
+import './versions';
 import { updateVerificationFromCorrection } from './verification';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -231,7 +231,7 @@ export async function reviewCorrection(input: ReviewCorrectionInput) {
       });
 
       // 2. Create a CompositionVersion snapshot
-      const version = await tx.compositionVersion.create({
+      await tx.compositionVersion.create({
         data: {
           compositionId: correction.compositionId,
           versionNumber: await getNextVersionNumber(tx, correction.compositionId),

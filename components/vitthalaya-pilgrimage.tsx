@@ -3,49 +3,13 @@
 import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { BookOpen, Compass, Search, Sparkles, Star, Volume2, Users, Upload, BookMarked, Shield, Eye, Heart } from 'lucide-react';
-import dynamic from 'next/dynamic';
+import { Users, Upload, BookMarked, Shield, Eye, Heart } from 'lucide-react';
 import '@/app/homepage.css';
+import { ChapterHero } from './features/pilgrimage/hero-section';
+import { ChapterBhakti } from './features/pilgrimage/timeline-section';
+import { ChapterWari } from './features/pilgrimage/wari-section';
+import { useScrollReveal } from './features/pilgrimage/hooks';
 
-const PandharpurScene = dynamic(
-  () => import('./3d/pandharpur-scene').then((mod) => mod.PandharpurScene),
-  { ssr: false, loading: () => <div className="w-full h-full bg-saffron/5 animate-pulse rounded-full" /> }
-);
-
-/* ── Hooks ── */
-function useScrollReveal(threshold = 0.15) {
-  const ref = React.useRef<HTMLDivElement>(null);
-  const [isVisible, setIsVisible] = React.useState(false);
-
-  React.useEffect(() => {
-    const element = ref.current;
-    if (!element) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setIsVisible(true); observer.unobserve(element); } },
-      { threshold, rootMargin: '0px 0px -50px 0px' }
-    );
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [threshold]);
-
-  return { ref, isVisible };
-}
-
-function useMouseParallax(intensity = 0.02) {
-  const [offset, setOffset] = React.useState({ x: 0, y: 0 });
-
-  React.useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      const x = (e.clientX / window.innerWidth - 0.5) * intensity;
-      const y = (e.clientY / window.innerHeight - 0.5) * intensity;
-      setOffset({ x, y });
-    };
-    window.addEventListener('mousemove', handleMouseMove, { passive: true });
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, [intensity]);
-
-  return offset;
-}
 
 /* ── Types ── */
 interface Saint {
@@ -148,7 +112,10 @@ export function VitthalayaPilgrimage({
         <ChapterBooks />
 
         {/* Chapter 9: Community */}
-        <ChapterCommunity />
+        <ChapterCommunity
+          totalCompositions={totalCompositions}
+          saintsCount={saints.length}
+        />
 
         {/* Chapter 10: Preservation */}
         <ChapterPreservation />
@@ -157,113 +124,6 @@ export function VitthalayaPilgrimage({
         <ChapterCTA />
       </main>
     </div>
-  );
-}
-
-/* ============================================================
-   CHAPTER 1 — HERO: Cinematic Arrival
-   ============================================================ */
-function ChapterHero({
-  totalCompositions,
-  onSearch,
-  query,
-  setQuery,
-  progress,
-}: {
-  totalCompositions: number;
-  onSearch: (e: React.FormEvent<HTMLFormElement>) => void;
-  query: string;
-  setQuery: (v: string) => void;
-  progress: number;
-}) {
-  const mouse = useMouseParallax(30);
-
-  return (
-    <section className="dp-hero" aria-labelledby="hero-title">
-      {/* Background layers */}
-      <div className="dp-hero-bg" aria-hidden="true" />
-
-      {/* Mist layers */}
-      <div className="dp-hero-mist" aria-hidden="true">
-        <span /><span /><span />
-      </div>
-
-      {/* Stars */}
-      <div className="dp-stars" aria-hidden="true">
-        {Array.from({ length: 50 }, (_, i) => (
-          <span key={i} className="dp-star" style={{
-            left: `${(i * 17) % 100}%`,
-            top: `${(i * 13) % 50}%`,
-            animationDelay: `${i * -0.4}s`,
-            animationDuration: `${3 + (i % 4)}s`,
-          }} />
-        ))}
-      </div>
-
-      {/* Temple silhouette */}
-      <div className="dp-hero-temple" aria-hidden="true" />
-
-      {/* Floating diyas */}
-      <div className="dp-hero-diyas" aria-hidden="true">
-        {Array.from({ length: 8 }, (_, i) => (
-          <div key={i} className="dp-diya" style={{
-            left: `${10 + (i * 12) % 80}%`,
-            bottom: `${15 + (i * 19) % 40}%`,
-            animationDelay: `${i * -1.5}s`,
-            width: `${16 + (i % 3) * 6}px`,
-            height: `${16 + (i % 3) * 6}px`,
-          }} />
-        ))}
-      </div>
-
-      {/* River reflections */}
-      <div className="dp-hero-river" aria-hidden="true">
-        {Array.from({ length: 10 }, (_, i) => (
-          <span key={i} style={{
-            left: `${(i * 11) % 100}%`,
-            bottom: `${(i * 17) % 80}%`,
-            animationDelay: `${i * -1.2}s`,
-          }} />
-        ))}
-      </div>
-
-      {/* 3D Scene */}
-      <div style={{ position: 'absolute', inset: 0, zIndex: -1, transform: `translate(${mouse.x}px, ${mouse.y}px)` }}>
-        <PandharpurScene progress={progress} />
-      </div>
-
-      {/* Content */}
-      <div className="dp-hero-content">
-        <div className="dp-hero-mark">
-          <Sparkles size={14} /> डिजिटल पंढरपूर
-        </div>
-        <h1 id="hero-title" className="dp-hero-title">
-          Enter the living digital temple of Bhakti.
-        </h1>
-        <p className="dp-hero-desc">
-          A cinematic pilgrimage through Pandharpur, the Wari, saints, abhangs, books, music,
-          and a knowledge universe of {totalCompositions.toLocaleString('en-IN')} devotional works.
-        </p>
-        <form onSubmit={onSearch} className="dp-hero-search">
-          <Search size={18} style={{ color: 'rgba(255,246,223,0.5)' }} />
-          <input
-            aria-label="Search abhangs, saints, books, and festivals"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search surrender, Vitthal, Tukaram..."
-          />
-          <button type="submit">Explore</button>
-        </form>
-        <div className="dp-hero-links">
-          <Link href="/sant" className="dp-hero-link"><Star size={14} /> Saints</Link>
-          <Link href="/books" className="dp-hero-link"><BookOpen size={14} /> Books</Link>
-          <Link href="/collections" className="dp-hero-link"><Volume2 size={14} /> Audio</Link>
-          <Link href="/wari" className="dp-hero-link"><Compass size={14} /> Wari</Link>
-        </div>
-      </div>
-
-      <div className="dp-scroll-cue" aria-hidden="true">Scroll for darshan</div>
-    </section>
   );
 }
 
@@ -337,128 +197,6 @@ function ChapterWelcome({
 }
 
 /* ============================================================
-   CHAPTER 3 — BHAKTI TIMELINE: Museum Stone Tablets
-   ============================================================ */
-const BHAKTI_TIMELINE = [
-  {
-    century: '13th Century',
-    saint: 'संत ज्ञानेश्वर',
-    saintEn: 'Saint Dnyaneshwar',
-    desc: 'Opens sacred knowledge in Marathi through the Dnyaneshwari — a commentary on the Bhagavad Gita that made divine wisdom accessible to all.',
-    tag: 'Dnyaneshwari',
-    image: '/images/saints/dnyaneshwar.jpg',
-  },
-  {
-    century: '14th Century',
-    saint: 'संत नामदेव',
-    saintEn: 'Saint Namdev',
-    desc: 'Carries kirtan across regions, transforming personal devotion into a collective spiritual movement that crosses caste and class boundaries.',
-    tag: 'Abhang & Kirtan',
-    image: '/images/registry/s18.jpg',
-  },
-  {
-    century: '16th Century',
-    saint: 'संत एकनाथ',
-    saintEn: 'Saint Eknath',
-    desc: 'Deepens public teaching through verse, bridging the gap between scholarly theology and the everyday language of the people.',
-    tag: 'Bhakti Poetry',
-    image: '/images/realistic/ancient-manuscript.jpg',
-  },
-  {
-    century: '17th Century',
-    saint: 'संत तुकाराम',
-    saintEn: 'Saint Tukaram',
-    desc: 'Gives the Wari its immortal voice. His abhangs become the living prayers sung by millions on the pilgrimage to Pandharpur.',
-    tag: 'Tukaram Gatha',
-    image: '/images/saints/tukaram-birthplace.jpg',
-  },
-];
-
-function ChapterBhakti() {
-  const reveal = useScrollReveal();
-
-  return (
-    <section
-      className={`dp-chapter dp-bhakti dp-reveal ${reveal.isVisible ? 'visible' : ''}`}
-      aria-labelledby="bhakti-title"
-      ref={reveal.ref}
-    >
-      <div className="dp-chapter-inner">
-        <div className="dp-kicker">Chapter 2 — Birth of Bhakti</div>
-        <h2 id="bhakti-title" className="dp-title">
-          Birth of the Bhakti Movement
-        </h2>
-        <p className="dp-subtitle" style={{ marginTop: '0.5rem' }}>
-          From the 13th to 17th century, Maharashtra's saints transformed devotion from temple ritual
-          into a living, breathing movement of the people.
-        </p>
-
-        <div className="dp-timeline">
-          {BHAKTI_TIMELINE.map((item, i) => (
-            <TimelineItem key={i} {...item} index={i} />
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function TimelineItem({
-  century,
-  saint,
-  saintEn,
-  desc,
-  tag,
-  image,
-  index,
-}: {
-  century: string;
-  saint: string;
-  saintEn: string;
-  desc: string;
-  tag: string;
-  image: string;
-  index: number;
-}) {
-  const itemReveal = useScrollReveal(0.2);
-
-  return (
-    <div
-      className={`dp-timeline-item dp-reveal ${itemReveal.isVisible ? 'visible' : ''}`}
-      ref={itemReveal.ref}
-      style={{ transitionDelay: `${index * 100}ms` }}
-    >
-      <div className="dp-timeline-century">{century}</div>
-      <div className="dp-timeline-card">
-        <div className="dp-timeline-grid">
-          <div className="dp-timeline-img-container">
-            <Image
-              src={image}
-              alt={`${saintEn} portrait`}
-              width={180}
-              height={180}
-              className="dp-timeline-img"
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
-          </div>
-          <div className="dp-timeline-content">
-            <h3 className="dp-timeline-saint">{saint}</h3>
-            <p style={{
-              fontFamily: 'var(--font-inter), sans-serif',
-              fontSize: '0.8rem',
-              color: 'rgba(255,246,223,0.5)',
-              margin: '0 0 0.75rem',
-            }}>{saintEn}</p>
-            <p className="dp-timeline-desc">{desc}</p>
-            <span className="dp-timeline-tag">{tag}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ============================================================
    CHAPTER 4 — SAINTS: Portrait Gallery
    ============================================================ */
 const SAINT_IMAGES: Record<string, string> = {
@@ -527,61 +265,6 @@ function SaintCard({ saint }: { saint: Saint }) {
         </div>
       </div>
     </Link>
-  );
-}
-
-/* ============================================================
-   CHAPTER 5 — WARI: Pilgrimage Experience
-   ============================================================ */
-function ChapterWari({ activeStop, progress }: { activeStop: string; progress: number }) {
-  const reveal = useScrollReveal();
-
-  return (
-    <section
-      className={`dp-chapter dp-wari dp-reveal ${reveal.isVisible ? 'visible' : ''}`}
-      aria-labelledby="wari-title"
-      ref={reveal.ref}
-    >
-      <div className="dp-wari-sticky">
-        <div className="dp-wari-header">
-          <div className="dp-kicker">Chapter 4 — The Walk</div>
-          <h2 id="wari-title" className="dp-title">
-            The Wari Experience
-          </h2>
-          <p className="dp-subtitle" style={{ marginTop: '0.5rem' }}>
-            The journey moves under your feet. Scroll from Dehu and Alandi toward Pandharpur —
-            following the path that millions of Warkaris have walked for centuries.
-          </p>
-        </div>
-
-        <div className="dp-wari-meter">
-          <span className="dp-wari-stop">{activeStop}</span>
-          <strong className="dp-wari-distance">
-            {Math.max(0, Math.round(250 - progress * 250))}
-            <span className="dp-wari-unit"> km</span>
-          </strong>
-        </div>
-
-        <div className="dp-wari-road" aria-hidden="true">
-          {WARI_STOPS.map((stop, i) => (
-            <div key={stop} className={`dp-wari-stop-dot ${i <= WARI_STOPS.indexOf(activeStop) ? 'active' : ''}`}>
-              <span className="dp-wari-stop-name">{stop}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Pilgrim particles */}
-      <div className="dp-pilgrim-field" aria-hidden="true">
-        {Array.from({ length: 24 }, (_, i) => (
-          <span key={i} className="dp-pilgrim" style={{
-            left: `${(i * 37) % 100}%`,
-            top: `${(i * 23) % 70}%`,
-            animationDelay: `${i * -0.8}s`,
-          }} />
-        ))}
-      </div>
-    </section>
   );
 }
 
@@ -809,15 +492,25 @@ const COMMUNITY_ITEMS = [
     title: 'Verification Queue',
     desc: 'Help verify newly digitized texts — every contribution ensures accuracy for future generations.',
   },
-  {
-    icon: <Shield size={22} />,
-    title: 'Impact',
-    desc: '450+ compositions preserved. 12 saints documented. 3 languages represented. Growing daily.',
-  },
 ];
 
-function ChapterCommunity() {
+/** Impact card — live numbers from the real catalog, never hardcoded. */
+function ChapterCommunity({
+  totalCompositions,
+  saintsCount,
+}: {
+  totalCompositions: number;
+  saintsCount: number;
+}) {
   const reveal = useScrollReveal();
+  const items = [
+    ...COMMUNITY_ITEMS,
+    {
+      icon: <Shield size={22} />,
+      title: 'Impact',
+      desc: `${totalCompositions.toLocaleString('en-IN')}+ compositions preserved. ${saintsCount} saints documented. Growing daily.`,
+    },
+  ];
 
   return (
     <section
@@ -835,7 +528,7 @@ function ChapterCommunity() {
         </p>
 
         <div className="dp-community-grid dp-stagger">
-          {COMMUNITY_ITEMS.map((item, i) => (
+          {items.map((item, i) => (
             <div key={i} className="dp-community-card">
               <div className="dp-community-icon">{item.icon}</div>
               <h3 className="dp-community-title">{item.title}</h3>

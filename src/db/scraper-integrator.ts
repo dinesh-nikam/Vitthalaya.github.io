@@ -10,7 +10,7 @@
 
 import { db } from './client';
 import * as fs from 'fs';
-import * as path from 'path';
+import 'path';
 
 interface ScrapedComposition {
   title: string;

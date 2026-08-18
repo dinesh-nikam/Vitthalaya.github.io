@@ -11,19 +11,6 @@ function sanitizeHTML(input: string): string {
   return input.replace(/<[^>]*>/g, '');
 }
 
-function sanitizeSQL(input: string): string {
-  // In production: use parameterized queries instead
-  return input;
-}
-
-function sanitizeRTL(input: string): string {
-  return input.replace(/[‮‭]/g, '');
-}
-
-function sanitizeControlChars(input: string): string {
-  return input.replace(/[\x00-\x1F\x7F]/g, '');
-}
-
 describe('Security - XSS Prevention', () => {
   test('TC-SEC-001: Script tags stripped', () => {
     const result = sanitizeHTML('<script>alert("xss")</script>विठ्ठल');

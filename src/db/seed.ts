@@ -184,6 +184,89 @@ async function main() {
     }),
   ]);
 
+  // =============== WARI STOPS ===============
+  // Documented Ashadhi Wari route stops (real places, real route distances).
+  const wariStops = await Promise.all([
+    prisma.wariStop.upsert({
+      where: { slug: 'dehu' },
+      update: {},
+      create: {
+        nameMarathi: 'देहू',
+        nameTranslit: 'Dehu',
+        slug: 'dehu',
+        distanceKm: 250,
+        description: 'संत तुकाराम महाराजांच्या पालखीचे प्रस्थान',
+        icon: '🚩',
+        sortOrder: 0,
+      },
+    }),
+    prisma.wariStop.upsert({
+      where: { slug: 'alandi' },
+      update: {},
+      create: {
+        nameMarathi: 'आळंदी',
+        nameTranslit: 'Alandi',
+        slug: 'alandi',
+        distanceKm: 238,
+        description: 'संत ज्ञानेश्वर माऊलींच्या पालखीचे प्रस्थान',
+        icon: '🚩',
+        sortOrder: 1,
+      },
+    }),
+    prisma.wariStop.upsert({
+      where: { slug: 'pune' },
+      update: {},
+      create: {
+        nameMarathi: 'पुणे',
+        nameTranslit: 'Pune',
+        slug: 'pune',
+        distanceKm: 215,
+        description: 'दोन्ही पालख्यांचा संगम आणि भव्य स्वागत सोहळा',
+        icon: '🏛️',
+        sortOrder: 2,
+      },
+    }),
+    prisma.wariStop.upsert({
+      where: { slug: 'jejuri' },
+      update: {},
+      create: {
+        nameMarathi: 'जेजुरी',
+        nameTranslit: 'Jejuri',
+        slug: 'jejuri',
+        distanceKm: 165,
+        description: 'खंडोबा चरणी भंडारा उधळण',
+        icon: '⛰️',
+        sortOrder: 3,
+      },
+    }),
+    prisma.wariStop.upsert({
+      where: { slug: 'wakhari' },
+      update: {},
+      create: {
+        nameMarathi: 'वाखरी',
+        nameTranslit: 'Wakhari',
+        slug: 'wakhari',
+        distanceKm: 15,
+        description: 'वारीतील शेवटचे भव्य गोलाकार रिंगण',
+        icon: '🌀',
+        sortOrder: 4,
+      },
+    }),
+    prisma.wariStop.upsert({
+      where: { slug: 'pandharpur' },
+      update: {},
+      create: {
+        nameMarathi: 'पंढरपूर',
+        nameTranslit: 'Pandharpur',
+        slug: 'pandharpur',
+        distanceKm: 0,
+        description: 'चंद्रभागेचे स्नान आणि विठू माऊलींचे दर्शन',
+        icon: '🛕',
+        sortOrder: 5,
+      },
+    }),
+  ]);
+
   // Get IDs for relationships
   const tukaramId = saints.find((s) => s.nameMarathi === 'तुकाराम महाराज')?.id;
   const dnyaneshwarId = saints.find((s) => s.nameMarathi === 'द्न्यादेश्वर महाराज')?.id;
@@ -191,7 +274,6 @@ async function main() {
   const eknathId = saints.find((s) => s.nameMarathi === 'एकनाथ महाराज')?.id;
   const vitthalId = deities.find((d) => d.nameMarathi === 'विठ्ठल')?.id;
   const shivId = deities.find((d) => d.nameMarathi === 'शिव')?.id;
-  const deviId = deities.find((d) => d.nameMarathi === 'देवी')?.id;
   const ganpatiId = deities.find((d) => d.nameMarathi === 'गणपती')?.id;
 
   const abhangId = categories.find((c) => c.slug === 'abhang')?.id;
@@ -199,7 +281,6 @@ async function main() {
   const aartiId = categories.find((c) => c.slug === 'aarti')?.id;
 
   const ashadhiId = festivals.find((f) => f.nameMarathi === 'आषाढी एकादशी')?.id;
-  const kartikiId = festivals.find((f) => f.nameMarathi === 'कार्तिकी एकादशी')?.id;
 
   // =============== COMPOSITIONS ===============
   // All content is from public domain classical texts (~500+ years old)
@@ -554,7 +635,7 @@ async function main() {
     },
   });
 
-  const ebookEditions = await Promise.all([
+  await Promise.all([
     prisma.bookEdition.upsert({
       where: { id: `${tukaramAbhangs.id}-pdf` },
       update: {},
@@ -630,6 +711,7 @@ async function main() {
   console.log(`  - ${deities.length} Deities`);
   console.log(`  - ${categories.length} Categories`);
   console.log(`  - ${festivals.length} Festivals`);
+  console.log(`  - ${wariStops.length} Wari Stops`);
   console.log(`  - ${compositions.length} Compositions (all editorially reviewed)`);
   console.log(`  - ${bookCount} Book Publications`);
   console.log(`  - ${editionCount} Book Editions`);

@@ -10,14 +10,10 @@ const prisma = new PrismaClient();
 async function main() {
   // Get reference IDs
   const tukaram = await prisma.saint.findFirst({ where: { nameMarathi: 'तुकाराम महाराज' } });
-  const dnyaneshwar = await prisma.saint.findFirst({ where: { nameMarathi: 'द्न्यादेश्वर महाराज' } });
-  const namdev = await prisma.saint.findFirst({ where: { nameMarathi: 'नामदेव महाराज' } });
 
   const vitthal = await prisma.deity.findFirst({ where: { nameMarathi: 'विठ्ठल' } });
 
   const abhangCat = await prisma.category.findUnique({ where: { slug: 'abhang' } });
-  const haripathCat = await prisma.category.findUnique({ where: { slug: 'haripath' } });
-  const aartiCat = await prisma.category.findUnique({ where: { slug: 'aarti' } });
 
   // Additional Tukaram Abhangas
   const tukaramAbhangas = [

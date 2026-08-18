@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/src/lib/auth';
 import { submitPeerVote } from '@/src/lib/moderation-workflow';
+import { ApiErrors, errorResponse } from '@/src/lib/api-response';
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     // 1. Authenticate user session
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized. Please sign in.' }, { status: 401 });
+      return ApiErrors.UNAUTHORIZED('Unauthorized. Please sign in.');
     }
 
     const userId = (session.user as any).id;
@@ -18,11 +19,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const { queueId, vote, notes } = body;
 
     if (!queueId || !vote) {
-      return NextResponse.json({ error: 'Parameters "queueId" and "vote" are required.' }, { status: 400 });
+      return ApiErrors.BAD_REQUEST('Parameters "queueId" and "vote" are required.');
     }
 
     if (!['approve', 'reject', 'flag'].includes(vote)) {
-      return NextResponse.json({ error: 'Invalid vote. Must be "approve", "reject", or "flag".' }, { status: 400 });
+      return ApiErrors.BAD_REQUEST('Invalid vote. Must be "approve", "reject", or "flag".');
     }
 
     // 3. Register peer review vote
@@ -35,6 +36,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error('Moderation vote API error:', err);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return errorResponse(msg, 500, { code: 'INTERNAL_ERROR' });
   }
 }

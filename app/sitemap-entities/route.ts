@@ -1,13 +1,7 @@
 import { NextRequest } from 'next/server';
 import { db } from '@/src/db/client';
 import { redis } from '@/src/lib/redis';
-import {
-  ENTITY_CHANGEFREQ,
-  ENTITY_PRIORITY,
-  STATIC_CHANGEFREQ,
-  STATIC_PRIORITY,
-  buildUrlSet,
-} from '@/src/lib/seo';
+import { ENTITY_CHANGEFREQ, ENTITY_PRIORITY, STATIC_CHANGEFREQ, buildUrlSet } from '@/src/lib/seo';
 import { getTopCanonicalQueries } from '@/src/lib/canonical-queries';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://digitalpandharpur.com';

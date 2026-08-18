@@ -8,6 +8,10 @@ import { upsertCompositionToIndex as upsertMeili, deleteCompositionFromIndex as 
 import { upsertCompositionToIndex as upsertOS, deleteCompositionFromIndex as deleteOS } from './opensearch-client';
 import { drainQueue } from '../ai-enrichment/queue';
 
+// YouTube audio transcription queue (yt-dlp download + Whisper), drained by
+// the worker daemon off the request path.
+export { enqueueAudioProcessingJob, processAudioProcessingJobs } from './audio-processing';
+
 /**
  * Processes pending search sync outbox jobs.
  * Connects transactional DB updates with search search backends.

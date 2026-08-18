@@ -2,7 +2,7 @@ import { db } from '@/src/db/client';
 import { VitthalayaPilgrimage } from '@/components/vitthalaya-pilgrimage';
 
 export default async function HomePage() {
-  const [saints, dbCategories, totalCompositions, totalBooks] = await Promise.all([
+  const [saints, dbCategories, totalCompositions, totalBooks, byTypeRows] = await Promise.all([
     db.saint.findMany({
       orderBy: { nameMarathi: 'asc' },
       take: 8,
@@ -26,12 +26,17 @@ export default async function HomePage() {
     }),
     db.composition.count(),
     db.bookPublication.count(),
+    db.composition.groupBy({ by: ['type'], _count: { _all: true } }),
   ]);
 
+  // Category cards show REAL catalog size: where a category slug maps to a
+  // composition type (abhang/aarti/haripath...) use the true per-type count;
+  // curated categories without a type mapping keep their join-table count.
+  const typeCount = new Map(byTypeRows.map((row) => [row.type.toLowerCase(), row._count._all]));
   const categories = dbCategories.map((category) => ({
     slug: category.slug,
     nameMarathi: category.nameMarathi,
-    count: category._count.compositions,
+    count: typeCount.get(category.slug.toLowerCase()) ?? category._count.compositions,
   }));
 
   return (

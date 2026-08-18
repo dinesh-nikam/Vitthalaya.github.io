@@ -138,7 +138,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const results = [...related.entries()]
       .sort((a, b) => b[1].score - a[1].score)
       .slice(0, limit)
-      .map(([id, entry]) => ({
+      .map(([_id, entry]) => ({
         ...entry.comp,
         relevance: entry.score,
         via: entry.reasons[0] ?? 'related',

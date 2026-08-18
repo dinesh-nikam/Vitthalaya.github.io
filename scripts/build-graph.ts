@@ -16,7 +16,7 @@
  */
 
 import { db } from '../src/db/client';
-import { bulkImportEdges, deleteEdgesForEntity } from '../src/knowledge-graph/relationship-engine';
+import { bulkImportEdges } from '../src/knowledge-graph/relationship-engine';
 import type { EntityType, RelationshipType } from '../src/knowledge-graph/graph-ontology';
 
 const DRY_RUN = process.argv.includes('--dry-run');

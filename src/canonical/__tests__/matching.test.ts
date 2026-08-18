@@ -41,9 +41,9 @@ import {
   buildMatchResult,
 } from '../confidence-score';
 
-import { canonicalEngine, CanonicalEngine } from '../canonical-engine';
+import { CanonicalEngine } from '../canonical-engine';
 import { DedupEngine } from '../../scraper/dedup';
-import type { AlgorithmScore, MatchCandidate, MatchResult } from '../types';
+import type { AlgorithmScore, MatchCandidate } from '../types';
 import { CONFIDENCE_THRESHOLDS } from '../types';
 
 // ─── Test Marathi Texts ─────────────────────────────────────────────────────
@@ -65,12 +65,6 @@ const ABHANG_A_VARIANT =
   'एका जनार्दनी प्रसाद । म्हणे नका फीरों मनें वृथा ।।१।।\n' +
   'पंढरीचा महिमा वेगळा । तेथें राहे श्री विठ्ठला । \n' +
   'एका जनार्दनी प्रसाद । भक्त जनां भेटी द्यावया ।।२।।';
-
-const ABHANG_A_OCR_NOISY =
-  'काया ही पंढरी साच | जिहीं भेटे विठ्ठल साक्षात् |\n' +
-  'एका जनार्दनी प्रसाद | म्हणे नका फीरों मने वृथा ||१||\n' +
-  'पंढरीचा महिमा वेगळा | तेथें राहे श्री विठ्ठला |\n' +
-  'एका जनार्दनी प्रसाद | भक्त जनां भेटी द्यावया ||२||';
 
 const ABHANG_B_DIFFERENT =
   'जो जो म्हणे विठ्ठल । त्याच्या कंठीं विठ्ठल ।\n' +

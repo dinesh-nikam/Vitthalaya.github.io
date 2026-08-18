@@ -15,7 +15,7 @@ import {
 
 interface ModerationItem {
   id: string;
-  sourceType: 'ocr' | 'suggestion';
+  sourceType: 'ocr' | 'suggestion' | 'youtube' | 'recording';
   sourceId: string;
   draftTitle: string;
   draftText: string;
@@ -75,6 +75,20 @@ const ConfidenceBadge = ({ level }: { level: string | null }) => {
     </span>
   );
 };
+
+const SOURCE_TYPE_META: Record<string, { icon: string; label: string; badgeClass: string }> = {
+  ocr: { icon: '📄', label: 'Manuscript OCR', badgeClass: 'bg-blue-950/80 text-blue-400 border border-blue-900/50' },
+  suggestion: { icon: '✏️', label: 'Edit Suggestion', badgeClass: 'bg-amber-950/80 text-amber-400 border border-amber-900/50' },
+  youtube: { icon: '▶️', label: 'YouTube Import', badgeClass: 'bg-red-950/80 text-red-400 border border-red-900/50' },
+  recording: { icon: '🎤', label: 'Voice Recording', badgeClass: 'bg-purple-950/80 text-purple-400 border border-purple-900/50' },
+};
+
+function sourceTypeMeta(sourceType: string) {
+  return SOURCE_TYPE_META[sourceType] ?? { icon: '📄', label: sourceType, badgeClass: 'bg-gray-800 text-gray-400 border border-gray-700' };
+}
+
+/** Source types that create a brand-new draft composition (no "original" to diff against). */
+const NEW_DRAFT_SOURCE_TYPES = new Set(['ocr', 'youtube', 'recording']);
 
 // ── Main Dashboard ────────────────────────────────────
 
@@ -626,7 +640,7 @@ export default function ModerationDashboard() {
               <div className="flex-1 min-w-0">
                 <h3 className="font-bold text-[#f7e8cf] text-sm truncate">{item.draftTitle}</h3>
                 <p className="text-xs text-[#f7e8cf]/50 truncate">
-                  {item.sourceType === 'ocr' ? '📄 Manuscript OCR' : '✏️ Edit Suggestion'} | स्वीकारले: {item.consensusScore}
+                  {sourceTypeMeta(item.sourceType).icon} {sourceTypeMeta(item.sourceType).label} | स्वीकारले: {item.consensusScore}
                 </p>
               </div>
               <div className="flex items-center gap-3 ml-4">
@@ -832,12 +846,8 @@ export default function ModerationDashboard() {
                         />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
-                            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase ${
-                              item.sourceType === 'ocr'
-                                ? 'bg-blue-950/80 text-blue-400 border border-blue-900/50'
-                                : 'bg-amber-950/80 text-amber-400 border border-amber-900/50'
-                            }`}>
-                              {item.sourceType === 'ocr' ? '📄 OCR' : '✏️ Edit'}
+                            <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold uppercase ${sourceTypeMeta(item.sourceType).badgeClass}`}>
+                              {sourceTypeMeta(item.sourceType).icon} {sourceTypeMeta(item.sourceType).label}
                             </span>
                             <span className="text-[9px] text-[#e5a93c]/50">
                               {new Date(item.createdAt).toLocaleDateString('mr-IN')}
@@ -914,9 +924,11 @@ export default function ModerationDashboard() {
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <h3 className="text-sm font-extrabold uppercase text-[#e5a93c] tracking-wider">मूळ प्रत</h3>
-                      {selectedItem.sourceType === 'ocr' ? (
+                      {NEW_DRAFT_SOURCE_TYPES.has(selectedItem.sourceType) ? (
                         <div className="flex flex-col items-center justify-center text-center p-8 h-[250px] border border-dashed border-[#e5a93c]/20 rounded-2xl bg-[#1c080b]/30">
-                          <p className="text-sm text-[#e5a93c]/50 italic">नवीन अपलोड — मूळ प्रत नाही.</p>
+                          <p className="text-sm text-[#e5a93c]/50 italic">
+                            नवीन अपलोड ({sourceTypeMeta(selectedItem.sourceType).label}) — मूळ प्रत नаही.
+                          </p>
                         </div>
                       ) : (
                         <div className="font-mono text-sm leading-relaxed p-4 rounded-xl bg-[#1c080b]/40 border border-[#e5a93c]/5 max-h-[500px] overflow-y-auto whitespace-pre-wrap text-[#f7e8cf]/60">

@@ -174,7 +174,7 @@ export default function SearchPageClient({
       }
       return prev;
     });
-  }, [searchParams]); // eslint-disable-line
+  }, [searchParams]);
 
   const handleSearch = useCallback((q: string) => {
     setQuery(q);

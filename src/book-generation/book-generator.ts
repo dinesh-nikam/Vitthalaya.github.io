@@ -16,23 +16,12 @@ import { db } from '../db/client';
 import { curateBook } from './curator';
 import { buildStructure } from './structure-builder';
 import { exportBook } from './format-exporter';
-import {
-  type BookFormat,
-  type BookStatus,
-  type BookType,
-  type CurationCriteria,
-  type CurationType,
-  type GenerateBookRequest,
-  type GenerateBookResult,
-  type LayoutConfig,
-  type CoverDesign,
-  DEFAULT_LAYOUTS,
-} from './types';
+import { DEFAULT_LAYOUTS, type BookFormat, type BookStatus, type BookType, type GenerateBookRequest, type GenerateBookResult, type LayoutConfig, type CoverDesign } from './types';
 
 // ── Config ────────────────────────────────────────────────────────────────────
 
 const OUTPUT_DIR = 'public/books';
-const DEFAULT_CURRENCY = 'INR';
+
 
 // ── Slug Generation ───────────────────────────────────────────────────────────
 
@@ -93,7 +82,7 @@ export async function generateBook(request: GenerateBookRequest): Promise<Genera
       subtitle: coverDesign.subtitle,
       bookType: request.bookType,
       curationType: request.curationType,
-      curationCriteria: request.curationCriteria as any,
+      curationConfig: JSON.stringify(request.curationCriteria),
       status: 'DRAFT',
       creatorId: request.creatorId,
       isPublic: request.isPublic ?? false,

@@ -161,7 +161,7 @@ async function main() {
       
       const progress = ((inserted / count) * 100).toFixed(1);
       process.stdout.write(`\r  → Ingested: ${inserted.toLocaleString()} / ${count.toLocaleString()} (${progress}%)`);
-    } catch (err: any) {
+    } catch {
       // SQLite fallback: Prisma createMany might fail on SQLite setups
       // If failed, insert sequentially for this chunk
       for (const comp of compositions) {

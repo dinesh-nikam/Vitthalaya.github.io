@@ -10,7 +10,7 @@ interface ReadingModeContextValue {
   isDarkMode: boolean;
   setDarkMode: (value: boolean) => void;
   bookmarked: boolean;
-  toggleBookmarkForSlug: (slug: string, title?: string) => void;
+  toggleBookmarkForSlug: (slug: string, title?: string) => Promise<void>;
 }
 
 const ReadingModeContext = React.createContext<ReadingModeContextValue | null>(null);
@@ -87,11 +87,22 @@ export function ReadingModeProvider({
     }
   }, []);
 
-  const bookmarked = currentSlug ? isBookmarked(currentSlug) : false;
+  const [bookmarked, setBookmarked] = React.useState(false);
 
-  const toggleBookmarkWithTitle = (slug: string, title?: string) => {
+  React.useEffect(() => {
+    if (currentSlug) {
+      isBookmarked(currentSlug).then(setBookmarked).catch(console.error);
+    }
+  }, [currentSlug]);
+
+  const toggleBookmarkWithTitle = async (slug: string, title?: string) => {
     if (title) {
-      toggleBookmark(slug, title);
+      try {
+        const nowBookmarked = await toggleBookmark(slug, title);
+        setBookmarked(nowBookmarked);
+      } catch (error) {
+        console.error('Failed to toggle bookmark:', error);
+      }
     }
   };
 

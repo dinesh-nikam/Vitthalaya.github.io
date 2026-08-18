@@ -3,15 +3,9 @@
 import { VitthalayaShell } from '@/components/vitthalaya-shell';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { TrendingUp, BookOpen, Users, Calendar, Star, ArrowRight } from 'lucide-react';
+import { TrendingUp, BookOpen, Calendar, Star, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 
-const CATEGORY_COVERS: Record<string, { img: string; en: string; count: string; path: string }> = {
-  'अभंग': { img: '/images/categories/abhang.jpg', en: 'Abhang', count: '५०,०००+', path: '/search?type=abhang' },
-  'आरती': { img: '/images/categories/aarti.jpg', en: 'Aarti', count: '५००+', path: '/search?type=aarti' },
-  'स्तोत्रे': { img: '/images/categories/stotra.jpg', en: 'Stotra', count: '१,०००+', path: '/search?type=stotra' },
-  'भजन': { img: '/images/categories/bhajan.jpg', en: 'Bhajan', count: '२,०००+', path: '/search?type=bhajan' },
-};
 
 interface TrendingComposition {
   id: string;
@@ -19,6 +13,17 @@ interface TrendingComposition {
   slug: string;
   type: string;
   saintName: string | null;
+}
+
+interface RecentComposition extends TrendingComposition {
+  createdAt: string;
+  preview: string;
+}
+
+interface TrendingResponse {
+  windowDays: number;
+  signal: 'interactions' | 'recency';
+  trending: TrendingComposition[];
 }
 
 interface Festival {
@@ -32,26 +37,62 @@ interface Stats {
   compositions: number;
   saints: number;
   categories: number;
+  byType: Record<string, number>;
 }
+
+/** Devanagari digit formatting for real counts. */
+function fmtMr(n: number): string {
+  try {
+    return new Intl.NumberFormat('mr-IN').format(n);
+  } catch {
+    return String(n);
+  }
+}
+
+function fmtDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString('mr-IN', { day: 'numeric', month: 'short' });
+  } catch {
+    return iso;
+  }
+}
+
+const TYPE_CARDS: { type: string; label: string; en: string; img: string; slug: string }[] = [
+  { type: 'abhang', label: 'अभंग', en: 'Abhang', img: '/images/categories/abhang.jpg', slug: '/search?type=abhang' },
+  { type: 'aarti', label: 'आरत्या', en: 'Aarti', img: '/images/categories/aarti.jpg', slug: '/search?type=aarti' },
+  { type: 'stotra', label: 'स्तोत्रे', en: 'Stotra', img: '/images/categories/stotra.jpg', slug: '/search?type=stotra' },
+  { type: 'bhajan', label: 'भजन', en: 'Bhajan', img: '/images/categories/bhajan.jpg', slug: '/search?type=bhajan' },
+];
 
 export default function ExplorePage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [trending, setTrending] = useState<TrendingComposition[]>([]);
+  const [trendingSignal, setTrendingSignal] = useState<'interactions' | 'recency'>('recency');
+  const [recent, setRecent] = useState<RecentComposition[]>([]);
   const [upcomingFestivals, setUpcomingFestivals] = useState<Festival[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [statsRes, trendingRes, festivalsRes] = await Promise.all([
+        const [statsRes, trendingRes, festivalsRes, recentRes] = await Promise.all([
           fetch('/api/explore/stats'),
           fetch('/api/explore/trending'),
           fetch('/api/explore/festivals'),
+          fetch('/api/explore/recent'),
         ]);
 
         if (statsRes.ok) setStats(await statsRes.json());
-        if (trendingRes.ok) setTrending(await trendingRes.json());
+        if (trendingRes.ok) {
+          const json: TrendingResponse = await trendingRes.json();
+          setTrending(json.trending ?? []);
+          setTrendingSignal(json.signal ?? 'recency');
+        }
         if (festivalsRes.ok) setUpcomingFestivals(await festivalsRes.json());
+        if (recentRes.ok) {
+          const json = await recentRes.json();
+          setRecent(Array.isArray(json) ? json : []);
+        }
       } catch (err) {
         console.error('Failed to fetch explore data:', err);
       } finally {
@@ -73,9 +114,9 @@ export default function ExplorePage() {
         primaryLabel="Search Compositions"
         eyebrow="Spiritual Discovery"
         stats={[
-          { label: 'Compositions', value: stats?.compositions?.toLocaleString() || '...' },
-          { label: 'Saints', value: stats?.saints?.toLocaleString() || '...' },
-          { label: 'Categories', value: stats?.categories?.toLocaleString() || '...' },
+          { label: 'Compositions', value: stats ? fmtMr(stats.compositions) : '...' },
+          { label: 'Saints', value: stats ? fmtMr(stats.saints) : '...' },
+          { label: 'Categories', value: stats ? fmtMr(stats.categories) : '...' },
         ]}
       >
         {/* Page-specific content */}
@@ -86,32 +127,68 @@ export default function ExplorePage() {
               साहित्य श्रेणींचे अन्वेषण करा
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {Object.entries(CATEGORY_COVERS).map(([label, info]) => (
-                <Link
-                  key={label}
-                  href={info.path}
-                  className="group relative overflow-hidden rounded-2xl aspect-[4/3] flex flex-col justify-end p-5 border border-saffron/10 transition-all duration-300 hover:border-saffron/30 hover:shadow-2xl hover:-translate-y-1"
-                >
-                  <div className="absolute inset-0 z-0">
-                    <Image
-                      src={info.img}
-                      alt={label}
-                      fill
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent group-hover:via-saffron-950/20 group-hover:from-saffron-950/80 transition-colors duration-300" />
-                  </div>
+              {TYPE_CARDS.map((card) => {
+                const count = stats?.byType?.[card.type];
+                return (
+                  <Link
+                    key={card.type}
+                    href={card.slug}
+                    className="group relative overflow-hidden rounded-2xl aspect-[4/3] flex flex-col justify-end p-5 border border-saffron/10 transition-all duration-300 hover:border-saffron/30 hover:shadow-2xl hover:-translate-y-1"
+                  >
+                    <div className="absolute inset-0 z-0">
+                      <Image
+                        src={card.img}
+                        alt={card.label}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent group-hover:via-saffron-950/20 group-hover:from-saffron-950/80 transition-colors duration-300" />
+                    </div>
 
-                  <div className="relative z-10 space-y-1 text-left">
-                    <span className="text-saffron text-[10px] font-bold uppercase tracking-wider">{info.en}</span>
-                    <h3 className="text-white text-xl font-bold font-marathi">{label}</h3>
-                    <p className="text-white/60 text-xs font-mono">{info.count} रचना</p>
-                  </div>
-                </Link>
-              ))}
+                    <div className="relative z-10 space-y-1 text-left">
+                      <span className="text-saffron text-[10px] font-bold uppercase tracking-wider">{card.en}</span>
+                      <h3 className="text-white text-xl font-bold font-marathi">{card.label}</h3>
+                      <p className="text-white/60 text-xs font-mono">
+                        {count != null ? `${fmtMr(count)} रचना` : '… रचना'}
+                      </p>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </section>
+
+          {/* Recent Compositions — real rows, real timestamps */}
+          {!loading && recent.length > 0 && (
+            <section aria-labelledby="recent">
+              <h2 id="recent" className="text-saffron-300 text-xl font-medium mb-4 flex items-center gap-2">
+                <BookOpen className="w-5 h-5" />
+                नवीन जोडलेल्या रचना
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {recent.slice(0, 6).map((comp) => (
+                  <Link
+                    key={comp.id}
+                    href={`/abhang/${comp.slug}`}
+                    className="group bg-card rounded-xl p-4 border border-saffron/10 hover:border-saffron/30 hover:shadow-md transition-all"
+                  >
+                    <h3 className="font-marathi font-medium text-foreground group-hover:text-saffron transition-colors line-clamp-2">
+                      {comp.titleMarathi}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {comp.saintName || 'अज्ञात संत'} • {comp.type} • {fmtDate(comp.createdAt)}
+                    </p>
+                    {comp.preview && (
+                      <p className="text-xs text-muted-foreground/80 mt-2 line-clamp-3 leading-relaxed">
+                        {comp.preview}
+                      </p>
+                    )}
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Trending Compositions */}
           {!loading && trending.length > 0 && (
@@ -120,6 +197,11 @@ export default function ExplorePage() {
                 <TrendingUp className="w-5 h-5" />
                 ट्रेंडिंग रचना
               </h2>
+              <p className="text-xs text-muted-foreground -mt-2 mb-4">
+                {trendingSignal === 'interactions'
+                  ? 'शेवटच्या ३० दिवसांतील वाचन/ऐकण्याच्या परस्परसंवादावर आधारित.'
+                  : 'अलीकडे जोडलेल्या रचना (पुरेसा परस्परसंवाद डेटा नाही अजून).'}
+              </p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {trending.slice(0, 6).map((comp) => (
                   <Link

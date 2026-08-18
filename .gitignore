@@ -2,9 +2,16 @@
 node_modules/
 .pnp
 .pnp.js
+.zed/
+.freebuff/
+.kilo/
 
-# --- Bun ---
+
+# --- Bun (single source of truth for deps) ---
 bun.lockb
+# npm lockfile is stale; bun.lock is authoritative
+package-lock.json
+npm-shrinkwrap.json
 
 # --- Next.js ---
 .next/
@@ -79,6 +86,9 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 # --- Caches ---
 .eslintcache
 .cache/
+
+# --- Generated dependency-graph artifacts ---
+graphify-out/
 
 # --- OMO Continuation Session Data ---
 .omo/run-continuation/*.json

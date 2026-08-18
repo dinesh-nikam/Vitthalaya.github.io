@@ -252,7 +252,7 @@ function adjustColor(hex: string, amount: number): string {
 
 export function generateBookIllustrations(
   saintNames: string[],
-  bookType: string,
+  _bookType: string,
 ): Array<{ section: string; svg: string }> {
   const illustrations: Array<{ section: string; svg: string }> = [];
 

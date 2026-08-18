@@ -126,8 +126,6 @@ export class ContentSegmenter {
     // Match headings: # Heading, ## Heading, or <h1>Heading
     const headingRegex = /^(#{1,6})\s+(.+)$|^<h[1-6][^>]*>(.+?)<\/h[1-6]>/gm;
     const segments: Array<{ title?: string; text: string }> = [];
-    let lastIndex = 0;
-    let lastTitle: string | undefined;
 
     const matches: Array<{ index: number; title: string; fullMatchLen: number }> = [];
     let match: RegExpExecArray | null;
@@ -193,9 +191,7 @@ export class ContentSegmenter {
 
     if (parts.length <= 1) {
       return [{ text }];
-    }
-
-    return parts.map((part, i) => {
+    }      return parts.map((part, _i) => {
       // First line of each part may be a title
       const lines = part.split('\n').map((l) => l.trim()).filter(Boolean);
       const title = lines.length > 1 ? lines[0] : undefined;

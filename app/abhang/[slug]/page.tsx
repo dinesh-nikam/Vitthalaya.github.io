@@ -13,24 +13,6 @@ import RelatedCompositions from '@/components/related-compositions';
 import CorrectionPanel from '@/components/correction-panel';
 import VersionHistory from '@/components/version-history';
 
-interface Composition {
-  id: string;
-  titleMarathi: string;
-  titleTranslit: string;
-  fullText: string;
-  meaning: string | null;
-  saint: {
-    nameMarathi: string;
-    nameTranslit: string;
-    slug: string;
-  } | null;
-  deity: {
-    nameMarathi: string;
-  } | null;
-  audioLinks: string[];
-  source: string | null;
-}
-
 export default async function CompositionPage({
   params,
 }: {
@@ -200,6 +182,7 @@ export default async function CompositionPage({
             saint={composerSaint}
             deity={composerDeity}
             embedUrl={embedUrl}
+            compositionId={composition.id}
           />
         </div>
 

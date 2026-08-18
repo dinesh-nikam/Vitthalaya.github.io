@@ -9,7 +9,7 @@
 
 import { NextRequest } from 'next/server';
 import { db } from '@/src/db/client';
-import { Prisma } from '@prisma/client';
+import '@prisma/client';
 import {
   listResponse,
   errorResponse,
@@ -36,17 +36,17 @@ export async function GET(request: NextRequest) {
   const q = searchParams.get('q');
 
   // Build type-safe where clause
-  const where: Prisma.CompositionWhereInput = {
+  const where: any = {
     reviewed: true,
     ...(type && { type }),
     ...(saint && { saint: { slug: saint } }),
     ...(deity && {
-      deity: { nameTranslit: { contains: deity, mode: 'insensitive' } },
+      deity: { nameTranslit: { contains: deity } },
     }),
     ...(q && {
       OR: [
-        { titleMarathi: { contains: q, mode: 'insensitive' } },
-        { titleTranslit: { contains: q, mode: 'insensitive' } },
+        { titleMarathi: { contains: q } },
+        { titleTranslit: { contains: q } },
       ],
     }),
   };

@@ -1,5 +1,12 @@
 /** @type {import('next').NextConfig} */
+const createNextIntlPlugin = require('next-intl/plugin');
+
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
+
 const nextConfig = {
+  // Pin the tracing root to this project so stray lockfiles outside it
+  // (e.g. a bun.lock in the user's home directory) never get picked up.
+  outputFileTracingRoot: __dirname,
   experimental: {
     reactCompiler: true,
   },
@@ -23,4 +30,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+module.exports = withNextIntl(nextConfig);

@@ -32,7 +32,7 @@ async function verifyFile(backupPath: string): Promise<boolean> {
 
   try {
     const content = await readFile(checksumPath, 'utf-8');
-    const [expectedHash, filename] = content.trim().split(/\s+/);
+    const [expectedHash] = content.trim().split(/\s+/);
     const actualHash = await computeChecksum(backupPath);
 
     const name = backupPath.split(/[\\/]/).pop();

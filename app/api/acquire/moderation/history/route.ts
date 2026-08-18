@@ -3,16 +3,17 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/src/lib/auth';
 import { db } from '@/src/db/client';
 import { Prisma } from '@prisma/client';
+import { ApiErrors, errorResponse } from '@/src/lib/api-response';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+      return ApiErrors.UNAUTHORIZED('Unauthorized.');
     }
     const role = (session.user as any).role;
     if (!['MODERATOR', 'ADMIN'].includes(role)) {
-      return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
+      return ApiErrors.FORBIDDEN('Forbidden.');
     }
 
     const { searchParams } = new URL(request.url);
@@ -32,8 +33,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     if (sourceType) where.sourceType = sourceType;
     if (query) {
       where.OR = [
-        { draftTitle: { contains: query, mode: 'insensitive' } },
-        { draftText: { contains: query, mode: 'insensitive' } },
+        { draftTitle: { contains: query } },
+        { draftText: { contains: query } },
       ];
     }
     if (dateFrom || dateTo) {
@@ -72,6 +73,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error('Moderation history API error:', err);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return errorResponse(msg, 500, { code: 'INTERNAL_ERROR' });
   }
 }

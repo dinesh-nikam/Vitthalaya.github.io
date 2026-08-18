@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { db } from '@/src/db/client';
+import '@/src/db/client';
 import { resolveCanonicalQuery } from '@/src/lib/canonical-queries';
 import { searchCompositions } from '@/src/lib/search-client';
 import { canonicalMetadata } from '@/src/lib/seo';
@@ -24,7 +24,6 @@ export default async function CanonicalSearchPage({ params }: Props) {
   const results = await searchCompositions(canonicalQuery.labelTranslit, {});
 
   // Also fetch by category/type for richer context
-  const typeLabel = canonicalQuery.source === 'type' ? canonicalQuery.slug.toUpperCase() : null;
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -96,7 +95,7 @@ export default async function CanonicalSearchPage({ params }: Props) {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
-          {results.map((result, index) => (
+          {results.map((result, _index) => (
             <Link
               key={result.id}
               href={`/abhang/${result.slug}`}

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { db } from '../../../src/db/client';
+import { getUnitPrice } from '@/src/lib/orders/pricing';
 import { AddToCartButton } from '@/components/add-to-cart-button';
 
 export const dynamic = 'force-dynamic';
@@ -170,7 +171,7 @@ export default async function BookDetailPage({ params }: Props) {
             <h3 className="font-bold text-maroon-800 mb-4">उपलब्ध आवृत्त्या</h3>
             <div className="space-y-3">
               {book.editions.map((ed) => {
-                const unitPrice = ed.price ? Number(ed.price) : (ed.format.startsWith('DIGITAL_') ? 99 : 299);
+                const unitPrice = getUnitPrice(ed.price, ed.format);
                 return (
                   <div key={ed.id} className="pb-3 border-b border-gray-50 last:border-0 last:pb-0">
                     <div className="flex items-center justify-between mb-2">

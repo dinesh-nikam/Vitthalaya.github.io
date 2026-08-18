@@ -28,7 +28,6 @@ function getUnderlyingDb() {
   if (hasUrl && !isSqliteUrl) {
     try {
       if (!globalForPrisma.prisma) {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
         const { PrismaClient } = require('@prisma/client');
         let dbUrl = process.env.DATABASE_URL;
 
@@ -52,11 +51,24 @@ function getUnderlyingDb() {
     }
   }
 
-  // Fall back to SQLite shim
+  // Fall back to SQLite shim (for Bun environments)
   try {
     return require('./client-sqlite').db;
-  } catch {
-    return {};
+  } catch (sqliteErr) {
+    // If SQLite shim fails (e.g. running under Node.js where 'bun:sqlite' is unavailable),
+    // fall back to using standard Prisma Client which works with SQLite if configured.
+    try {
+      const { PrismaClient } = require('@prisma/client');
+      if (!globalForPrisma.prisma) {
+        globalForPrisma.prisma = new PrismaClient({
+          log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+        });
+      }
+      return globalForPrisma.prisma;
+    } catch (prismaErr) {
+      console.error('⚠️ SQLite shim and Prisma Client fallback both failed:', sqliteErr, prismaErr);
+      return {};
+    }
   }
 }
 
@@ -139,6 +151,11 @@ const createResilientDb = () => {
     get(target, modelName) {
       const underlyingDb = getUnderlyingDb();
 
+      // Do not proxy internal Prisma helpers (starting with _ or $)
+      if (typeof modelName === 'string' && (modelName.startsWith('_') || modelName.startsWith('$')) && modelName !== '$queryRawUnsafe') {
+        return underlyingDb[modelName];
+      }
+
       // Handle the raw SQL method
       if (modelName === '$queryRawUnsafe') {
         if (typeof underlyingDb[modelName] === 'function') {
@@ -194,7 +211,7 @@ const createResilientDb = () => {
       // Return a stub proxy for models that are undefined
       return new Proxy({}, {
         get(modelObj, method) {
-          return async (...args: any[]) => {
+          return async (..._args: any[]) => {
             console.warn(`⚠️ [Production Readiness] Fallback stub model method called: ${String(modelName)}.${String(method)}`);
             if (isBuildPhase) {
               return getFallbackValue(String(method));

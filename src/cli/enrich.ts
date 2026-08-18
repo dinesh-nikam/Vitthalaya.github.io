@@ -17,16 +17,7 @@
 
 import { parseArgs } from 'util';
 
-import {
-  enqueueComposition,
-  enqueueBatch,
-  getQueueStats,
-  retryFailedJobs,
-  runBatchPipeline,
-  getPendingReviews,
-  processReview,
-  printProviderStatus,
-} from '../ai-enrichment';
+import { enqueueComposition, enqueueBatch, getQueueStats, retryFailedJobs, runBatchPipeline, getPendingReviews, printProviderStatus } from '../ai-enrichment';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -178,7 +169,7 @@ async function actionProcess(args: CliArgs): Promise<void> {
 
   const { processWithConcurrency } = await import('../ai-enrichment');
   const processed = await processWithConcurrency(args.concurrency, {
-    onProgress(stats: { processed: number; total: number; failed?: number }) {
+    onProgress(_stats: { processed: number; total: number; failed?: number }) {
       // Progress callback - can add logging here
     },
   });

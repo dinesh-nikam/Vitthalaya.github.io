@@ -16,13 +16,13 @@
  *  - Status webhooks (optional)
  */
 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-/* eslint-disable @typescript-eslint/no-explicit-any */
+
+
+
+
 
 import { db } from '../db/client';
-import { enrichComposition, reEnrichWithFeedback } from './enricher';
+import { enrichComposition } from './enricher';
 import { resolveDeityId, resolveFestivalIds, resolveCategoryNames } from './enricher';
 import type { EnrichmentInput } from './enricher';
 
@@ -128,7 +128,7 @@ export async function enqueueComposition(
 export async function dequeueJob(): Promise<JobInfo | null> {
   try {
     // PostgreSQL atomic dequeue with row-level locking
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const rows = await (db as any).$queryRawUnsafe(
       `UPDATE "ai_enrichment_jobs"
        SET status = 'processing', "attempt_count" = "attempt_count" + 1, "updated_at" = NOW() AT TIME ZONE 'UTC'
@@ -225,7 +225,7 @@ export async function processJob(jobId: string): Promise<void> {
     // Resolve entities
     const deityId = await resolveDeityId(result.output.deity);
     const festivalIds = await resolveFestivalIds(result.output.festivals);
-    const { matchedIds: categoryIds, suggestedNew } = await resolveCategoryNames(
+    const { suggestedNew } = await resolveCategoryNames(
       result.output.categories
     );
 

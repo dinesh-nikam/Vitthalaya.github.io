@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Search, MapPin, Calendar, BookOpen, ArrowRight } from 'lucide-react';
+import { Search, BookOpen, ArrowRight } from 'lucide-react';
 import { SAINTS_COLLECTION } from '@/src/lib/assets-registry';
 
 // Map slugs to curated images from SAINTS_COLLECTION for premium layout

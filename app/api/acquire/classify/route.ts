@@ -18,13 +18,14 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/src/lib/auth';
 import { db } from '@/src/db/client';
 import { classifyContent } from '@/src/ai-enrichment/classifier';
+import { errorResponse, ApiErrors } from '@/src/lib/api-response';
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     // 1. Authenticate
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      return ApiErrors.UNAUTHORIZED('Unauthorized');
     }
 
     // 2. Parse input
@@ -34,17 +35,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const fileId = (body.fileId ?? '').trim() || undefined;
 
     if (!text || text.length < 10) {
-      return NextResponse.json(
-        { success: false, error: 'Text must be at least 10 characters.' },
-        { status: 400 }
-      );
+      return errorResponse('Text must be at least 10 characters.', 400, {
+        code: 'VALIDATION_ERROR',
+      });
     }
 
     if (text.length > 100_000) {
-      return NextResponse.json(
-        { success: false, error: 'Text exceeds maximum length (100,000 characters).' },
-        { status: 400 }
-      );
+      return errorResponse('Text exceeds maximum length (100,000 characters).', 400, {
+        code: 'VALIDATION_ERROR',
+      });
     }
 
     // 3. Run classification
@@ -69,9 +68,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json(result, { status: result.success ? 200 : 502 });
   } catch (err) {
     console.error('Classification endpoint error:', err);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    return ApiErrors.INTERNAL_ERROR();
   }
 }

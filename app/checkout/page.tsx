@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getCart, getCartSummary, clearCart } from '../../src/lib/orders/cart';
+import { calculateTax } from '../../src/lib/orders/pricing';
+import { PriceBreakdown } from '@/components/price-breakdown';
 
 // Razorpay global type
 declare global {
@@ -39,6 +41,12 @@ export default function CheckoutPage() {
 
   const cart = getCart();
   const { subtotal, itemCount } = getCartSummary(cart);
+
+  // Same breakdown as the order detail page — the server charges exactly this
+  // (shipping is currently free, matching /api/orders/create).
+  const shippingCost: number = 0;
+  const tax = calculateTax(subtotal);
+  const total = subtotal + shippingCost + tax;
 
   if (cart.items.length === 0) {
     return (
@@ -97,7 +105,7 @@ export default function CheckoutPage() {
         });
 
         clearCart();
-        router.push(`/orders/${data.orderId}`);
+        router.push(`/orders/${data.orderId}?token=${encodeURIComponent(data.accessToken || '')}`);
         return;
       }
 
@@ -130,7 +138,7 @@ export default function CheckoutPage() {
               throw new Error(verifyData.error ?? 'Payment verification failed');
             }
             clearCart();
-            router.push(`/orders/${data.orderId}`);
+            router.push(`/orders/${data.orderId}?token=${encodeURIComponent(data.accessToken || '')}`);
           } catch (e: any) {
             setError(e instanceof Error ? e.message : 'Payment verification failed');
             setLoading(false);
@@ -173,8 +181,8 @@ export default function CheckoutPage() {
               <span>₹{item.unitPrice * item.quantity}</span>
             </div>
           ))}
-          <div className="flex justify-between font-bold mt-3 text-lg">
-            <span>एकूण</span><span>₹{subtotal}</span>
+          <div className="mt-3 pt-3 border-t border-gray-50">
+            <PriceBreakdown subtotal={subtotal} shippingCost={shippingCost} tax={tax} total={total} />
           </div>
         </div>
 
@@ -222,7 +230,7 @@ export default function CheckoutPage() {
           disabled={loading || !form.fullName || !form.phone}
           className="w-full py-3 bg-saffron text-white rounded-lg hover:bg-saffron-600 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {loading ? 'प्रक्रिया होत आहे...' : `₹${subtotal} भरा`}
+          {loading ? 'प्रक्रिया होत आहे...' : `₹${total.toLocaleString('en-IN')} भरा`}
         </button>
       </div>
     </div>

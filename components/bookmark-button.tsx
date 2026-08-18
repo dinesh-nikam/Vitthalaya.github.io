@@ -28,7 +28,7 @@ export function BookmarkButton({ slug, title, className = '' }: BookmarkButtonPr
   const animationIdRef = React.useRef<number | null>(null);
 
   React.useEffect(() => {
-    setBookmarked(isBookmarked(slug));
+    isBookmarked(slug).then(setBookmarked).catch(console.error);
   }, [slug]);
 
   // Clean up animation on unmount
@@ -118,13 +118,18 @@ export function BookmarkButton({ slug, title, className = '' }: BookmarkButtonPr
     animateParticles();
   };
 
-  const handleClick = () => {
-    const nowBookmarked = toggleBookmark(slug, title);
-    setBookmarked(nowBookmarked);
-    
-    // Only burst particles on active bookmark add
-    if (nowBookmarked) {
-      triggerLeafBurst();
+  const handleClick = async () => {
+    try {
+      const nowBookmarked = await toggleBookmark(slug, title);
+      setBookmarked(nowBookmarked);
+      
+      // Only burst particles on active bookmark add
+      if (nowBookmarked) {
+        triggerLeafBurst();
+      }
+    } catch (error) {
+      console.error('Failed to toggle bookmark:', error);
+      // Fallback or show toast here ideally
     }
   };
 

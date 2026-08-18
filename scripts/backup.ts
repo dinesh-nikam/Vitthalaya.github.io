@@ -173,7 +173,6 @@ async function verifyAllBackups(): Promise<void> {
 
 async function cleanupOldBackups(maxAgeDays = 30): Promise<void> {
   console.log(`▶ Cleaning up backups older than ${maxAgeDays} days...`);
-  const cmd = `find ${BACKUP_DIR} -name "*.sql.gz" -o -name "*.tar.gz" | xargs -r stat -c %Y,%n 2>/dev/null | awk -F, -v cutoff=$(date -d "-${maxAgeDays} days" +%s) '$1 < cutoff {print $2}' | xargs -r rm -f 2>/dev/null || true`;
 
   await $`rm -f ${BACKUP_DIR}/*.sql.gz ${BACKUP_DIR}/*.tar.gz 2>/dev/null || true`.quiet();
   console.log('✅ Cleanup complete');

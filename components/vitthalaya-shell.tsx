@@ -1,31 +1,10 @@
 'use client';
 
 import * as React from 'react';
-import { Inter, Noto_Sans_Devanagari, Tiro_Devanagari_Marathi } from 'next/font/google';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { useTheme } from '@/src/lib/theme';
 
-// Font variables
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
-});
-
-const notoSansDevanagari = Noto_Sans_Devanagari({
-  subsets: ['devanagari'],
-  variable: '--font-devanagari',
-  display: 'swap',
-});
-
-const tiroDevanagari = Tiro_Devanagari_Marathi({
-  subsets: ['devanagari'],
-  variable: '--font-devanagari-heading',
-  display: 'swap',
-  weight: '400',
-  style: 'normal',
-});
 
 interface StatItem {
   label: string;
@@ -40,10 +19,20 @@ export function VitthalayaShell({
   primaryLabel,
   eyebrow,
   stats = [] as StatItem[],
-  theme = 'dark', // 'dark' or 'light'
+  theme,
+}: {
+  children: React.ReactNode;
+  title?: string;
+  description?: string;
+  primaryHref?: string;
+  primaryLabel?: string;
+  eyebrow?: string;
+  stats?: StatItem[];
+  theme?: 'dark' | 'light';
 }) {
-  const [scrollY, setScrollY] = useState(0);
-  const router = useRouter();
+  const [, setScrollY] = useState(0);
+  const { isDark } = useTheme();
+  const currentTheme = theme || (isDark ? 'dark' : 'light');
 
   // Add scroll progress bar effect
   useEffect(() => {
@@ -80,7 +69,7 @@ export function VitthalayaShell({
 
   return (
     <div
-      className={`min-h-screen scroll-smooth ${theme === 'dark' ? 'bg-black' : 'bg-white'} transition-colors duration-300 ${prefersReducedMotion ? 'no-transition-all' : 'transition-all duration-300'} overflow-x-hidden`}
+      className={`min-h-screen scroll-smooth ${currentTheme === 'dark' ? 'bg-black' : 'bg-white'} transition-colors duration-300 ${prefersReducedMotion ? 'no-transition-all' : 'transition-all duration-300'} overflow-x-hidden`}
       style={{
         scrollBehavior: 'smooth',
         backgroundImage: `linear-gradient(rgba(0,0,0,0.05), rgba(0,0,0,0.05)), url('/bg-texture.svg')`,
@@ -177,7 +166,7 @@ export function VitthalayaShell({
       />
 
       {/* 3D Floating Elements - only in dark mode */}
-      {theme === 'dark' && (
+      {currentTheme === 'dark' && (
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           {/* Floating temple elements */}
           <div className="w-64 h-48 bg-transparent border-4 border-saffron-200/30 rounded-full shadow-2xl animate-bounce" style={{ left: '10%', top: '10%' }}></div>

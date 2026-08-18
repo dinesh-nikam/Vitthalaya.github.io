@@ -1,0 +1,30 @@
+# Optional local PostgreSQL for machines that don't already have a native
+# Postgres server installed. If you already run PostgreSQL natively (Windows
+# service, Homebrew, apt, etc.), prefer that instead and skip this file to
+# avoid a port 5432 conflict — Docker Desktop's port-forwarding can silently
+# lose the binding race to a native service on the same host port.
+#
+# To use this instead of a native install, either stop the native Postgres
+# service first, or change the host port below (e.g. "5433:5432") and update
+# DATABASE_URL in .env to match.
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: varkari-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: varkari
+      POSTGRES_PASSWORD: varkari_dev_password
+      POSTGRES_DB: varkari
+    ports:
+      - "5432:5432"
+    volumes:
+      - varkari_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U varkari -d varkari"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  varkari_postgres_data:

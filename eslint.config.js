@@ -3,7 +3,21 @@ const tsparser = require('@typescript-eslint/parser');
 
 module.exports = [
   {
-    ignores: ['.next/**', 'node_modules/**', 'prisma/varkari.db*', 'next-env.d.ts'],
+    ignores: [
+      '.next/**',
+      'node_modules/**',
+      '.agents/**',
+      '.claude/**',
+      '.kilo/**',
+      '.omo/**',
+      '.omx/**',
+      '.freebuff/**',
+      'src/cli/scrape.ts', // deprecated, gitignored
+      'graphify-out/**',
+      'prisma/*.db*',
+      'data/*.db*',
+      'next-env.d.ts',
+    ],
   },
   {
     files: ['**/*.ts', '**/*.tsx'],
@@ -26,7 +40,17 @@ module.exports = [
       '@typescript-eslint/no-wrapper-object-types': 'off',
       '@typescript-eslint/no-unsafe-function-type': 'off',
       '@typescript-eslint/no-empty-object-type': 'off',
-      '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        {
+          // `_`-prefixed names are the project convention for intentionally
+          // unused placeholders (e.g. `_request` in route handlers).
+          varsIgnorePattern: '^_',
+          argsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+          destructuredArrayIgnorePattern: '^_',
+        },
+      ],
       '@typescript-eslint/no-require-imports': 'off',
       '@typescript-eslint/ban-ts-comment': 'off',
     },

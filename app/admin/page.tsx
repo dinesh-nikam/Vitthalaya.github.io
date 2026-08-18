@@ -17,6 +17,7 @@ export default async function AdminDashboardPage() {
   const [
     bookCount, orderCount, collectionCount, recentOrders,
     compositionCount, saintCount, enrichmentCount, recentCompositions,
+    pageCount, tagCount, userSubmittedCount,
   ] = await Promise.all([
     db.bookPublication.count(),
     db.order.count(),
@@ -38,8 +39,12 @@ export default async function AdminDashboardPage() {
         type: true,
         updatedAt: true,
         saint: { select: { nameMarathi: true } },
+        createdBy: { select: { name: true, email: true } },
       },
     }),
+    db.page.count(),
+    db.tag.count(),
+    db.composition.count({ where: { createdById: { not: null } } }),
   ]);
 
   const statusCounts = {
@@ -49,13 +54,18 @@ export default async function AdminDashboardPage() {
   };
 
   const cards = [
-    { label: 'एकूण रचना', value: compositionCount, href: '/search', color: 'bg-saffron' },
+    { label: 'एकूण रचना', value: compositionCount, href: '/admin/compositions', color: 'bg-saffron' },
+    { label: 'वापरकर्ता-निर्मित रचना', value: userSubmittedCount, href: '/admin/compositions', color: 'bg-pink-600' },
+    { label: 'एकूण पाने', value: pageCount, href: '/admin/pages', color: 'bg-blue-600' },
+    { label: 'एकूण टॅग्स', value: tagCount, href: '/admin/tags', color: 'bg-orange-600' },
     { label: 'एकूण संत', value: saintCount, href: '/category/saints', color: 'bg-indigo-600' },
     { label: 'AI समृद्ध', value: enrichmentCount, href: '/admin/analytics', color: 'bg-purple-600' },
     { label: 'एकूण पुस्तके', value: bookCount, href: '/admin/books', color: 'bg-teal-600' },
     { label: 'एकूण ऑर्डर्स', value: orderCount, href: '/admin/orders', color: 'bg-maroon-600' },
     { label: 'प्रलंबित ऑर्डर्स', value: statusCounts.pending, href: '/admin/orders?status=PENDING', color: 'bg-yellow-500' },
     { label: 'सार्वजनिक संग्रह', value: collectionCount, href: '/admin/collections', color: 'bg-green-600' },
+    { label: 'ऑडिओ पटल', value: await db.uploadedFile.count({ where: { format: 'audio' } }), href: '/admin/audio', color: 'bg-purple-600' },
+    { label: 'डेटा गुणवत्ता', value: await db.composition.count({ where: { reviewed: true } }), href: '/admin/data-quality', color: 'bg-amber-600' },
   ];
 
   return (
@@ -85,6 +95,12 @@ export default async function AdminDashboardPage() {
         {/* Quick Links */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {[
+            { label: 'रचना व्यवस्थापन', href: '/admin/compositions', icon: '📜' },
+            { label: 'पान व्यवस्थापन', href: '/admin/pages', icon: '📄' },
+            { label: 'टॅग व्यवस्थापन', href: '/admin/tags', icon: '🏷️' },
+            { label: 'मॉडरेशन रांग', href: '/admin/moderation', icon: '\u2705' },
+            { label: 'ऑडिओ पटल', href: '/admin/audio', icon: '🎙️' },
+            { label: 'डेटा गुणवत्ता', href: '/admin/data-quality', icon: '🔍' },
             { label: 'पुस्तके व्यवस्थापन', href: '/admin/books', icon: '📚' },
             { label: 'ऑर्डर व्यवस्थापन', href: '/admin/orders', icon: '📦' },
             { label: 'मुद्रण भागीदार', href: '/admin/print-partners', icon: '🖨️' },
@@ -128,11 +144,11 @@ export default async function AdminDashboardPage() {
           </div>
           <div className="divide-y">
             {recentCompositions.map((comp) => (
-              <Link key={comp.slug} href={`/abhang/${comp.slug}`}
+              <Link key={comp.slug} href={`/admin/compositions`}
                 className="flex items-center justify-between py-2 text-sm hover:bg-gray-50 transition-colors -mx-2 px-2 rounded">
                 <div className="min-w-0">
                   <p className="font-medium text-gray-800 truncate">{comp.titleMarathi}</p>
-                  <p className="text-xs text-gray-400">{comp.saint?.nameMarathi || '—'} · {comp.type}</p>
+                  <p className="text-xs text-gray-400">{comp.saint?.nameMarathi || '—'} · {comp.type} · {comp.createdBy ? `by ${comp.createdBy.name || comp.createdBy.email}` : 'system import'}</p>
                 </div>
                 <span className="text-xs text-gray-400 flex-shrink-0 ml-3">{comp.updatedAt.toLocaleDateString()}</span>
               </Link>

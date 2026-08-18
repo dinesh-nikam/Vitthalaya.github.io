@@ -4,7 +4,7 @@
  */
 
 import { redis } from './redis';
-import { db } from '../db/client';
+import '../db/client';
 
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_DURATION_SECONDS = 900; // 15 minutes

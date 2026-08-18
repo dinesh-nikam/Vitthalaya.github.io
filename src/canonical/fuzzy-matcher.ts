@@ -13,7 +13,7 @@
  */
 
 import { normalizeForComparison, tokenize, splitIntoLines } from './normalization';
-import type { AlgorithmScore, AlgorithmType } from './types';
+import type { AlgorithmScore } from './types';
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 

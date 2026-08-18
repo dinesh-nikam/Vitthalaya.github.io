@@ -130,9 +130,6 @@ export function expandPhonetic(query: string): string[] {
     }
   }
   
-  // Generate phonetic encoding and find similar words
-  const queryEncoding = encodePhonetic(normalized);
-  
   // Add common spelling variations
   const commonVariations: Record<string, string[]> = {
     'v': ['w', 'b'],

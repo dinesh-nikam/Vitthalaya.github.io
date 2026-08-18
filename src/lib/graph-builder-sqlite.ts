@@ -14,7 +14,6 @@ let dbInstance: DatabaseType | null = null;
 function getDatabase(): DatabaseType {
   if (!dbInstance) {
     // Dynamic require to avoid Next.js build-time resolution
-    // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
     const Database = require('bun:sqlite').Database as typeof DatabaseType;
     dbInstance = new Database(process.env.DATABASE_PATH || DEFAULT_DB_PATH);
   }
@@ -44,14 +43,14 @@ export interface KnowledgeGraph {
  * Build complete graph for visualization
  */
 export function buildCompleteGraph(): KnowledgeGraph {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+
   const db = getDatabase() as any;
   const nodes: GraphNode[] = [];
   const edges: GraphEdge[] = [];
   const visited = new Set<string>();
 
   // Get all saints
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
   const saints = db.query(
     'SELECT id, name_marathi, name_transliteration FROM saints'
   ).all() as { id: string; name_marathi: string; name_transliteration: string }[];
@@ -76,7 +75,7 @@ export function buildCompleteGraph(): KnowledgeGraph {
     visited.add(nodeId);
 
     // Add compositions by this saint
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
     const comps = db
       .query(
         `SELECT id, title_marathi, slug, deity_id, type
@@ -103,7 +102,7 @@ export function buildCompleteGraph(): KnowledgeGraph {
       edges.push({ source: nodeId, target: compNodeId, type: 'composed' });
 
       // Add deity connection
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
       if (comp.deity_id) {
         const deity = db
           .query('SELECT id, name_marathi FROM deities WHERE id = ?')
@@ -127,7 +126,7 @@ export function buildCompleteGraph(): KnowledgeGraph {
   }
 
   // Add festivals
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
   const festivals = db
     .query(
       `SELECT f.id, f.name_marathi, COUNT(fc.composition_id) as comp_count

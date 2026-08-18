@@ -3,7 +3,7 @@
  * and canonical URLs for all book-related pages.
  */
 
-import type { BookType, BookStatus } from '../../book-generation/types';
+
 
 // ── JSON-LD Schemas ───────────────────────────────────────────────────────────
 

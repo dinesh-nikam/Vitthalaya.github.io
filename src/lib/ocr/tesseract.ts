@@ -13,7 +13,7 @@ import type { EngineOcrResult } from './types';
 export async function runTesseractOcr(
   buffer: Buffer,
   language: string[],
-  timeoutMs: number
+  _timeoutMs: number
 ): Promise<EngineOcrResult> {
   // Map our language codes to Tesseract language codes
   const langMap: Record<string, string> = {
@@ -31,11 +31,9 @@ export async function runTesseractOcr(
   try {
     const Tesseract = await import('tesseract.js');
 
-    const startTime = Date.now();
     const result = await Tesseract.recognize(buffer, tessLangs || 'eng', {
       logger: () => {}, // suppress progress logs
     });
-    const duration = Date.now() - startTime;
 
     if (result?.data?.text) {
       return {

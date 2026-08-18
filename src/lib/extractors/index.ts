@@ -36,9 +36,13 @@ export function findExtractor(
   filename: string
 ): IExtractor | null {
   const ext = '.' + (filename.split('.').pop()?.toLowerCase() ?? '');
+  // Strip MIME parameters (e.g. ";codecs=opus" from MediaRecorder blobs) so
+  // 'audio/webm;codecs=opus' routes to the audio extractor and
+  // 'video/webm;codecs=vp9' to the video extractor.
+  const mime = mimeType.toLowerCase().split(';')[0].trim();
 
   for (const extractor of extractors) {
-    if (extractor.canHandle(mimeType, ext)) {
+    if (extractor.canHandle(mime, ext)) {
       return extractor;
     }
   }

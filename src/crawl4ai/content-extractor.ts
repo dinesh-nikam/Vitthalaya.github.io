@@ -12,14 +12,7 @@
  * Each strategy produces normalized compositions ready for dedup + enrichment.
  */
 
-import type {
-  CrawlResult,
-  ExtractedComposition,
-  ExtractionStrategy,
-  ContentSelectors,
-  SegmentationConfig,
-  CrawlerTemplate,
-} from './types';
+import type { CrawlResult, ExtractedComposition, ContentSelectors, CrawlerTemplate } from './types';
 import { normalizeForDisplay } from '../canonical/normalization';
 
 export class ContentExtractor {
@@ -108,7 +101,7 @@ export class ContentExtractor {
 
   private extractDOM(
     result: CrawlResult,
-    selectors?: ContentSelectors,
+    _selectors?: ContentSelectors,
   ): ExtractedComposition[] {
     if (!result.content?.html && !result.content?.text) return [];
 
@@ -216,8 +209,8 @@ export class ContentExtractor {
   // ─── Sitemap Extraction ────────────────────────────────────
 
   private extractFromSitemap(
-    content: NonNullable<CrawlResult['content']>,
-    url: string,
+    _content: NonNullable<CrawlResult['content']>,
+    _url: string,
   ): ExtractedComposition[] {
     // Sitemaps don't directly yield compositions — they yield URLs to crawl.
     // The URLs are in the links array for the scheduler to process.

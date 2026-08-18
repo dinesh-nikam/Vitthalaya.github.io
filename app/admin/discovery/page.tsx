@@ -150,7 +150,7 @@ export default async function AdminDiscoveryPage() {
   return (
     <DiscoveryDashboardClient
       initialStats={dashboardStats}
-      initialSources={serializedSources}
+      initialSources={serializedSources as any}
       initialJobs={serializedRecentJobs}
       initialAlerts={serializedAlerts}
       initialDocTree={docTree}

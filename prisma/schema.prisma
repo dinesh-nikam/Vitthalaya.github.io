@@ -6,35 +6,36 @@ generator client {
 }
 
 datasource db {
-  provider = "cockroachdb"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model Saint {
-  id            String            @id @default(uuid())
-  nameMarathi   String            @map("name_marathi")
-  nameTranslit  String            @unique @map("name_transliteration")
-  slug          String            @unique
-  period        String?
-  biography     String?
-  region        String?
-  imageUrl      String?           @map("image_url")
-  compositions  Composition[]
-  canonicalId   String?
+  id               String            @id @default(uuid())
+  nameMarathi      String            @map("name_marathi")
+  nameTranslit     String            @unique @map("name_transliteration")
+  slug             String            @unique
+  period           String?
+  biography        String?
+  region           String?
+  imageUrl         String?           @map("image_url")
+  compositions     Composition[]
+  canonicalId      String?
   canonicalRecords CanonicalRecord[]
-  relatedFrom     SaintRelation[]      @relation("RelatedFrom")
-  relatedTo       SaintRelation[]      @relation("RelatedTo")
+  relatedFrom      SaintRelation[]   @relation("RelatedFrom")
+  relatedTo        SaintRelation[]   @relation("RelatedTo")
   bookPublications BookPublication[]
+  dailyFeatures    DailyFeature[]
 
-  createdAt     DateTime          @default(now()) @map("created_at")
-  updatedAt     DateTime          @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("saints")
 }
 
 model SaintRelation {
-  saintId         String  @map("saint_id")
-  relatedSaintId  String  @map("related_saint_id")
+  saintId          String  @map("saint_id")
+  relatedSaintId   String  @map("related_saint_id")
   relationshipType String? @map("relationship_type")
 
   saint   Saint @relation("RelatedTo", fields: [saintId], references: [id])
@@ -45,12 +46,12 @@ model SaintRelation {
 }
 
 model Deity {
-  id            String            @id @default(uuid())
-  nameMarathi   String            @map("name_marathi")
-  nameTranslit  String            @unique @map("name_transliteration")
-  iconName      String?           @map("icon_name")
-  compositions  Composition[]
-  canonicalId   String?
+  id               String            @id @default(uuid())
+  nameMarathi      String            @map("name_marathi")
+  nameTranslit     String            @unique @map("name_transliteration")
+  iconName         String?           @map("icon_name")
+  compositions     Composition[]
+  canonicalId      String?
   canonicalRecords CanonicalRecord[]
   bookPublications BookPublication[]
 
@@ -58,25 +59,26 @@ model Deity {
 }
 
 model Festival {
-  id            String                @id @default(uuid())
-  nameMarathi   String                @map("name_marathi")
-  nameTranslit  String                @unique @map("name_transliteration")
-  dateRule      String?               @map("date_rule")
-  monthDayRule  String?               @map("month_day_rule")
-  compositions  FestivalComposition[]
+  id           String                @id @default(uuid())
+  nameMarathi  String                @map("name_marathi")
+  nameTranslit String                @unique @map("name_transliteration")
+  dateRule     String?               @map("date_rule")
+  monthDayRule String?               @map("month_day_rule")
+  compositions FestivalComposition[]
+  dailyFeatures DailyFeature[]
 
   @@map("festivals")
 }
 
 model Category {
-  id           String               @id @default(uuid())
-  nameMarathi  String               @map("name_marathi")
-  nameTranslit String               @map("name_transliteration")
-  slug         String               @unique
+  id           String                @id @default(uuid())
+  nameMarathi  String                @map("name_marathi")
+  nameTranslit String                @map("name_transliteration")
+  slug         String                @unique
   description  String?
-  parent       Category?            @relation("CategoryHierarchy", fields: [parentId], references: [id])
-  parentId     String?              @map("parent_category_id")
-  children     Category[]           @relation("CategoryHierarchy")
+  parent       Category?             @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  parentId     String?               @map("parent_category_id")
+  children     Category[]            @relation("CategoryHierarchy")
   compositions CategoryComposition[]
 
   @@map("categories")
@@ -87,7 +89,7 @@ model Composition {
   titleMarathi  String          @map("title_marathi")
   titleTranslit String          @map("title_transliteration")
   slug          String          @unique
-  type          String          @map("type") // SQLite: use String instead of enum
+  type          CompositionType @map("type")
   fullText      String          @map("full_text")
   meaning       String?
   saint         Saint?          @relation(fields: [saintId], references: [id])
@@ -96,34 +98,43 @@ model Composition {
   deityId       String?         @map("deity_id")
   region        String?
   source        String?         @map("source_attribution")
-  audioLinks    String?         @map("audio_links") // SQLite: JSON string
+  audioLinks    Json?           @map("audio_links") // SQLite: JSON string
   // Alternate titles/identifiers, e.g. canonical Gatha numbers.
   alternateTitles Json?          @map("alternate_titles")
   reviewed      Boolean         @default(false) @map("is_verified")
 
-  canonicalId    String?        @map("canonical_id")
+  canonicalId     String?          @map("canonical_id")
   canonicalRecord CanonicalRecord? @relation(fields: [canonicalId], references: [id])
-  contentHash    String?        @map("content_hash")
+  contentHash     String?          @map("content_hash")
 
-  festivals      FestivalComposition[]
-  categories     CategoryComposition[]
-  aiEnrichmentJobs  AiEnrichmentJob[]
-  aiEnrichmentResults AiEnrichmentResult[]
+  festivals             FestivalComposition[]
+  dailyFeatures         DailyFeature[]
+  categories            CategoryComposition[]
+  aiEnrichmentJobs      AiEnrichmentJob[]
+  aiEnrichmentResults   AiEnrichmentResult[]
   correctionSuggestions CorrectionSuggestion[]
-  versions       CompositionVersion[]
+  versions              CompositionVersion[]
   verificationRecord    VerificationRecord[]
 
+  // T2/T6 — composition matches from transcribed recordings
+  compositionMatches CompositionMatch[]
+
   // Book commerce
-  bookEntries        BookComposition[]
-  collectionEntries  CollectionComposition[]
+  bookEntries       BookComposition[]
+  collectionEntries CollectionComposition[]
 
   // Personalization
-  interactions       UserInteraction[]
-  readingProgress    ReadingProgress[]
-  highlights         UserHighlight[]
+  interactions    UserInteraction[]
+  readingProgress ReadingProgress[]
+  highlights      UserHighlight[]
 
-  createdAt    DateTime   @default(now()) @map("created_at")
-  updatedAt    DateTime   @updatedAt @map("updated_at")
+  // Personal audio library
+  playlistItems   PlaylistItem[]
+  playbackHistory PlaybackHistory[]
+  audioFavorites  AudioFavorite[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([canonicalId])
   @@index([contentHash])
@@ -132,21 +143,21 @@ model Composition {
 }
 
 model CanonicalRecord {
-  id             String          @id @default(uuid())
-  titleMarathi   String          @map("title_marathi")
-  titleTranslit  String          @map("title_transliteration")
-  type           String
-  canonicalText  String          @map("canonical_text")
-  meaning        String?
-  saintId        String?         @map("saint_id")
-  saint          Saint?          @relation(fields: [saintId], references: [id])
-  deityId        String?         @map("deity_id")
-  deity          Deity?          @relation(fields: [deityId], references: [id])
-  region         String?
-  canonicalVersion Int           @default(1) @map("canonical_version")
-  compositeScore   Float?       @map("composite_score")
+  id               String  @id @default(uuid())
+  titleMarathi     String  @map("title_marathi")
+  titleTranslit    String  @map("title_transliteration")
+  type             String
+  canonicalText    String  @map("canonical_text")
+  meaning          String?
+  saintId          String? @map("saint_id")
+  saint            Saint?  @relation(fields: [saintId], references: [id])
+  deityId          String? @map("deity_id")
+  deity            Deity?  @relation(fields: [deityId], references: [id])
+  region           String?
+  canonicalVersion Int     @default(1) @map("canonical_version")
+  compositeScore   Float?  @map("composite_score")
 
-  compositions   Composition[]
+  compositions Composition[]
 
   @@index([type])
   @@index([canonicalVersion])
@@ -158,16 +169,16 @@ model CanonicalSourceMapping {
   canonicalId   String  @map("canonical_id")
   compositionId String? @map("composition_id")
 
-  source        String
-  sourceUrl     String  @map("source_url")
-  sourceTitle   String  @map("source_title")
-  sourceText    String  @map("source_text")
+  source      String
+  sourceUrl   String @map("source_url")
+  sourceTitle String @map("source_title")
+  sourceText  String @map("source_text")
 
   contentHash     String @map("content_hash")
   confidenceScore Float  @map("confidence_score")
   mappingType     String @map("mapping_type")
 
-  createdAt       DateTime @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@index([canonicalId])
   @@index([compositionId])
@@ -229,22 +240,24 @@ model Region {
   longitude    Float?
 
   createdAt DateTime @default(now()) @map("created_at")
+
   @@map("regions")
 }
 
 model Temple {
-  id            String  @id @default(uuid())
-  nameMarathi   String  @map("name_marathi")
-  nameTranslit  String  @unique @map("name_transliteration")
-  slug          String  @unique
-  description   String?
-  deityName     String? @map("deity_name")
-  location      String?
-  latitude      Float?
-  longitude     Float?
-  imageUrl      String? @map("image_url")
+  id           String  @id @default(uuid())
+  nameMarathi  String  @map("name_marathi")
+  nameTranslit String  @unique @map("name_transliteration")
+  slug         String  @unique
+  description  String?
+  deityName    String? @map("deity_name")
+  location     String?
+  latitude     Float?
+  longitude    Float?
+  imageUrl     String? @map("image_url")
 
-  createdAt     DateTime @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
   @@map("temples")
 }
 
@@ -259,8 +272,51 @@ model Audio {
   source        String?
   externalId    String? @map("external_id")
 
-  createdAt     DateTime @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
   @@map("audio_recordings")
+}
+
+/// One entry in the daily devotional rotation. The /daily page picks the
+/// day's content by rotating through each slot (ABHANG, SAINT, THOUGHT,
+/// FESTIVAL, DID_YOU_KNOW) — every entry references a real DB record
+/// (composition/saint/festival) so nothing is fabricated.
+model DailyFeature {
+  id             String   @id @default(uuid())
+  slot           String   @map("slot") // ABHANG | SAINT | THOUGHT | FESTIVAL | DID_YOU_KNOW
+  rotationIndex  Int      @default(0) @map("rotation_index")
+  titleMarathi   String   @map("title_marathi")
+  bodyMarathi    String?  @map("body_marathi")
+  compositionId  String?  @map("composition_id")
+  saintId        String?  @map("saint_id")
+  festivalId     String?  @map("festival_id")
+
+  composition Composition? @relation(fields: [compositionId], references: [id])
+  saint       Saint?       @relation(fields: [saintId], references: [id])
+  festival    Festival?    @relation(fields: [festivalId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([slot, rotationIndex])
+  @@map("daily_features")
+}
+
+/// A stop on the Wari pilgrimage route (documented, real places with
+/// real route distances). Drives the /wari page — no hardcoded arrays.
+model WariStop {
+  id           String  @id @default(uuid())
+  nameMarathi  String  @map("name_marathi")
+  nameTranslit String  @map("name_transliteration")
+  slug         String  @unique
+  distanceKm   Int     @map("distance_km")
+  description  String
+  icon         String?
+  sortOrder    Int     @default(0) @map("sort_order")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([sortOrder])
+  @@map("wari_stops")
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -268,43 +324,42 @@ model Audio {
 // ═══════════════════════════════════════════════════════════════
 
 model BookPublication {
-  id            String   @id @default(uuid())
-  titleMarathi  String   @map("title_marathi")
-  titleEnglish  String?  @map("title_english")
-  slug          String   @unique
+  id           String  @id @default(uuid())
+  titleMarathi String  @map("title_marathi")
+  titleEnglish String? @map("title_english")
+  slug         String  @unique
 
-  bookType      String   @default("STANDARD") @map("book_type")
+  bookType String @default("STANDARD") @map("book_type")
   // POCKET | STANDARD | PREMIUM_HARDCOVER | COLLECTOR | TEMPLE
 
-  status        String   @default("DRAFT") @map("status")
+  status String @default("DRAFT") @map("status")
   // DRAFT | GENERATING | READY | PUBLISHED | ARCHIVED
 
-  curationType  String   @map("curation_type")
+  curationType String @map("curation_type")
   // SAINT_BASED | DEITY_BASED | FESTIVAL_BASED | THEME_BASED | USER_CURATED
 
-  curationConfig String? @map("curation_config") // JSON: criteria, filters, count per type
+  curationConfig Json? @map("curation_config") // JSON: criteria, filters, count per type
 
-  description   String?
-  themeId       String?  @map("theme_id")
+  description String?
+  themeId     String? @map("theme_id")
 
   // Focus entity relationships
-  saintId       String?  @map("saint_id")
-  saint         Saint?   @relation(fields: [saintId], references: [id])
-  deityId       String?  @map("deity_id")
-  deity         Deity?   @relation(fields: [deityId], references: [id])
+  saintId String? @map("saint_id")
+  saint   Saint?  @relation(fields: [saintId], references: [id])
+  deityId String? @map("deity_id")
+  deity   Deity?  @relation(fields: [deityId], references: [id])
 
   // Creator
-  creatorId     String?  @map("creator_id")
-  creator       User?    @relation("BookCreator", fields: [creatorId], references: [id])
-  isPublic      Boolean  @default(false) @map("is_public")
+  creatorId String? @map("creator_id")
+  creator   User?   @relation("BookCreator", fields: [creatorId], references: [id])
+  isPublic  Boolean @default(false) @map("is_public")
 
   // Pricing (base, overridden by editions)
-  basePrice     Decimal? @map("base_price")
-  royaltyPercent Float?  @map("royalty_percent")
-  totalCompositions  Int?  @map("total_compositions")
-  totalPages         Int?  @map("total_pages")
-  totalSections      Int?  @map("total_sections")
-
+  basePrice         Decimal? @map("base_price")
+  royaltyPercent    Float?   @map("royalty_percent")
+  totalCompositions Int?     @map("total_compositions")
+  totalPages        Int?     @map("total_pages")
+  totalSections     Int?     @map("total_sections")
 
   // Generation tracking
   generationStartedAt   DateTime? @map("generation_started_at")
@@ -312,12 +367,12 @@ model BookPublication {
   generationError       String?   @map("generation_error")
 
   // Relations
-  editions      BookEdition[]
-  compositions  BookComposition[]
-  orderItems    OrderItem[]
+  editions     BookEdition[]
+  compositions BookComposition[]
+  orderItems   OrderItem[]
 
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([status])
   @@index([bookType])
@@ -329,39 +384,39 @@ model BookPublication {
 }
 
 model BookEdition {
-  id              String   @id @default(uuid())
-  publicationId   String   @map("publication_id")
-  publication     BookPublication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  id            String          @id @default(uuid())
+  publicationId String          @map("publication_id")
+  publication   BookPublication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
 
-  format          String   @map("format")
+  format String @map("format")
   // DIGITAL_PDF | DIGITAL_EPUB | DIGITAL_KINDLE | PRINT_PAPERBACK | PRINT_HARDCOVER | PRINT_COLLECTOR
 
   // File assets
-  fileUrl         String?  @map("file_url")
-  fileSizeBytes   Int?     @map("file_size_bytes")
-  previewUrl      String?  @map("preview_url")
-  coverUrl        String?  @map("cover_url")
+  fileUrl       String? @map("file_url")
+  fileSizeBytes Int?    @map("file_size_bytes")
+  previewUrl    String? @map("preview_url")
+  coverUrl      String? @map("cover_url")
 
   // Print specs
-  pageCount       Int?     @map("page_count")
-  trimSize        String?  @map("trim_size")
-  paperType       String?  @map("paper_type")
-  coverFinish     String?  @map("cover_finish")
-  bleedMm         Float?   @map("bleed_mm")
-  dpi             Int?     @default(300) @map("dpi")
-  colorMode       String?  @default("CMYK") @map("color_mode")
+  pageCount   Int?    @map("page_count")
+  trimSize    String? @map("trim_size")
+  paperType   String? @map("paper_type")
+  coverFinish String? @map("cover_finish")
+  bleedMm     Float?  @map("bleed_mm")
+  dpi         Int?    @default(300) @map("dpi")
+  colorMode   String? @default("CMYK") @map("color_mode")
 
   // Pricing
   price           Decimal? @map("price")
   printCost       Decimal? @map("print_cost")
   shippingWeightG Int?     @map("shipping_weight_g")
 
-  isDefault       Boolean  @default(false) @map("is_default")
+  isDefault Boolean @default(false) @map("is_default")
 
   // Order items using this edition
-  orderItems      OrderItem[]
+  orderItems OrderItem[]
 
-  createdAt       DateTime @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@index([publicationId])
   @@index([format])
@@ -369,17 +424,17 @@ model BookEdition {
 }
 
 model BookComposition {
-  id              String   @id @default(uuid())
-  publicationId   String   @map("publication_id")
-  publication     BookPublication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
-  compositionId   String   @map("composition_id")
-  composition     Composition @relation(fields: [compositionId], references: [id])
+  id            String          @id @default(uuid())
+  publicationId String          @map("publication_id")
+  publication   BookPublication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  compositionId String          @map("composition_id")
+  composition   Composition     @relation(fields: [compositionId], references: [id])
 
-  sortOrder       Int      @map("sort_order")
-  sectionName     String?  @map("section_name")
-  curatedByAi     Boolean  @default(true) @map("curated_by_ai")
-  includeMeaning  Boolean  @default(true) @map("include_meaning")
-  userNotes       String?  @map("user_notes")
+  sortOrder      Int     @map("sort_order")
+  sectionName    String? @map("section_name")
+  curatedByAi    Boolean @default(true) @map("curated_by_ai")
+  includeMeaning Boolean @default(true) @map("include_meaning")
+  userNotes      String? @map("user_notes")
 
   @@unique([publicationId, compositionId])
   @@index([publicationId])
@@ -388,17 +443,18 @@ model BookComposition {
 }
 
 model BookTheme {
-  id              String   @id @default(uuid())
-  nameMarathi     String   @map("name_marathi")
-  nameEnglish     String   @map("name_english")
-  slug            String   @unique
-  description     String?
+  id          String  @id @default(uuid())
+  nameMarathi String  @map("name_marathi")
+  nameEnglish String  @map("name_english")
+  slug        String  @unique
+  description String?
 
-  curationRules   String?  @map("curation_rules") // JSON
-  isOfficial      Boolean  @default(false) @map("is_official")
-  isActive        Boolean  @default(true) @map("is_active")
+  curationRules Json?   @map("curation_rules") // JSON
+  isOfficial    Boolean @default(false) @map("is_official")
+  isActive      Boolean @default(true) @map("is_active")
 
-  createdAt       DateTime @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
   @@map("book_themes")
 }
 
@@ -407,42 +463,42 @@ model BookTheme {
 // ═══════════════════════════════════════════════════════════════
 
 model Order {
-  id                String     @id @default(uuid())
+  id String @id @default(uuid())
 
-  userId            String?    @map("user_id")
-  user              User?      @relation(fields: [userId], references: [id])
+  userId String? @map("user_id")
+  user   User?   @relation(fields: [userId], references: [id])
 
-  guestEmail        String?    @map("guest_email")
-  guestName         String?    @map("guest_name")
+  guestEmail String? @map("guest_email")
+  guestName  String? @map("guest_name")
 
-  status            String     @default("PENDING") @map("status")
+  status String @default("PENDING") @map("status")
   // PENDING | CONFIRMED | PROCESSING | PRINTING | SHIPPED | DELIVERED | CANCELLED | REFUNDED
 
-  shippingAddressId String?    @map("shipping_address_id")
-  shippingAddress   Address?   @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
-  shippingMethod    String?    @map("shipping_method")
-  shippingCost      Decimal?   @map("shipping_cost")
-  trackingNumber    String?    @map("tracking_number")
+  shippingAddressId String?  @map("shipping_address_id")
+  shippingAddress   Address? @relation("ShippingAddress", fields: [shippingAddressId], references: [id])
+  shippingMethod    String?  @map("shipping_method")
+  shippingCost      Decimal? @map("shipping_cost")
+  trackingNumber    String?  @map("tracking_number")
 
-  paymentProvider   String?    @map("payment_provider")
-  paymentId         String?    @map("payment_id")
-  paymentStatus     String?    @map("payment_status")
-  currency          String     @default("INR")
-  subtotal          Decimal    @map("subtotal")
-  tax               Decimal    @default(0)
-  total             Decimal
+  paymentProvider String? @map("payment_provider")
+  paymentId       String? @map("payment_id")
+  paymentStatus   String? @map("payment_status")
+  currency        String  @default("INR")
+  subtotal        Decimal @map("subtotal")
+  tax             Decimal @default(0)
+  total           Decimal
 
-  isGift            Boolean    @default(false) @map("is_gift")
-  giftMessage       String?    @map("gift_message")
-  giftRecipient     String?    @map("gift_recipient")
-  dedicationText    String?    @map("dedication_text")
+  isGift         Boolean @default(false) @map("is_gift")
+  giftMessage    String? @map("gift_message")
+  giftRecipient  String? @map("gift_recipient")
+  dedicationText String? @map("dedication_text")
 
-  printPartnerId    String?    @map("print_partner_id")
+  printPartnerId String? @map("print_partner_id")
 
-  items             OrderItem[]
+  items OrderItem[]
 
-  createdAt         DateTime   @default(now()) @map("created_at")
-  updatedAt         DateTime   @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([userId])
   @@index([status])
@@ -451,24 +507,24 @@ model Order {
 }
 
 model OrderItem {
-  id                 String         @id @default(uuid())
-  orderId            String         @map("order_id")
-  order              Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  id      String @id @default(uuid())
+  orderId String @map("order_id")
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
-  publicationId      String         @map("publication_id")
-  publication        BookPublication @relation(fields: [publicationId], references: [id])
-  editionId          String?        @map("edition_id")
+  publicationId String          @map("publication_id")
+  publication   BookPublication @relation(fields: [publicationId], references: [id])
+  editionId     String?         @map("edition_id")
   /// Enforces Restrict onDelete to prevent deletion of book editions that are referenced by existing order items.
-  edition            BookEdition?   @relation(fields: [editionId], references: [id], onDelete: Restrict)
+  edition       BookEdition?    @relation(fields: [editionId], references: [id], onDelete: Restrict)
 
-  quantity           Int            @default(1)
-  unitPrice          Decimal        @map("unit_price")
-  totalPrice         Decimal        @map("total_price")
+  quantity   Int     @default(1)
+  unitPrice  Decimal @map("unit_price")
+  totalPrice Decimal @map("total_price")
 
-  dedicationText     String?        @map("dedication_text")
-  personalizationJson String?       @map("personalization_json")
+  dedicationText      String? @map("dedication_text")
+  personalizationJson String? @map("personalization_json")
 
-  createdAt          DateTime       @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@index([orderId])
   @@index([publicationId])
@@ -476,51 +532,52 @@ model OrderItem {
 }
 
 model Address {
-  id              String   @id @default(uuid())
-  userId          String?  @map("user_id")
-  user            User?    @relation(fields: [userId], references: [id])
+  id     String  @id @default(uuid())
+  userId String? @map("user_id")
+  user   User?   @relation(fields: [userId], references: [id])
 
-  label           String?  // "Home", "Office", "Temple"
-  fullName        String   @map("full_name")
-  phone           String
-  line1           String
-  line2           String?
-  city            String
-  state           String
-  postalCode      String   @map("postal_code")
-  country         String   @default("IN")
+  label      String? // "Home", "Office", "Temple"
+  fullName   String  @map("full_name")
+  phone      String
+  line1      String
+  line2      String?
+  city       String
+  state      String
+  postalCode String  @map("postal_code")
+  country    String  @default("IN")
 
-  isDefault       Boolean  @default(false) @map("is_default")
-  orders          Order[]  @relation("ShippingAddress")
+  isDefault Boolean @default(false) @map("is_default")
+  orders    Order[] @relation("ShippingAddress")
 
-  createdAt       DateTime @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@index([userId])
   @@map("addresses")
 }
 
 model PrintPartner {
-  id                 String   @id @default(uuid())
-  name               String
-  provider           String   // "printful", "lulu", "kdp", "regional_printer"
-  isActive           Boolean  @default(true) @map("is_active")
+  id       String  @id @default(uuid())
+  name     String
+  provider String // "printful", "lulu", "kdp", "regional_printer"
+  isActive Boolean @default(true) @map("is_active")
 
-  apiEndpoint        String?  @map("api_endpoint")
-  apiKey             String?  @map("api_key")
-  apiSecret          String?  @map("api_secret")
+  apiEndpoint String? @map("api_endpoint")
+  apiKey      String? @map("api_key")
+  apiSecret   String? @map("api_secret")
 
-  supportsHardcover  Boolean  @default(false) @map("supports_hardcover")
-  supportsColor      Boolean  @default(true) @map("supports_color")
-  maxPages           Int?     @map("max_pages")
+  supportsHardcover Boolean @default(false) @map("supports_hardcover")
+  supportsColor     Boolean @default(true) @map("supports_color")
+  maxPages          Int?    @map("max_pages")
 
-  baseCostPerPage    Decimal? @map("base_cost_per_page")
-  baseCostPerBook    Decimal? @map("base_cost_per_book")
-  coverCostPerBook   Decimal? @map("cover_cost_per_book")
-  currency           String   @default("INR")
+  baseCostPerPage  Decimal? @map("base_cost_per_page")
+  baseCostPerBook  Decimal? @map("base_cost_per_book")
+  coverCostPerBook Decimal? @map("cover_cost_per_book")
+  currency         String   @default("INR")
 
-  regions            String?  // JSON array
+  regions Json? // JSON array
 
-  createdAt          DateTime @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
   @@map("print_partners")
 }
 
@@ -529,22 +586,22 @@ model PrintPartner {
 // ═══════════════════════════════════════════════════════════════
 
 model UserCollection {
-  id              String   @id @default(uuid())
-  name            String
-  slug            String   @unique
-  description     String?
-  userId          String   @map("user_id")
-  user            User     @relation(fields: [userId], references: [id])
+  id          String  @id @default(uuid())
+  name        String
+  slug        String  @unique
+  description String?
+  userId      String  @map("user_id")
+  user        User    @relation(fields: [userId], references: [id])
 
-  isPublic        Boolean  @default(false) @map("is_public")
-  isFeatured      Boolean  @default(false) @map("is_featured")
+  isPublic   Boolean @default(false) @map("is_public")
+  isFeatured Boolean @default(false) @map("is_featured")
 
-  compositions    CollectionComposition[]
+  compositions CollectionComposition[]
 
-  likes           Int      @default(0)
-  saves           Int      @default(0)
+  likes Int @default(0)
+  saves Int @default(0)
 
-  createdAt       DateTime @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@index([userId])
   @@index([isPublic, isFeatured])
@@ -552,14 +609,14 @@ model UserCollection {
 }
 
 model CollectionComposition {
-  id              String   @id @default(uuid())
-  collectionId    String   @map("collection_id")
-  collection      UserCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
-  compositionId   String   @map("composition_id")
-  composition     Composition @relation(fields: [compositionId], references: [id])
+  id            String         @id @default(uuid())
+  collectionId  String         @map("collection_id")
+  collection    UserCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  compositionId String         @map("composition_id")
+  composition   Composition    @relation(fields: [compositionId], references: [id])
 
-  sortOrder       Int      @map("sort_order")
-  userNotes       String?  @map("user_notes")
+  sortOrder Int     @map("sort_order")
+  userNotes String? @map("user_notes")
 
   @@unique([collectionId, compositionId])
   @@map("collection_compositions")
@@ -574,7 +631,7 @@ model EntityGraphEdge {
   relationship String
   weight       Float?   @default(1.0)
   confidence   Float?   @default(1.0) @map("confidence") // 0.0–1.0: 1.0=deterministic FK, lower=inferred/ML
-  metadata     String?  @map("metadata") // SQLite: JSON as string
+  metadata     Json?    @map("metadata") // SQLite: JSON as string
   createdAt    DateTime @default(now()) @map("created_at")
 
   @@index([sourceType, sourceId])
@@ -584,20 +641,20 @@ model EntityGraphEdge {
 }
 
 model AiEnrichmentJob {
-  id             String   @id @default(uuid())
-  compositionId  String   @map("composition_id")
-  composition    Composition @relation(fields: [compositionId], references: [id])
+  id            String      @id @default(uuid())
+  compositionId String      @map("composition_id")
+  composition   Composition @relation(fields: [compositionId], references: [id])
 
-  status         String   @default("pending")
-  priority       Int      @default(0) @map("priority")
-  attemptCount   Int      @default(0) @map("attempt_count")
-  maxAttempts    Int      @default(3) @map("max_attempts")
-  errorMessage   String?  @map("error_message")
-  modelProvider  String?  @map("model_provider")
-  modelName      String?  @map("model_name")
+  status        String  @default("pending")
+  priority      Int     @default(0) @map("priority")
+  attemptCount  Int     @default(0) @map("attempt_count")
+  maxAttempts   Int     @default(3) @map("max_attempts")
+  errorMessage  String? @map("error_message")
+  modelProvider String? @map("model_provider")
+  modelName     String? @map("model_name")
 
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([status])
   @@index([priority])
@@ -606,82 +663,96 @@ model AiEnrichmentJob {
 }
 
 model AiEnrichmentResult {
-  id              String   @id @default(uuid())
-  jobId           String   @unique @map("job_id")
-  compositionId   String   @map("composition_id")
-  composition     Composition @relation(fields: [compositionId], references: [id])
+  id            String      @id @default(uuid())
+  jobId         String      @unique @map("job_id")
+  compositionId String      @map("composition_id")
+  composition   Composition @relation(fields: [compositionId], references: [id])
 
-  summary         String?
-  meaning         String?
-  keywords        String?  // SQLite: JSON string
-  deityId         String?  @map("deity_id")
-  festivalIds     String?  // SQLite: JSON string
-  categories      String?  // SQLite: JSON string
-  tags            String?  // SQLite: JSON string
-  difficulty      String?
-  sentiment       String?
+  summary     String?
+  meaning     String?
+  keywords    Json? // SQLite: JSON string
+  deityId     String? @map("deity_id")
+  festivalIds Json? // SQLite: JSON string
+  categories  Json? // SQLite: JSON string
+  tags        Json? // SQLite: JSON string
+  difficulty  String?
+  sentiment   String?
 
   confidenceSummary  String? @map("confidence_summary")
   confidenceDeity    String? @map("confidence_deity")
   confidenceFestival String? @map("confidence_festival")
-  rawResponse     String?  @map("raw_response")
-  reviewed        Boolean  @default(false)
+  rawResponse        String? @map("raw_response")
+  reviewed           Boolean @default(false)
 
-  createdAt       DateTime @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
   @@map("ai_enrichment_results")
 }
 
 model User {
-  id              String   @id @default(uuid())
-  email           String   @unique
+  id              String    @id @default(uuid())
+  email           String    @unique
   emailVerified   DateTime? @map("email_verified")
   name            String?
-  imageUrl        String?  @map("image_url")
-  password        String?  // Password hash for credentials auth
-  role            String   @default("USER")
-  reputationScore Int      @default(0) @map("reputation_score")
+  imageUrl        String?   @map("image_url")
+  password        String? // Password hash for credentials auth
+  role            String    @default("USER")
+  reputationScore Int       @default(0) @map("reputation_score")
   bio             String?
 
   accounts            Account[]
   sessions            Session[]
-  corrections         CorrectionSuggestion[] @relation("UserCorrections")
-  reviewedCorrections CorrectionSuggestion[] @relation("ReviewerCorrections")
-  versions            CompositionVersion[]   @relation("UserVersions")
+  corrections         CorrectionSuggestion[]    @relation("UserCorrections")
+  reviewedCorrections CorrectionSuggestion[]    @relation("ReviewerCorrections")
+  versions            CompositionVersion[]      @relation("UserVersions")
   manuscripts         ManuscriptUpload[]
   uploads             UploadedFile[]
   moderationReviews   ModerationReview[]
   moderationNotes     ModerationEditorialNote[]
 
   // Book commerce
-  createdPublications  BookPublication[] @relation("BookCreator")
-  orders               Order[]
-  addresses            Address[]
-  collections          UserCollection[]
+  createdPublications BookPublication[] @relation("BookCreator")
+  orders              Order[]
+  addresses           Address[]
+  collections         UserCollection[]
 
   // Personalization
-  preferences          UserPreference?
-  interactions         UserInteraction[]
-  readingProgress      ReadingProgress[]
-  highlights           UserHighlight[]
-  dailyStats           DailyReadingStats[]
+  preferences     UserPreference?
+  interactions    UserInteraction[]
+  readingProgress ReadingProgress[]
+  highlights      UserHighlight[]
+  dailyStats      DailyReadingStats[]
 
-  createdAt           DateTime @default(now()) @map("created_at")
+  // Personal audio library
+  playlists       Playlist[]
+  playbackHistory PlaybackHistory[]
+  audioFavorites  AudioFavorite[]
+
+  // T2/T3 — corrections authored / verified by this user
+  authoredCorrections  TranscriptCorrection[] @relation("CorrectionAuthor")
+  verifiedCorrections  TranscriptCorrection[] @relation("CorrectionVerifier")
+
+  // T2 — rights records for recordings
+  rightsRecords RightsRecord[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+
   @@map("users")
 }
 
 model Account {
-  id                 String  @id @default(uuid())
-  userId             String  @map("user_id")
-  type               String
-  provider           String
-  providerAccountId  String  @map("provider_account_id")
-  refresh_token      String?
-  access_token       String?
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?
-  session_state      String?
+  id                String  @id @default(uuid())
+  userId            String  @map("user_id")
+  type              String
+  provider          String
+  providerAccountId String  @map("provider_account_id")
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -709,48 +780,48 @@ model VerificationToken {
 }
 
 model CorrectionSuggestion {
-  id            String   @id @default(uuid())
-  compositionId String   @map("composition_id")
+  id            String      @id @default(uuid())
+  compositionId String      @map("composition_id")
   composition   Composition @relation(fields: [compositionId], references: [id])
-  userId        String   @map("user_id")
-  user          User     @relation("UserCorrections", fields: [userId], references: [id])
-  fieldPath     String   @map("field_path")
-  oldValue      String?  @map("old_value")
-  newValue      String   @map("new_value")
-  diffJson      String?  @map("diff_json") // SQLite: JSON as string
+  userId        String      @map("user_id")
+  user          User        @relation("UserCorrections", fields: [userId], references: [id])
+  fieldPath     String      @map("field_path")
+  oldValue      String?     @map("old_value")
+  newValue      String      @map("new_value")
+  diffJson      Json?       @map("diff_json") // SQLite: JSON as string
   reason        String?
-  status        String   @default("draft")
-  
-  reviewerId    String?  @map("reviewer_id")
-  reviewer      User?    @relation("ReviewerCorrections", fields: [reviewerId], references: [id])
-  reviewerNotes String?  @map("reviewer_notes")
+  status        String      @default("draft")
+
+  reviewerId    String?   @map("reviewer_id")
+  reviewer      User?     @relation("ReviewerCorrections", fields: [reviewerId], references: [id])
+  reviewerNotes String?   @map("reviewer_notes")
   reviewedAt    DateTime? @map("reviewed_at")
 
-  version       CompositionVersion?
-  createdAt     DateTime @default(now()) @map("created_at")
+  version   CompositionVersion?
+  createdAt DateTime            @default(now()) @map("created_at")
 
   @@index([compositionId])
   @@map("correction_suggestions")
 }
 
 model CompositionVersion {
-  id              String   @id @default(uuid())
-  compositionId   String   @map("composition_id")
-  composition     Composition @relation(fields: [compositionId], references: [id])
-  versionNumber   Int      @map("version_number")
+  id            String      @id @default(uuid())
+  compositionId String      @map("composition_id")
+  composition   Composition @relation(fields: [compositionId], references: [id])
+  versionNumber Int         @map("version_number")
 
-  titleMarathi    String   @map("title_marathi")
-  titleTranslit   String   @map("title_transliteration")
-  fullText        String   @map("full_text")
-  meaning         String?
+  titleMarathi  String  @map("title_marathi")
+  titleTranslit String  @map("title_transliteration")
+  fullText      String  @map("full_text")
+  meaning       String?
 
-  changeReason    String   @map("change_reason")
-  
-  createdByUserId String?  @map("created_by_user_id")
-  createdByUser   User?    @relation("UserVersions", fields: [createdByUserId], references: [id])
-  
-  correctionId    String?  @unique @map("correction_id")
-  correction      CorrectionSuggestion? @relation(fields: [correctionId], references: [id])
+  changeReason String @map("change_reason")
+
+  createdByUserId String? @map("created_by_user_id")
+  createdByUser   User?   @relation("UserVersions", fields: [createdByUserId], references: [id])
+
+  correctionId String?               @unique @map("correction_id")
+  correction   CorrectionSuggestion? @relation(fields: [correctionId], references: [id])
 
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -759,42 +830,42 @@ model CompositionVersion {
 }
 
 model VerificationRecord {
-  id                     String   @id @default(uuid())
-  compositionId          String   @unique @map("composition_id")
+  id                     String      @id @default(uuid())
+  compositionId          String      @unique @map("composition_id")
   composition            Composition @relation(fields: [compositionId], references: [id])
-  trustScore             Float    @default(0.0) @map("trust_score")
-  sourceCount            Int      @default(0) @map("source_count")
-  templeVerification     Int      @default(0) @map("temple_verification") // SQLite: INTEGER for boolean
-  scholarReview          Int      @default(0) @map("scholar_review")
-  communityConfirmations Int      @default(0) @map("community_confirmations")
-  ageDays                Int      @default(0) @map("age_days")
+  trustScore             Float       @default(0.0) @map("trust_score")
+  sourceCount            Int         @default(0) @map("source_count")
+  templeVerification     Boolean     @default(false) @map("temple_verification")
+  scholarReview          Int         @default(0) @map("scholar_review")
+  communityConfirmations Int         @default(0) @map("community_confirmations")
+  ageDays                Int         @default(0) @map("age_days")
 
   @@map("verification_records")
 }
 
 model ManuscriptUpload {
-  id            String             @id @default(uuid())
-  volunteerId   String             @map("volunteer_id")
-  volunteer     User               @relation(fields: [volunteerId], references: [id])
-  imageUrl      String             @map("image_url")
-  status        String             @default("pending") // pending, ocr_completed, failed
-  rawOcrText    String?            @map("raw_ocr_text")
-  ocrJobs       OcrProcessingJob[]
-  createdAt     DateTime           @default(now()) @map("created_at")
+  id          String             @id @default(uuid())
+  volunteerId String             @map("volunteer_id")
+  volunteer   User               @relation(fields: [volunteerId], references: [id])
+  imageUrl    String             @map("image_url")
+  status      String             @default("pending") // pending, ocr_completed, failed
+  rawOcrText  String?            @map("raw_ocr_text")
+  ocrJobs     OcrProcessingJob[]
+  createdAt   DateTime           @default(now()) @map("created_at")
 
   @@map("manuscript_uploads")
 }
 
 model OcrProcessingJob {
-  id            String             @id @default(uuid())
-  uploadId      String             @map("upload_id")
-  upload        ManuscriptUpload   @relation(fields: [uploadId], references: [id])
-  engine        String             @default("paddleocr") // paddleocr, google_vision
-  status        String             @default("queued") // queued, processing, succeeded, failed
-  resultText    String?            @map("result_text")
-  errorLog      String?            @map("error_log")
-  createdAt     DateTime           @default(now()) @map("created_at")
-  updatedAt     DateTime           @updatedAt @map("updated_at")
+  id         String           @id @default(uuid())
+  uploadId   String           @map("upload_id")
+  upload     ManuscriptUpload @relation(fields: [uploadId], references: [id])
+  engine     String           @default("paddleocr") // paddleocr, google_vision
+  status     String           @default("queued") // queued, processing, succeeded, failed
+  resultText String?          @map("result_text")
+  errorLog   String?          @map("error_log")
+  createdAt  DateTime         @default(now()) @map("created_at")
+  updatedAt  DateTime         @updatedAt @map("updated_at")
 
   @@map("ocr_processing_jobs")
 }
@@ -805,35 +876,48 @@ model OcrProcessingJob {
 
 /// Central upload record for ALL file types (supersedes ManuscriptUpload for new content)
 model UploadedFile {
-  id                String              @id @default(uuid())
-  userId            String              @map("user_id")
-  user              User                @relation(fields: [userId], references: [id])
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id])
 
-  originalName      String              @map("original_name")
-  mimeType          String              @map("mime_type")
-  sizeBytes         Int                 @map("size_bytes")
-  format            String              @map("format") // image, pdf, document, ebook, audio, video
+  originalName String @map("original_name")
+  mimeType     String @map("mime_type")
+  sizeBytes    Int    @map("size_bytes")
+  format       String @map("format") // image, pdf, document, ebook, audio, video
 
-  storagePath       String              @map("storage_path")
-  storageProvider   String              @default("local") @map("storage_provider")
+  storagePath     String @map("storage_path")
+  storageProvider String @default("local") @map("storage_provider")
 
-  processingStatus  String              @default("pending") @map("processing_status")
+  processingStatus String @default("pending") @map("processing_status")
   // pending → extracting → ocr → ai_classifying → completed → moderation_queue → failed
-  processingSteps   String?             @map("processing_steps") // JSON array of completed steps
+  processingSteps  Json?  @map("processing_steps") // JSON array of completed steps
 
-  extractedText     String?             @map("extracted_text")
-  extractedMetadata String?             @map("extracted_metadata") // JSON
-  extractionConfidence Float?           @map("extraction_confidence")
+  extractedText        String? @map("extracted_text")
+  extractedMetadata    Json?   @map("extracted_metadata") // JSON
+  extractionConfidence Float?  @map("extraction_confidence")
 
-  sourceUrl         String?             @map("source_url") // YouTube URL or original source link
-  detectedMetadata  String?             @map("detected_metadata") // JSON: AI-detected saint, deity, etc.
+  sourceUrl        String? @map("source_url") // YouTube URL or original source link
+  detectedMetadata Json?   @map("detected_metadata") // JSON: AI-detected saint, deity, etc.
 
-  versions          UploadedFileVersion[]
-  ocrResults        OcrConsensusResult[]
-  moderationQueue   ModerationQueue[]   @relation("FileModerationQueue")
+  versions        UploadedFileVersion[]
+  ocrResults      OcrConsensusResult[]
+  moderationQueue ModerationQueue[]     @relation("FileModerationQueue")
 
-  createdAt         DateTime            @default(now()) @map("created_at")
-  updatedAt         DateTime            @updatedAt @map("updated_at")
+  // Personal audio library
+  playlistItems   PlaylistItem[]
+  playbackHistory PlaybackHistory[]
+  audioFavorites  AudioFavorite[]
+
+  // T2/T3 — ASR corrections against this upload
+  transcriptCorrections TranscriptCorrection[]
+
+  // T2/T6 — audio processing jobs, rights record, composition matches
+  audioProcessingJobs AudioProcessingJob[]
+  rightsRecord        RightsRecord?
+  compositionMatches  CompositionMatch[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([userId])
   @@index([processingStatus])
@@ -844,67 +928,352 @@ model UploadedFile {
 
 /// Versioned snapshots of uploaded files (original, preprocessed, OCR output)
 model UploadedFileVersion {
-  id              String       @id @default(uuid())
-  fileId          String       @map("file_id")
-  file            UploadedFile @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  id     String       @id @default(uuid())
+  fileId String       @map("file_id")
+  file   UploadedFile @relation(fields: [fileId], references: [id], onDelete: Cascade)
 
-  versionNumber   Int          @map("version_number")
-  label           String       @map("label") // "original", "preprocessed", "ocr_input", "ocr_output"
-  storagePath     String       @map("storage_path")
-  sizeBytes       Int          @map("size_bytes")
-  metadata        String?      @map("metadata") // JSON
+  versionNumber Int    @map("version_number")
+  label         String @map("label") // "original", "preprocessed", "ocr_input", "ocr_output"
+  storagePath   String @map("storage_path")
+  sizeBytes     Int    @map("size_bytes")
+  metadata      Json?  @map("metadata") // JSON
 
-  createdAt       DateTime     @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@unique([fileId, versionNumber])
   @@index([fileId])
   @@map("uploaded_file_versions")
 }
 
+// ═══════════════════════════════════════════════════════════════
+// Audio Platform — Processing Jobs, Rights Records, Composition Matches
+// ═══════════════════════════════════════════════════════════════
+
+/// Background audio processing job (YouTube download or audio_file
+/// transcription), drained by the worker daemon off the request path.
+/// status: pending → processing → completed | failed (retried to maxAttempts).
+model AudioProcessingJob {
+  id       String        @id @default(uuid())
+  uploadId String        @map("upload_id")
+  upload   UploadedFile  @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+
+  kind        String // 'youtube' | 'audio_file'
+  videoId     String? @map("video_id")
+  url         String?
+  storagePath String? @map("storage_path")
+
+  status       String  @default("pending")
+  attempts     Int     @default(0)
+  maxAttempts  Int     @default(3)
+  errorMessage String? @map("error_message")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([uploadId])
+  @@index([status])
+  @@map("audio_processing_jobs")
+}
+
+/// Rights classification for a recording: user-owned, public-domain
+/// composition, user performance, third-party, or unknown. One per upload.
+model RightsRecord {
+  id             String       @id @default(uuid())
+  uploadedFileId String       @unique @map("uploaded_file_id")
+  upload         UploadedFile @relation(fields: [uploadedFileId], references: [id], onDelete: Cascade)
+  userId         String?      @map("user_id")
+  user           User?        @relation(fields: [userId], references: [id])
+
+  rightsStatus          String  @map("rights_status") // USER_OWNED | PUBLIC_DOMAIN_COMPOSITION | USER_PERFORMANCE | THIRD_PARTY | UNKNOWN
+  consentGranted        Boolean @default(false) @map("consent_granted")
+  publicationPermission Boolean @default(false) @map("publication_permission")
+  attribution           String?
+  source                String? @default("record")
+  license               String?
+  notes                 String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("rights_records")
+}
+
+/// Composition match candidate for a transcribed recording. Only an explicit
+/// user confirmation flips status to 'confirmed' — the matcher never silently
+/// misidentifies (spec §11).
+model CompositionMatch {
+  id             String        @id @default(uuid())
+  uploadedFileId String        @map("uploaded_file_id")
+  upload         UploadedFile  @relation(fields: [uploadedFileId], references: [id], onDelete: Cascade)
+  compositionId  String        @map("composition_id")
+  composition    Composition   @relation(fields: [compositionId], references: [id], onDelete: Cascade)
+
+  score         Float  @default(0)
+  method        String // 'title' | 'verse' | 'ngram'
+  status        String @default("candidate") // candidate | confirmed | rejected
+  userConfirmed Boolean @default(false) @map("user_confirmed")
+  matchedText   String? @map("matched_text")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([uploadedFileId])
+  @@index([compositionId])
+  @@index([status])
+  @@map("composition_matches")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Personal Audio Library — Playlists, Playback History, Favorites
+// ═══════════════════════════════════════════════════════════════
+
+/// User-created audio playlists. An item references a composition OR a
+/// recording (UploadedFile), never both — enforced by assertSingleTarget.
+model Playlist {
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name        String
+  description String? @map("description")
+  isPublic    Boolean @default(false) @map("is_public")
+  kind        String  @default("USER") // USER | AI_GENERATED
+
+  items PlaylistItem[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@map("playlists")
+}
+
+/// One track in a playlist: a composition OR a recording (never both).
+model PlaylistItem {
+  id             String       @id @default(uuid())
+  playlistId     String       @map("playlist_id")
+  playlist       Playlist     @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  compositionId  String?      @map("composition_id")
+  composition    Composition? @relation(fields: [compositionId], references: [id], onDelete: Cascade)
+  uploadedFileId String?      @map("uploaded_file_id")
+  uploadedFile   UploadedFile? @relation(fields: [uploadedFileId], references: [id], onDelete: Cascade)
+  sortOrder      Int          @default(0) @map("sort_order")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([playlistId, sortOrder])
+  @@index([playlistId])
+  @@index([compositionId])
+  @@index([uploadedFileId])
+  @@map("playlist_items")
+}
+
+/// Playback history — what a user listened to and when (drives Continue
+/// Listening, analytics, and Media Session bookkeeping).
+model PlaybackHistory {
+  id             String       @id @default(uuid())
+  userId         String       @map("user_id")
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  compositionId  String?      @map("composition_id")
+  composition    Composition? @relation(fields: [compositionId], references: [id], onDelete: Cascade)
+  uploadedFileId String?      @map("uploaded_file_id")
+  uploadedFile   UploadedFile? @relation(fields: [uploadedFileId], references: [id], onDelete: Cascade)
+
+  playedAt DateTime @default(now()) @map("played_at")
+  durationSeconds Int? @map("duration_seconds")
+  completed       Boolean @default(false)
+
+  @@index([userId, playedAt])
+  @@index([compositionId])
+  @@index([uploadedFileId])
+  @@map("playback_history")
+}
+
+/// Audio favorites/bookmarks — a user's starred recordings and compositions.
+model AudioFavorite {
+  id             String       @id @default(uuid())
+  userId         String       @map("user_id")
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  compositionId  String?      @map("composition_id")
+  composition    Composition? @relation(fields: [compositionId], references: [id], onDelete: Cascade)
+  uploadedFileId String?      @map("uploaded_file_id")
+  uploadedFile   UploadedFile? @relation(fields: [uploadedFileId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, compositionId])
+  @@unique([userId, uploadedFileId])
+  @@index([userId])
+  @@map("audio_favorites")
+}
+
+// ═══════════════════════════════════════════════════════════════
+// T2/T3 — Transcription corrections & model evaluation registry
+// ═══════════════════════════════════════════════════════════════
+
+/// A human/moderator-approved correction of an ASR transcript. Only
+/// `approved` corrections may feed the training/eval loop.
+model TranscriptCorrection {
+  id             String       @id @default(uuid())
+  uploadedFileId String       @map("uploaded_file_id")
+  upload         UploadedFile @relation(fields: [uploadedFileId], references: [id], onDelete: Cascade)
+  authorId       String       @map("author_id")
+  author         User         @relation("CorrectionAuthor", fields: [authorId], references: [id])
+  verifierId     String?      @map("verifier_id")
+  verifier       User?        @relation("CorrectionVerifier", fields: [verifierId], references: [id])
+
+  originalAsr   String  @map("original_asr")
+  correctedText String  @map("corrected_text")
+  canonicalText String  @map("canonical_text")
+  diffJson      String? @map("diff_json") // JSON: aligned lines + word diffs
+  confidence    Float   @default(0)
+  errorType     String  @default("none") @map("error_type")
+  modelVersion  String? @map("model_version") // ASR version key that produced originalAsr
+  status        String  @default("pending") // pending | approved | rejected
+  notes         String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([uploadedFileId])
+  @@index([status])
+  @@index([modelVersion])
+  @@map("transcript_corrections")
+}
+
+/// A registered ASR/singing model version. Never auto-deployed: activation
+/// requires an explicit admin action after a passing evaluation run.
+model ModelVersion {
+  id        String @id @default(uuid())
+  modelName String @map("model_name")
+  modelType String @map("model_type") // asr | singing | marathi | enhancement
+  version   String
+  provider  String
+  config    String? // JSON: asrKey etc.
+  notes     String?
+  status    String @default("candidate") // candidate | active | retired | rolled_back
+
+  metricsJson String? @map("metrics_json") // JSON: latest aggregate WER/CER
+
+  evaluationRuns EvaluationRun[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([modelName, version])
+  @@index([modelType, status])
+  @@map("model_versions")
+}
+
+/// A golden evaluation dataset. Frozen sets gate models; the live
+/// approved-corrections set grows as moderators approve corrections.
+model EvaluationDataset {
+  id          String @id @default(uuid())
+  name        String
+  description String?
+  datasetType String @map("dataset_type") // asr | marathi | singing | enhancement
+  version     String
+  status      String @default("frozen") // frozen | active
+  sampleCount Int    @default(0) @map("sample_count")
+
+  samples EvaluationSample[]
+  runs    EvaluationRun[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([datasetType])
+  @@map("evaluation_datasets")
+}
+
+/// One golden sample. `sourceCorrectionId` (unique) makes approval→dataset
+/// idempotent — a re-approval upserts instead of duplicating.
+model EvaluationSample {
+  id                  String            @id @default(uuid())
+  datasetId           String            @map("dataset_id")
+  dataset             EvaluationDataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  sampleLabel         String            @map("sample_label")
+  referenceText       String            @map("reference_text")
+  sourceCompositionId String?           @map("source_composition_id")
+  sourceCorrectionId  String?           @unique @map("source_correction_id")
+  audioUrl            String?           @map("audio_url")
+  sortOrder           Int               @default(0) @map("sort_order")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([datasetId])
+  @@map("evaluation_samples")
+}
+
+/// An auditable evaluation run: model × dataset, gated WER/CER, optional A/B
+/// baseline comparison, and the per-sample metrics used to decide the gate.
+model EvaluationRun {
+  id                     String            @id @default(uuid())
+  modelVersionId         String            @map("model_version_id")
+  modelVersion           ModelVersion      @relation(fields: [modelVersionId], references: [id], onDelete: Cascade)
+  datasetId              String?           @map("dataset_id")
+  dataset                EvaluationDataset? @relation(fields: [datasetId], references: [id])
+  status                 String // passed | failed | inconclusive
+  aggregateMetricsJson   String?           @map("aggregate_metrics_json")
+  sampleMetricsJson      String?           @map("sample_metrics_json")
+  gatingResultJson       String?           @map("gating_result_json")
+  comparedModelVersionId String?           @map("compared_model_version_id")
+  comparedAggregateJson  String?           @map("compared_aggregate_json")
+  notes                  String?
+  createdBy              String            @default("system") @map("created_by")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([modelVersionId])
+  @@index([datasetId])
+  @@map("evaluation_runs")
+}
+
 /// Multi-engine OCR consensus results
 model OcrConsensusResult {
-  id                String       @id @default(uuid())
-  fileId            String       @map("file_id")
-  file              UploadedFile @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  id     String       @id @default(uuid())
+  fileId String       @map("file_id")
+  file   UploadedFile @relation(fields: [fileId], references: [id], onDelete: Cascade)
 
-  engineAResult     String?      @map("engine_a_result")  // Google Vision text
-  engineAConfidence Float?       @map("engine_a_confidence")
-  engineBResult     String?      @map("engine_b_result")  // Tesseract text
-  engineBConfidence Float?       @map("engine_b_confidence")
-  engineCResult     String?      @map("engine_c_result")  // PaddleOCR text
-  engineCConfidence Float?       @map("engine_c_confidence")
+  engineAResult     String? @map("engine_a_result") // Google Vision text
+  engineAConfidence Float?  @map("engine_a_confidence")
+  engineBResult     String? @map("engine_b_result") // Tesseract text
+  engineBConfidence Float?  @map("engine_b_confidence")
+  engineCResult     String? @map("engine_c_result") // PaddleOCR text
+  engineCConfidence Float?  @map("engine_c_confidence")
 
-  votedText         String       @map("voted_text")
-  finalConfidence   Float        @map("final_confidence")
-  votingMethod      String       @default("weighted-average") @map("voting_method")
-  engineCount       Int          @default(0) @map("engine_count")
+  votedText       String @map("voted_text")
+  finalConfidence Float  @map("final_confidence")
+  votingMethod    String @default("weighted-average") @map("voting_method")
+  engineCount     Int    @default(0) @map("engine_count")
 
-  createdAt         DateTime     @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@index([fileId])
   @@map("ocr_consensus_results")
 }
 
 model ModerationQueue {
-  id             String            @id @default(uuid())
-  sourceType     String            @map("source_type") // "ocr", "suggestion", "upload"
-  sourceId       String            @map("source_id") // ID from ManuscriptUpload, CorrectionSuggestion, or UploadedFile
-  uploadedFileId String?           @map("uploaded_file_id")
-  uploadedFile   UploadedFile?     @relation("FileModerationQueue", fields: [uploadedFileId], references: [id])
-  draftTitle     String            @map("draft_title")
-  draftText      String            @map("draft_text")
-  draftMeaning   String?           @map("draft_meaning")
-  tier           Int               @default(1) // 1 = AI, 2 = Peer, 3 = Scholar
-  consensusScore Int               @default(0) // incremented by peer approvals
-  status         String            @default("pending") // pending, approved, rejected, flagged
-  statusReason   String?           @map("status_reason") // why it was flagged/rejected
-  flags          String?           @map("flags") // JSON: AI flags, safety flags, etc.
-  reviewedAt     DateTime?         @map("reviewed_at")
+  id             String        @id @default(uuid())
+  sourceType     String        @map("source_type") // "ocr", "suggestion", "upload"
+  sourceId       String        @map("source_id") // ID from ManuscriptUpload, CorrectionSuggestion, or UploadedFile
+  uploadedFileId String?       @map("uploaded_file_id")
+  uploadedFile   UploadedFile? @relation("FileModerationQueue", fields: [uploadedFileId], references: [id])
+  draftTitle     String        @map("draft_title")
+  draftText      String        @map("draft_text")
+  draftMeaning   String?       @map("draft_meaning")
+  tier           Int           @default(1) // 1 = AI, 2 = Peer, 3 = Scholar
+  consensusScore Int           @default(0) // incremented by peer approvals
+  status         String        @default("pending") // pending, approved, rejected, flagged
+  statusReason   String?       @map("status_reason") // why it was flagged/rejected
+  flags          Json?         @map("flags") // JSON: AI flags, safety flags, etc.
+  reviewedAt     DateTime?     @map("reviewed_at")
 
-  reviews        ModerationReview[]
-  notes          ModerationEditorialNote[]
-  createdAt      DateTime          @default(now()) @map("created_at")
-  updatedAt      DateTime          @updatedAt @map("updated_at")
+  reviews   ModerationReview[]
+  notes     ModerationEditorialNote[]
+  createdAt DateTime                  @default(now()) @map("created_at")
+  updatedAt DateTime                  @updatedAt @map("updated_at")
 
   @@index([uploadedFileId])
   @@index([status])
@@ -914,14 +1283,14 @@ model ModerationQueue {
 }
 
 model ModerationReview {
-  id             String            @id @default(uuid())
-  queueId        String            @map("queue_id")
-  queue          ModerationQueue   @relation(fields: [queueId], references: [id])
-  reviewerId     String            @map("reviewer_id")
-  reviewer       User              @relation(fields: [reviewerId], references: [id])
-  vote           String            @map("vote") // "approve", "reject", "flag"
-  notes          String?
-  createdAt      DateTime          @default(now()) @map("created_at")
+  id         String          @id @default(uuid())
+  queueId    String          @map("queue_id")
+  queue      ModerationQueue @relation(fields: [queueId], references: [id])
+  reviewerId String          @map("reviewer_id")
+  reviewer   User            @relation(fields: [reviewerId], references: [id])
+  vote       String          @map("vote") // "approve", "reject", "flag"
+  notes      String?
+  createdAt  DateTime        @default(now()) @map("created_at")
 
   @@index([queueId])
   @@index([reviewerId])
@@ -930,16 +1299,16 @@ model ModerationReview {
 
 /// Threaded editorial notes on moderation queue items — internal discussions between editors
 model ModerationEditorialNote {
-  id             String            @id @default(uuid())
-  queueId        String            @map("queue_id")
-  queue          ModerationQueue   @relation(fields: [queueId], references: [id], onDelete: Cascade)
-  authorId       String            @map("author_id")
-  author         User              @relation(fields: [authorId], references: [id])
-  content        String            @map("content")
-  parentNoteId   String?           @map("parent_note_id") // for threaded replies
+  id           String          @id @default(uuid())
+  queueId      String          @map("queue_id")
+  queue        ModerationQueue @relation(fields: [queueId], references: [id], onDelete: Cascade)
+  authorId     String          @map("author_id")
+  author       User            @relation(fields: [authorId], references: [id])
+  content      String          @map("content")
+  parentNoteId String?         @map("parent_note_id") // for threaded replies
 
-  createdAt      DateTime          @default(now()) @map("created_at")
-  updatedAt      DateTime          @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([queueId])
   @@index([authorId])
@@ -949,7 +1318,7 @@ model ModerationEditorialNote {
 model SearchSyncJob {
   id            String   @id @default(uuid())
   compositionId String   @map("composition_id")
-  action        String   // "upsert" or "delete"
+  action        String // "upsert" or "delete"
   status        String   @default("pending") // pending, processing, completed, failed
   attempts      Int      @default(0)
   errorMessage  String?  @map("error_message")
@@ -976,11 +1345,11 @@ model PushSubscription {
 
 model AnalyticsEvent {
   id        String   @id @default(uuid())
-  eventType String   @map("event_type")          // page_view, book_view, add_to_cart, search, checkout_start, payment_success, etc.
-  page      String?                              // Current page path
-  referrer  String?                              // HTTP referrer
-  metadata  Json?                                // Arbitrary event-specific payload
-  ip        String?                              // Client IP (anonymized)
+  eventType String   @map("event_type") // page_view, book_view, add_to_cart, search, checkout_start, payment_success, etc.
+  page      String? // Current page path
+  referrer  String? // HTTP referrer
+  metadata  Json? // Arbitrary event-specific payload
+  ip        String? // Client IP (anonymized)
   userAgent String?  @map("user_agent")
   userId    String?  @map("user_id")
   sessionId String?  @map("session_id")
@@ -999,52 +1368,52 @@ model AnalyticsEvent {
 
 /// Tracks content sources discovered or manually registered for automated scraping.
 model ContentSource {
-  id             String   @id @default(uuid())
-  name           String   @map("name")                // Human-readable name
-  type           String   @map("type")                 // SITEMAP | RSS | WEBSITE | YOUTUBE | COMMUNITY | SEARCH
-  url            String   @map("url")                  // Root URL
-  baseDomain     String   @map("base_domain")          // Extracted domain for grouping
+  id         String @id @default(uuid())
+  name       String @map("name") // Human-readable name
+  type       String @map("type") // SITEMAP | RSS | WEBSITE | YOUTUBE | COMMUNITY | SEARCH
+  url        String @map("url") // Root URL
+  baseDomain String @map("base_domain") // Extracted domain for grouping
 
   // Scraping configuration
-  scraperType    String?  @map("scraper_type")         // Which scraper module to use (null = auto-detect)
-  scrapeInterval Int      @default(6) @map("scrape_interval")   // Hours between scrape runs
-  rateLimitMs    Int      @default(2000) @map("rate_limit_ms")  // Min ms between requests
-  robotsTxt      String?  @map("robots_txt")           // Cached robots.txt content
-  allowedPaths   String?  @map("allowed_paths")        // JSON array of allowed path globs
-  excludedPaths  String?  @map("excluded_paths")       // JSON array of excluded path globs
+  scraperType    String? @map("scraper_type") // Which scraper module to use (null = auto-detect)
+  scrapeInterval Int     @default(6) @map("scrape_interval") // Hours between scrape runs
+  rateLimitMs    Int     @default(2000) @map("rate_limit_ms") // Min ms between requests
+  robotsTxt      String? @map("robots_txt") // Cached robots.txt content
+  allowedPaths   Json?   @map("allowed_paths") // JSON array of allowed path globs
+  excludedPaths  Json?   @map("excluded_paths") // JSON array of excluded path globs
 
   // Trust & Quality
-  trustScore          Float    @default(0.5) @map("trust_score")
-  totalCompositions   Int      @default(0) @map("total_compositions")
-  verifiedCompositions Int     @default(0) @map("verified_compositions")
-  errorRate           Float    @default(0.0) @map("error_rate")
-  lastFetchAt         DateTime? @map("last_fetch_at")
-  lastErrorAt         DateTime? @map("last_error_at")
-  lastErrorMessage    String?  @map("last_error_message")
-  consecutiveErrors   Int      @default(0) @map("consecutive_errors")
+  trustScore           Float     @default(0.5) @map("trust_score")
+  totalCompositions    Int       @default(0) @map("total_compositions")
+  verifiedCompositions Int       @default(0) @map("verified_compositions")
+  errorRate            Float     @default(0.0) @map("error_rate")
+  lastFetchAt          DateTime? @map("last_fetch_at")
+  lastErrorAt          DateTime? @map("last_error_at")
+  lastErrorMessage     String?   @map("last_error_message")
+  consecutiveErrors    Int       @default(0) @map("consecutive_errors")
 
   // Licensing
-  license             String?  @map("license")
-  requiresAttribution Boolean  @default(true) @map("requires_attribution")
-  attributionTemplate String?  @map("attribution_template")
+  license             String? @map("license")
+  requiresAttribution Boolean @default(true) @map("requires_attribution")
+  attributionTemplate String? @map("attribution_template")
 
   // Status
-  status              String   @default("ACTIVE") @map("status")   // ACTIVE | PAUSED | DISABLED | BLOCKED
-  isAutoDiscovered    Boolean  @default(false) @map("is_auto_discovered")
-  discoveredById      String?  @map("discovered_by_id")
-  submittedById       String?  @map("submitted_by_id")
+  status           String  @default("ACTIVE") @map("status") // ACTIVE | PAUSED | DISABLED | BLOCKED
+  isAutoDiscovered Boolean @default(false) @map("is_auto_discovered")
+  discoveredById   String? @map("discovered_by_id")
+  submittedById    String? @map("submitted_by_id")
 
   // Metadata
-  tags                String?  @map("tags")             // JSON array
-  language            String   @default("mr") @map("language")
-  region              String?  @map("region")
-  notes               String?  @map("notes")
+  tags     Json?   @map("tags") // JSON array
+  language String  @default("mr") @map("language")
+  region   String? @map("region")
+  notes    String? @map("notes")
 
   // Relations
-  discoveryJobs       DiscoveryJob[] @relation("SourceDiscoveryJobs")
+  discoveryJobs DiscoveryJob[] @relation("SourceDiscoveryJobs")
 
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([status])
   @@index([type])
@@ -1056,27 +1425,27 @@ model ContentSource {
 
 /// Each discovery run against a source, logging results and health metrics.
 model DiscoveryJob {
-  id            String   @id @default(uuid())
-  sourceId      String   @map("source_id")
-  source        ContentSource @relation("SourceDiscoveryJobs", fields: [sourceId], references: [id])
+  id       String        @id @default(uuid())
+  sourceId String        @map("source_id")
+  source   ContentSource @relation("SourceDiscoveryJobs", fields: [sourceId], references: [id])
 
-  type          String   @map("type")              // FULL_SYNC | INCREMENTAL | HEALTH_CHECK | SOURCE_DISCOVERY
-  status        String   @default("PENDING") @map("status")  // PENDING | RUNNING | COMPLETED | FAILED
-  trigger       String   @default("SCHEDULED") @map("trigger") // SCHEDULED | MANUAL | WEBHOOK
+  type    String @map("type") // FULL_SYNC | INCREMENTAL | HEALTH_CHECK | SOURCE_DISCOVERY
+  status  String @default("PENDING") @map("status") // PENDING | RUNNING | COMPLETED | FAILED
+  trigger String @default("SCHEDULED") @map("trigger") // SCHEDULED | MANUAL | WEBHOOK
 
-  itemsFound    Int      @default(0) @map("items_found")
-  itemsNew      Int      @default(0) @map("items_new")
-  itemsErrored  Int      @default(0) @map("items_errored")
-  itemsDuplicates Int    @default(0) @map("items_duplicates")
-  durationMs    Int      @default(0) @map("duration_ms")
+  itemsFound      Int @default(0) @map("items_found")
+  itemsNew        Int @default(0) @map("items_new")
+  itemsErrored    Int @default(0) @map("items_errored")
+  itemsDuplicates Int @default(0) @map("items_duplicates")
+  durationMs      Int @default(0) @map("duration_ms")
 
-  errorLog      String?  @map("error_log")         // JSON array of error messages
-  resultSummary String?  @map("result_summary")    // Human-readable summary
+  errorLog      Json?   @map("error_log") // JSON array of error messages
+  resultSummary String? @map("result_summary") // Human-readable summary
 
-  startedAt     DateTime? @map("started_at")
-  completedAt   DateTime? @map("completed_at")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
+  startedAt   DateTime? @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
   @@index([sourceId])
   @@index([status])
@@ -1091,54 +1460,54 @@ model DiscoveryJob {
 
 /// User preferences for personalized experience
 model UserPreference {
-  id                  String   @id @default(uuid())
-  userId              String   @unique @map("user_id")
-  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(uuid())
+  userId String @unique @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  preferredLanguage   String   @default("mr") @map("preferred_language")
+  preferredLanguage String @default("mr") @map("preferred_language")
   // mr = Marathi, hi = Hindi, en = English
 
-  favoriteSaints      String?  @map("favorite_saints")      // JSON array of saint IDs
-  favoriteDeities     String?  @map("favorite_deities")     // JSON array of deity IDs
-  favoriteCategories  String?  @map("favorite_categories")  // JSON array of category slugs
+  favoriteSaints     Json? @map("favorite_saints") // JSON array of saint IDs
+  favoriteDeities    Json? @map("favorite_deities") // JSON array of deity IDs
+  favoriteCategories Json? @map("favorite_categories") // JSON array of category slugs
 
-  dailyAbhangEnabled  Boolean  @default(false) @map("daily_abhang_enabled")
-  dailyAbhangTime     String?  @map("daily_abhang_time")    // "06:00" for morning prayer
-  dailyAbhangSaintId  String?  @map("daily_abhang_saint_id")
+  dailyAbhangEnabled Boolean @default(false) @map("daily_abhang_enabled")
+  dailyAbhangTime    String? @map("daily_abhang_time") // "06:00" for morning prayer
+  dailyAbhangSaintId String? @map("daily_abhang_saint_id")
 
-  readingGoalPerDay   Int?     @map("reading_goal_per_day") // Target compositions per day
+  readingGoalPerDay Int? @map("reading_goal_per_day") // Target compositions per day
 
-  notificationPush    Boolean  @default(true) @map("notification_push")
-  notificationEmail   Boolean  @default(false) @map("notification_email")
+  notificationPush  Boolean @default(true) @map("notification_push")
+  notificationEmail Boolean @default(false) @map("notification_email")
 
-  createdAt           DateTime @default(now()) @map("created_at")
-  updatedAt           DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("user_preferences")
 }
 
 /// User interaction events for recommendation engine
 model UserInteraction {
-  id              String   @id @default(uuid())
-  userId          String   @map("user_id")
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  compositionId   String   @map("composition_id")
-  composition     Composition @relation(fields: [compositionId], references: [id], onDelete: Cascade)
+  compositionId String      @map("composition_id")
+  composition   Composition @relation(fields: [compositionId], references: [id], onDelete: Cascade)
 
-  interaction     String   @map("interaction")
+  interaction String @map("interaction")
   // view = opened and viewed
   // complete = read to end (scrolled past 80%)
   // bookmark = saved to reading list
   // share = shared with others
   // listen = played audio
 
-  durationSeconds Int?     @map("duration_seconds") // Time spent
-  scrollPercent   Int?     @map("scroll_percent")   // How far scrolled (0-100)
+  durationSeconds Int? @map("duration_seconds") // Time spent
+  scrollPercent   Int? @map("scroll_percent") // How far scrolled (0-100)
 
-  metadata        String?  @map("metadata")          // JSON: device, referrer, etc.
+  metadata Json? @map("metadata") // JSON: device, referrer, etc.
 
-  createdAt       DateTime @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@index([userId, createdAt])
   @@index([compositionId, createdAt])
@@ -1149,20 +1518,20 @@ model UserInteraction {
 
 /// User reading progress for continue reading feature
 model ReadingProgress {
-  id              String   @id @default(uuid())
-  userId          String   @map("user_id")
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  compositionId   String   @map("composition_id")
-  composition     Composition @relation(fields: [compositionId], references: [id], onDelete: Cascade)
+  compositionId String      @map("composition_id")
+  composition   Composition @relation(fields: [compositionId], references: [id], onDelete: Cascade)
 
-  scrollPosition  Int      @default(0) @map("scroll_position") // Pixels from top
-  scrollPercent   Int      @default(0) @map("scroll_percent")  // 0-100
-  completed       Boolean  @default(false) @map("completed")
+  scrollPosition Int     @default(0) @map("scroll_position") // Pixels from top
+  scrollPercent  Int     @default(0) @map("scroll_percent") // 0-100
+  completed      Boolean @default(false) @map("completed")
 
-  lastReadAt      DateTime @default(now()) @map("last_read_at")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  lastReadAt DateTime @default(now()) @map("last_read_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
 
   @@unique([userId, compositionId])
   @@index([userId, lastReadAt])
@@ -1171,22 +1540,22 @@ model ReadingProgress {
 
 /// User text highlights and notes on compositions
 model UserHighlight {
-  id              String   @id @default(uuid())
-  userId          String   @map("user_id")
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  compositionId   String   @map("composition_id")
-  composition     Composition @relation(fields: [compositionId], references: [id], onDelete: Cascade)
+  compositionId String      @map("composition_id")
+  composition   Composition @relation(fields: [compositionId], references: [id], onDelete: Cascade)
 
-  selectedText    String   @map("selected_text")
-  color           String   @default("saffron") @map("color") // saffron, blue, green, yellow
-  note            String?  @map("note")
+  selectedText String  @map("selected_text")
+  color        String  @default("saffron") @map("color") // saffron, blue, green, yellow
+  note         String? @map("note")
 
-  startOffset     Int      @map("start_offset") // Character offset in fullText
-  endOffset       Int      @map("end_offset")
+  startOffset Int @map("start_offset") // Character offset in fullText
+  endOffset   Int @map("end_offset")
 
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([userId, compositionId])
   @@index([userId, createdAt])
@@ -1195,19 +1564,19 @@ model UserHighlight {
 
 /// Daily reading statistics for streaks and goals
 model DailyReadingStats {
-  id              String   @id @default(uuid())
-  userId          String   @map("user_id")
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(uuid())
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  date            DateTime @map("date") // Date only (no time)
+  date DateTime @map("date") // Date only (no time)
 
-  compositionsRead   Int   @default(0) @map("compositions_read")
-  compositionsCompleted Int @default(0) @map("compositions_completed")
-  totalMinutesRead   Int   @default(0) @map("total_minutes_read")
-  goalMet            Boolean @default(false) @map("goal_met")
+  compositionsRead      Int     @default(0) @map("compositions_read")
+  compositionsCompleted Int     @default(0) @map("compositions_completed")
+  totalMinutesRead      Int     @default(0) @map("total_minutes_read")
+  goalMet               Boolean @default(false) @map("goal_met")
 
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@unique([userId, date])
   @@index([userId, date])
@@ -1216,21 +1585,33 @@ model DailyReadingStats {
 
 /// Backup audit trail — tracks every backup, verification, and restore event
 model BackupRecord {
-  id              String   @id @default(uuid())
-  type            String   @map("type") // "database", "uploads", "full"
-  status          String   @map("status") // "success", "failed", "verified", "restored"
-  filename        String   @map("filename")
-  checksumSha256  String?  @map("checksum_sha256")
-  checksumValid   Boolean? @map("checksum_valid")
-  fileSizeBytes   Int?     @map("file_size_bytes")
-  durationMs      Int?     @map("duration_ms")
-  errorMessage    String?  @map("error_message")
-  metadata        String?  @map("metadata") // JSON string for extra details
+  id             String   @id @default(uuid())
+  type           String   @map("type") // "database", "uploads", "full"
+  status         String   @map("status") // "success", "failed", "verified", "restored"
+  filename       String   @map("filename")
+  checksumSha256 String?  @map("checksum_sha256")
+  checksumValid  Boolean? @map("checksum_valid")
+  fileSizeBytes  Int?     @map("file_size_bytes")
+  durationMs     Int?     @map("duration_ms")
+  errorMessage   String?  @map("error_message")
+  metadata       Json?    @map("metadata") // JSON string for extra details
 
-  createdAt       DateTime @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@index([type])
   @@index([status])
   @@index([createdAt])
   @@map("backup_records")
+}
+
+enum CompositionType {
+  ABHANG
+  BHAJAN
+  AARTI
+  STOTRA
+  HARIPATH
+  OVI
+  POWADA
+  GAULAN
+  OTHER
 }

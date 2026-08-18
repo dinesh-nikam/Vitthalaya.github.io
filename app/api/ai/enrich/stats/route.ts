@@ -56,10 +56,10 @@ export async function GET(_request: NextRequest) {
       _count: { id: true },
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     return NextResponse.json({
       stats,
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
       recentActivity: recentActivity.map((j: any) => ({
         id: j.id,
         compositionId: j.compositionId,
@@ -71,13 +71,13 @@ export async function GET(_request: NextRequest) {
         reviewApproved: j.result?.reviewApproved ?? null,
         updatedAt: j.updatedAt,
       })),
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
       modelUsage: modelUsage.map((m: any) => ({
         provider: m.modelProvider,
         model: m.modelName,
         count: m._count.id,
       })),
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
       dailyStats: dailyStats.map((d: any) => ({
         status: d.status,
         count: d._count.id,

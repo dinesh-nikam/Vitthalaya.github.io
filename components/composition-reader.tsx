@@ -1,26 +1,11 @@
 'use client';
 
 import * as React from 'react';
-import { 
-  Share2, 
-  Copy, 
-  Printer, 
-  Moon, 
-  Sun, 
-  Type, 
-  Music, 
-  ChevronUp, 
-  ChevronDown, 
-  Download, 
-  Check, 
-  Maximize2, 
-  Minimize2, 
-  X,
-  ListPlus
-} from 'lucide-react';
+import { Share2, Copy, Printer, Moon, Sun, Type, Music, ChevronUp, ChevronDown, Download, Check, X, ListPlus, ListMusic } from 'lucide-react';
 import { BookmarkButton } from './bookmark-button';
 import { BellLikeButton } from './bell-like-button';
 import { FlowerPetals } from './flower-petals';
+import { useTheme } from '@/src/lib/theme';
 
 interface Saint {
   nameMarathi: string;
@@ -40,6 +25,12 @@ interface CompositionReaderProps {
   saint: Saint | null;
   deity: Deity | null;
   embedUrl: string | null;
+  compositionId?: string | null;
+}
+
+interface PlaylistOption {
+  id: string;
+  name: string;
 }
 
 export function CompositionReader({
@@ -48,15 +39,16 @@ export function CompositionReader({
   titleTranslit,
   slug,
   saint,
-  deity,
+  deity: _deity,
   embedUrl,
+  compositionId,
 }: CompositionReaderProps) {
   const [petalsActive, setPetalsActive] = React.useState(false);
   // Reading preferences state
   const [fontFamily, setFontFamily] = React.useState('font-marathi');
   const [fontSize, setFontSize] = React.useState(20); // in pixels
   const [lineHeight, setLineHeight] = React.useState(1.8);
-  const [isDark, setIsDark] = React.useState(false);
+  const { isDark, setTheme } = useTheme();
   const [showPrefPanel, setShowPrefPanel] = React.useState(false);
 
   // Status indicators
@@ -72,22 +64,12 @@ export function CompositionReader({
   const [selectedLines, setSelectedLines] = React.useState<string[]>([]);
   const canvasRef = React.useRef<HTMLCanvasElement | null>(null);
 
-  // Initialize theme from HTML class list
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setIsDark(document.documentElement.classList.contains('dark'));
-    }
-  }, []);
+  // Save-to-playlist state
+  const [showPlaylists, setShowPlaylists] = React.useState(false);
+  const [playlists, setPlaylists] = React.useState<PlaylistOption[]>([]);
+  const [playlistMsg, setPlaylistMsg] = React.useState<string | null>(null);
 
-  // Sync theme changes
-  const toggleTheme = (dark: boolean) => {
-    setIsDark(dark);
-    if (dark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  };
+  // Theme synchronizes automatically via useTheme hook
 
   // Copy to clipboard
   const handleCopy = async () => {
@@ -142,6 +124,47 @@ export function CompositionReader({
         },
       },
     }));
+  };
+
+  // Save this composition to one of the user's playlists.
+  const handleSaveToPlaylist = async () => {
+    if (!compositionId) return;
+    setShowPlaylists((prev) => !prev);
+    setPlaylistMsg(null);
+    try {
+      const res = await fetch('/api/playlists');
+      if (res.status === 401) {
+        setPlaylistMsg('लॉगिन आवश्यक आहे.');
+        setShowPlaylists(true);
+        return;
+      }
+      if (res.ok) {
+        const data = (await res.json()) as { playlists: PlaylistOption[] };
+        setPlaylists(data.playlists);
+      }
+    } catch {
+      // non-fatal
+    }
+  };
+
+  const addToPlaylist = async (playlistId: string) => {
+    if (!compositionId) return;
+    try {
+      const res = await fetch(`/api/playlists/${playlistId}/items`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ compositionId }),
+      });
+      if (res.ok) {
+        setPlaylistMsg('प्लेलिस्टमध्ये जोडले!');
+        setShowPlaylists(false);
+        setTimeout(() => setPlaylistMsg(null), 3000);
+      } else {
+        setPlaylistMsg('जोडता आले नाही.');
+      }
+    } catch {
+      setPlaylistMsg('जोडता आले नाही.');
+    }
   };
 
   // Handle line selection for quote card
@@ -299,11 +322,49 @@ export function CompositionReader({
             <button
               onClick={handleAddToQueue}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-saffron/20 text-sm hover:bg-saffron/10 text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-saffron"
-              title="प्लेलिस्टमध्ये जोडा"
+              title="ऑडिओ रांगेत जोडा (Queue)"
             >
               <ListPlus className="w-4 h-4 text-saffron" />
-              <span>प्लेलिस्टमध्ये जोडा</span>
+              <span>रांगेत जोडा</span>
             </button>
+          )}
+
+          {/* Save to Playlist Button */}
+          {compositionId && (
+            <div className="relative">
+              <button
+                onClick={handleSaveToPlaylist}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-saffron/20 text-sm hover:bg-saffron/10 text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-saffron"
+                title="प्लेलिस्टमध्ये जतन करा"
+              >
+                <ListMusic className="w-4 h-4 text-saffron" />
+                <span>प्लेलिस्टमध्ये जतन करा</span>
+              </button>
+              {showPlaylists && (
+                <div className="absolute right-0 mt-2 w-64 max-h-72 overflow-y-auto rounded-xl border border-saffron/20 bg-card shadow-xl z-30 p-2 space-y-1">
+                  {playlistMsg && (
+                    <p className="px-2 py-1 text-xs font-bold text-saffron">{playlistMsg}</p>
+                  )}
+                  {playlists.length === 0 && !playlistMsg && (
+                    <p className="px-2 py-1 text-xs text-muted-foreground">
+                      अजून प्लेलिस्ट नाहीत.{' '}
+                      <a href="/playlists" className="text-saffron font-bold underline">
+                        तयार करा
+                      </a>
+                    </p>
+                  )}
+                  {playlists.map((pl) => (
+                    <button
+                      key={pl.id}
+                      onClick={() => addToPlaylist(pl.id)}
+                      className="w-full text-left px-3 py-2 rounded-lg hover:bg-saffron/10 text-sm font-marathi transition-colors"
+                    >
+                      {pl.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </div>
 
@@ -323,7 +384,7 @@ export function CompositionReader({
           {/* Theme Toggles */}
           {isDark ? (
             <button
-              onClick={() => toggleTheme(false)}
+              onClick={() => setTheme('light')}
               className="p-2 rounded-lg border border-saffron/20 hover:bg-saffron/10 text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-saffron"
               title="लाइट मोड"
             >
@@ -331,7 +392,7 @@ export function CompositionReader({
             </button>
           ) : (
             <button
-              onClick={() => toggleTheme(true)}
+              onClick={() => setTheme('dark')}
               className="p-2 rounded-lg border border-saffron/20 hover:bg-saffron/10 text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-saffron"
               title="डार्क मोड"
             >

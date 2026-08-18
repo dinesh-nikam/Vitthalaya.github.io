@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { db } from '@/src/db/client';
-import { getCurrentFestival, getFestivalsForYear } from '@/src/lib/festival-calculator';
+import { getFestivalsForYear } from '@/src/lib/festival-calculator';
 import { canonicalMetadata, festivalSchema } from '@/src/lib/seo';
 
 export const dynamic = 'force-dynamic';

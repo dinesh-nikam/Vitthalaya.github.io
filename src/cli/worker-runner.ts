@@ -4,7 +4,7 @@
  *   bun run src/cli/worker-runner.ts [--run-once] [--interval 5000]
  */
 
-import { processSearchSyncJobs, processAiEnrichmentJobs } from '../lib/workers';
+import { processSearchSyncJobs, processAiEnrichmentJobs, processAudioProcessingJobs } from '../lib/workers';
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -47,6 +47,11 @@ async function main() {
       const aiEnrichProcessed = await processAiEnrichmentJobs();
       if (aiEnrichProcessed > 0) {
         console.log(`[WorkerRunner] Processed ${aiEnrichProcessed} AI enrichment jobs.`);
+      }
+
+      const audioProcessed = await processAudioProcessingJobs();
+      if (audioProcessed > 0) {
+        console.log(`[WorkerRunner] Processed ${audioProcessed} YouTube audio processing jobs.`);
       }
 
       if (runOnce) {

@@ -12,22 +12,11 @@
  * to the canonical DB access layer.
  */
 
-import type {
-  MatchResult,
-  MatchCandidate,
-  MergePayload,
-  SplitPayload,
-  MergeAction,
-  MappingType,
-  BatchConfig,
-  BatchStats,
-  CandidateGroup,
-  AlgorithmScore,
-} from './types';
+import type { MatchResult, MatchCandidate, MergeAction, MappingType, BatchConfig, CandidateGroup } from './types';
 import { CONFIDENCE_THRESHOLDS } from './types';
 import { computeAllScores, computeTitleScore } from './fuzzy-matcher';
-import { computeConfidence, buildMatchResult } from './confidence-score';
-import { contentHash, normalizeForComparison } from './normalization';
+import { buildMatchResult } from './confidence-score';
+import './normalization';
 import type {
   CanonicalRecordData,
   SourceMappingData,

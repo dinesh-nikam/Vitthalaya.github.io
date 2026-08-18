@@ -2,7 +2,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/src/lib/auth';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { User, MapPin, Award, LogOut, Shield } from 'lucide-react';
+import { User, MapPin, Award, Shield } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 

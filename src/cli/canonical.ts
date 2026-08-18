@@ -17,7 +17,7 @@
  *   --force            Actually write to DB (override dry-run)
  */
 
-import { parseArgs } from 'util';
+import 'util';
 import { canonicalEngine } from '../canonical/canonical-engine';
 import {
   getCompositionSummaries,
@@ -27,7 +27,7 @@ import {
   mergeIntoCanonical,
 } from '../db/canonical';
 import { CONFIDENCE_THRESHOLDS } from '../canonical/types';
-import type { BatchConfig, BatchStats, CandidateGroup } from '../canonical/types';
+
 
 // ─── CLI Parser ─────────────────────────────────────────────────────────────
 
@@ -147,15 +147,6 @@ async function actionDedup(options: CLIOptions): Promise<void> {
     return;
   }
 
-  const config: BatchConfig = {
-    types: options.type ? [options.type] : undefined,
-    minConfidence: options.minConfidence,
-    limit: options.limit,
-    skipCanonicalized: true,
-    dryRun: options.dryRun,
-    verbose: options.verbose,
-  };
-
   const startTime = Date.now();
   let autoMerged = 0;
   let suggested = 0;
@@ -263,15 +254,6 @@ async function actionReconcile(options: CLIOptions): Promise<void> {
     // We check by composing temporarily
     // Actually we need to compare canonical vs canonical — reuse the matching
     for (const other of others) {
-      const otherComp = {
-        id: other.id,
-        title: other.title,
-        fullText: other.canonicalText,
-        type: other.type,
-        saintId: other.saintId,
-        source: undefined,
-      };
-
       const matches = canonicalEngine.findMatches(comp, [other]);
       if (matches.length > 0 && matches[0].autoMerge) {
         merged++;

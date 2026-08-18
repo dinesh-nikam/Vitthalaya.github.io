@@ -2,10 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import {
-  User, Trophy, GitPullRequest, BookOpen,
-  Clock, CheckCircle, XCircle, Loader2, ArrowLeft,
-} from 'lucide-react';
+import { User, Trophy, GitPullRequest, BookOpen, Clock, CheckCircle, Loader2, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface ProfileData {
@@ -106,7 +103,6 @@ export default function ProfileClient({ userId }: { userId: string }) {
 
   const { user, corrections, versions } = data;
   const approvedCount = user.correctionStats?.approved || 0;
-  const submittedCount = user.correctionStats?.submitted || 0;
 
   return (
     <div>

@@ -37,9 +37,6 @@ const SAINT_MATCH_BONUS = 0.08;
 /** Penalty when composition types differ */
 const TYPE_MISMATCH_PENALTY = -0.15;
 
-/** Bonus when two different source sites agree on the same content */
-const SOURCE_DIVERSITY_BONUS = 0.05;
-
 // ─── Scoring ────────────────────────────────────────────────────────────────
 
 /**

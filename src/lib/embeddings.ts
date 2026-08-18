@@ -54,6 +54,54 @@ export async function getEmbedding(text: string): Promise<number[]> {
 }
 
 /**
+ * Batch generate embeddings for multiple texts, minimizing network overhead.
+ * Handles up to 100 texts per request as per standard LLM limits.
+ */
+export async function getEmbeddingsBatch(texts: string[]): Promise<number[][]> {
+  const apiKey = process.env.GEMINI_API_KEY || process.env.LLM_API_KEY;
+
+  if (!apiKey || texts.length === 0) {
+    return texts.map(t => generateFallbackEmbedding(t));
+  }
+
+  try {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:batchEmbedContents?key=${apiKey}`;
+    
+    // Construct the batch request body
+    const requests = texts.map(text => ({
+      model: 'models/text-embedding-004',
+      content: { parts: [{ text }] }
+    }));
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ requests }),
+      signal: AbortSignal.timeout(30000), // 30s timeout for batch
+    });
+
+    if (!response.ok) {
+      console.warn(`Gemini Batch Embeddings API returned status ${response.status}. Falling back.`);
+      return texts.map(t => generateFallbackEmbedding(t));
+    }
+
+    const data = (await response.json()) as any;
+    
+    if (data.embeddings && Array.isArray(data.embeddings) && data.embeddings.length === texts.length) {
+      return data.embeddings.map((emb: any) => emb.values);
+    }
+
+    console.warn(`Gemini Batch Embeddings response mismatch. Expected ${texts.length}, got ${data.embeddings?.length}. Falling back.`);
+    return texts.map(t => generateFallbackEmbedding(t));
+  } catch (err) {
+    console.warn('Error fetching batch embeddings from Gemini API. Falling back:', err);
+    return texts.map(t => generateFallbackEmbedding(t));
+  }
+}
+
+/**
  * Generates a deterministic unit-vector embedding based on the string hash.
  * This guarantees consistent cosine similarity for local testing and offline execution.
  */

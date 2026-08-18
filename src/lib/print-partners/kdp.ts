@@ -10,7 +10,7 @@
  *   KDP_API_SECRET       (optional)
  */
 
-import AdmZip from 'adm-zip';
+import 'adm-zip';
 import type { BookType } from '../../book-generation/types';
 
 // ── KDP Format Specs ──────────────────────────────────────────────────────────

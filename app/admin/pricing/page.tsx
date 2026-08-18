@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import 'next/link';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/src/lib/auth';
 import { redirect } from 'next/navigation';

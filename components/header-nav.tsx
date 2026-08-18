@@ -14,10 +14,13 @@ import { usePathname } from 'next/navigation';
 import { Search, User, BookOpen, BarChart3, Settings, LogOut, ShoppingBag } from 'lucide-react';
 import { CartIcon } from './cart-icon';
 import { ThemeToggle } from './theme-toggle';
+import { LanguageSwitcher } from './language-switcher';
 
 const PILLAR_LINKS = [
+  { href: '/daily', label: 'आजचे भक्ती' },
   { href: '/explore', label: 'एक्सप्लोर' },
   { href: '/library', label: 'लायब्ररी' },
+  { href: '/record', label: 'रेकॉर्ड' },
   { href: '/saints', label: 'संत' },
   { href: '/wari', label: 'वारी' },
   { href: '/learn', label: 'शिका' },
@@ -104,6 +107,9 @@ export function HeaderNav() {
 
         {/* Cart */}
         <CartIcon />
+
+        {/* Language Switcher */}
+        <LanguageSwitcher />
 
         {/* Theme Toggle */}
         <ThemeToggle />

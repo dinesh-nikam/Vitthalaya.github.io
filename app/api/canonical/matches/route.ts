@@ -32,7 +32,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Fetch the composition to match
-    const [compositions] = await Promise.all([
+    const [_compositions] = await Promise.all([
       getCompositionSummaries({ limit: 1 }),
     ]);
 

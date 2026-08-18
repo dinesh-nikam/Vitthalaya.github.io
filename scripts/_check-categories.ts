@@ -37,7 +37,7 @@ for (const cat of categories) {
   try {
     const pages = await getCategoryPages(cat);
     console.log(`${cat}: ${pages.length} pages`);
-  } catch(e) {
+  } catch {
     console.log(`${cat}: ERROR`);
   }
   await new Promise(r => setTimeout(r, 500));

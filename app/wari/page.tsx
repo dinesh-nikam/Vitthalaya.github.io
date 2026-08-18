@@ -1,25 +1,25 @@
-'use client';
-
-import * as React from 'react';
 import Link from 'next/link';
-import { MapPin, Footprints, Info, BookOpen, ExternalLink } from 'lucide-react';
+import { Footprints, Info, BookOpen, ExternalLink } from 'lucide-react';
 import Image from 'next/image';
+import { db } from '@/src/db/client';
 
-const JOURNEY_STOPS = [
-  { name: 'देहू', dist: 250, desc: 'संत तुकाराम महाराजांच्या पालखीचे प्रस्थान', icon: '🚩' },
-  { name: 'आळंदी', dist: 238, desc: 'संत ज्ञानेश्वर माऊलींच्या पालखीचे प्रस्थान', icon: '🚩' },
-  { name: 'पुणे', dist: 215, desc: 'दोन्ही पालख्यांचा संगम आणि भव्य स्वागत सोहळा', icon: '🏛️' },
-  { name: 'जेजुरी', dist: 165, desc: 'खंडोबा चरणी भंडारा उधळण', icon: '⛰️' },
-  { name: 'वाखरी', dist: 15, desc: 'वारीतील शेवटचे भव्य गोलाकार रिंगण', icon: '🌀' },
-  { name: 'पंढरपूर', dist: 0, desc: 'चंद्रभागेचे स्नान आणि विठू माऊलींचे दर्शन', icon: '🛕' },
-];
+export const metadata = {
+  title: 'वारी — पवित्र प्रवास | डिजिटल पंढरपूर',
+  description: 'आषाढी वारीतील मार्ग, पालख्या, मुख्य थांबे आणि पंढरपूरचे दर्शन — डिजिटल पंढरपूरवर.',
+};
 
-export default function WariPage() {
+export default async function WariPage() {
+  // Real documented route stops from the database — no hardcoded arrays.
+  const stops = await db.wariStop.findMany({
+    orderBy: { sortOrder: 'asc' },
+  });
+
+  const totalKm = stops.length > 0 ? Math.max(...stops.map((s) => s.distanceKm)) : 0;
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-cream to-background">
       {/* Hero */}
       <section className="relative py-24 text-center overflow-hidden bg-black">
-        {/* Background Procession Image with Saffron/Dark gradient overlay */}
         <div className="absolute inset-0 z-0">
           <Image
             src="/images/realistic/wari-procession.jpg"
@@ -52,70 +52,78 @@ export default function WariPage() {
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
-          {/* Timeline Route Stops */}
-          <div className="md:col-span-7 space-y-6">
-            <div className="relative">
-              {/* Vertical connecting line */}
-              <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-saffron/20" />
-
-              <div className="space-y-8 text-left">
-                {JOURNEY_STOPS.map((stop, idx) => (
-                  <div key={stop.name} className="relative flex items-start gap-6 pl-0">
-                    {/* Dot */}
-                    <div className={`relative z-10 w-12 h-12 rounded-full flex items-center justify-center text-lg shrink-0 border-2 ${
-                      idx === 0 ? 'bg-saffron border-saffron text-white' :
-                      idx === JOURNEY_STOPS.length - 1 ? 'bg-gold border-gold text-white' :
-                      'bg-card border-saffron/30'
-                    }`}>
-                      {idx === 0 ? '🏠' : idx === JOURNEY_STOPS.length - 1 ? '🛕' : stop.icon}
-                    </div>
-
-                    <div className="flex-1 pt-2">
-                      <div className="flex items-center gap-3 mb-1">
-                        <h3 className="text-lg font-marathiHeading font-bold text-maroon dark:text-saffron">
-                          {stop.name}
-                        </h3>
-                        <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                          {stop.dist} किमी
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground font-marathi">{stop.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Distance indicator */}
-            <div className="p-6 bg-card rounded-2xl border border-saffron/10 text-center">
-              <p className="text-sm font-marathi text-foreground/80">
-                एकूण अंतर: <span className="font-bold text-saffron">२५० किलोमीटर</span> — देहू/आळंदी ते पंढरपूर
-              </p>
-            </div>
+        {stops.length === 0 ? (
+          <div className="p-10 text-center bg-card rounded-2xl border border-saffron/10">
+            <p className="text-sm font-marathi text-muted-foreground">
+              वारी मार्गाचे थांबे अद्याप उपलब्ध नाहीत — संग्रहालय तयार होत आहे.
+            </p>
           </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+            {/* Timeline Route Stops */}
+            <div className="md:col-span-7 space-y-6">
+              <div className="relative">
+                {/* Vertical connecting line */}
+                <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-saffron/20" />
 
-          {/* Right Column: Destination View (River) */}
-          <div className="md:col-span-5 md:sticky md:top-24 space-y-6">
-            <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-saffron/20 shadow-2xl">
-              <Image
-                src="/images/realistic/chandrabhaga-river.jpg"
-                alt="Holy Chandrabhaga River"
-                fill
-                sizes="(max-width: 768px) 100vw, 33vw"
-                className="object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 p-5 text-left text-white">
-                <span className="text-saffron text-[10px] font-bold uppercase tracking-wider">अंतिम ध्येय | The Destination</span>
-                <h4 className="text-xl font-bold font-marathi mt-1">चंद्रभागा नदी</h4>
-                <p className="text-xs text-white/80 leading-relaxed font-marathi mt-2">
-                  "चंद्रभागेच्या वाळवंटी, विठू नामाची गर्जना..." प्रवासाचा शेवट पवित्र चंद्रभागेच्या स्नानाने आणि विठ्ठलाच्या दर्शनाने होतो.
+                <div className="space-y-8 text-left">
+                  {stops.map((stop, idx) => (
+                    <div key={stop.id} className="relative flex items-start gap-6 pl-0">
+                      {/* Dot */}
+                      <div className={`relative z-10 w-12 h-12 rounded-full flex items-center justify-center text-lg shrink-0 border-2 ${
+                        idx === 0 ? 'bg-saffron border-saffron text-white' :
+                        idx === stops.length - 1 ? 'bg-gold border-gold text-white' :
+                        'bg-card border-saffron/30'
+                      }`}>
+                        {idx === 0 ? '🏠' : idx === stops.length - 1 ? '🛕' : stop.icon || '📍'}
+                      </div>
+
+                      <div className="flex-1 pt-2">
+                        <div className="flex items-center gap-3 mb-1">
+                          <h3 className="text-lg font-marathiHeading font-bold text-maroon dark:text-saffron">
+                            {stop.nameMarathi}
+                          </h3>
+                          <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                            {stop.distanceKm} किमी
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground font-marathi">{stop.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Distance indicator */}
+              <div className="p-6 bg-card rounded-2xl border border-saffron/10 text-center">
+                <p className="text-sm font-marathi text-foreground/80">
+                  एकूण अंतर: <span className="font-bold text-saffron">{totalKm} किलोमीटर</span> — देहू/आळंदी ते पंढरपूर
                 </p>
               </div>
             </div>
+
+            {/* Right Column: Destination View (River) */}
+            <div className="md:col-span-5 md:sticky md:top-24 space-y-6">
+              <div className="relative aspect-[3/4] rounded-2xl overflow-hidden border border-saffron/20 shadow-2xl">
+                <Image
+                  src="/images/realistic/chandrabhaga-river.jpg"
+                  alt="Holy Chandrabhaga River"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 33vw"
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-5 text-left text-white">
+                  <span className="text-saffron text-[10px] font-bold uppercase tracking-wider">अंतिम ध्येय | The Destination</span>
+                  <h4 className="text-xl font-bold font-marathi mt-1">चंद्रभागा नदी</h4>
+                  <p className="text-xs text-white/80 leading-relaxed font-marathi mt-2">
+                    &quot;चंद्रभागेच्या वाळवंटी, विठू नामाची गर्जना...&quot; प्रवासाचा शेवट पवित्र चंद्रभागेच्या स्नानाने आणि विठ्ठलाच्या दर्शनाने होतो.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
       </section>
 
       {/* Explore Further */}
@@ -133,7 +141,7 @@ export default function WariPage() {
               <span className="text-sm font-marathi group-hover:text-saffron transition-colors">वारीवरील साहित्य</span>
             </Link>
             <Link
-              href="/learn/timeline"
+              href="/learn"
               className="flex items-center gap-3 p-4 rounded-xl border border-saffron/10 hover:border-saffron/30 transition-all group"
             >
               <Info className="w-5 h-5 text-saffron shrink-0" />

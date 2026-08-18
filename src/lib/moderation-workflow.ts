@@ -2,12 +2,23 @@ import { db } from '../db/client';
 import { resolveFreeConfig } from '../ai-enrichment/free-provider';
 import { v4 as uuidv4 } from 'uuid';
 import { buildEdgesForComposition } from '../knowledge-graph';
+import { recordAuditLog } from './audit';
 
 /**
- * Submits a new text composition (from OCR or volunteer edit) into the moderation queue
+ * Source types that create a brand-new draft Composition once approved.
+ * ('suggestion' is handled separately — it edits an existing composition.)
+ */
+export type NewDraftSourceType = 'ocr' | 'youtube' | 'recording';
+
+/**
+ * Submits a new text composition (from OCR, YouTube transcription, a user's
+ * own voice recording, or a volunteer edit) into the moderation queue.
+ * The item is stored purely as a draft (`draftTitle`/`draftText` on
+ * `ModerationQueue`) until an admin/moderator approves it — only approval
+ * creates and publishes the real `Composition` row (see `promoteAndPublish`).
  */
 export async function submitToModeration(
-  sourceType: 'ocr' | 'suggestion',
+  sourceType: NewDraftSourceType | 'suggestion',
   sourceId: string,
   title: string,
   text: string,
@@ -187,7 +198,7 @@ export async function submitPeerVote(
   const isModeratorOrAdmin = ['MODERATOR', 'ADMIN'].includes(reviewer.role);
 
   if (isModeratorOrAdmin && vote === 'approve') {
-    await promoteAndPublish(item);
+    await promoteAndPublish(item, reviewerId);
     return;
   }
 
@@ -203,7 +214,7 @@ export async function submitPeerVote(
 
   // Check consensus threshold (e.g., +3 approvals needed for peer promotion)
   if (newScore >= 3) {
-    await promoteAndPublish({ ...item, consensusScore: newScore });
+    await promoteAndPublish({ ...item, consensusScore: newScore }, reviewerId);
   } else if (newScore <= -3) {
     await db.moderationQueue.update({
       where: { id: queueId },
@@ -223,24 +234,37 @@ export async function submitPeerVote(
 }
 
 /**
- * Promotes approved moderation items to active production tables
+ * Promotes approved moderation items to active production tables.
+ *
+ * `approvedById` is the moderator/admin (or auto-approving user) whose
+ * decision triggered this promotion — recorded on the audit log entry.
+ * The original submitter (volunteer/uploader/suggester) is resolved from
+ * the source record and recorded as the composition's `createdById` /
+ * `lastEditedById`, so every composition and edit that enters the system
+ * through this pipeline carries real creator attribution.
  */
-async function promoteAndPublish(item: any): Promise<void> {
+async function promoteAndPublish(item: any, approvedById?: string | null): Promise<void> {
   await db.$transaction(async (tx) => {
     let compositionId: string | null = null;
+    let isNewComposition = false;
+    let submitterId: string | null = null;
 
-    if (item.sourceType === 'ocr') {
+    const NEW_DRAFT_SOURCE_TYPES = ['ocr', 'youtube', 'recording'];
+
+    if (NEW_DRAFT_SOURCE_TYPES.includes(item.sourceType)) {
       // Generate unique slug
       const cleanTitle = item.draftTitle
         .toLowerCase()
         .replace(/[^a-z0-9\s]/g, '')
         .replace(/\s+/g, '-');
-      const slug = `${cleanTitle || 'abhang'}-${uuidv4().substring(0, 8)}`;
+      const slugPrefix = cleanTitle || (item.sourceType === 'youtube' ? 'youtube-import' : item.sourceType === 'recording' ? 'recording' : 'abhang');
+      const slug = `${slugPrefix}-${uuidv4().substring(0, 8)}`;
 
-      // Try to read pre-classification data from UploadedFile
+      // Try to read pre-classification data + audio URL from UploadedFile
       let detectedType: string | null = null;
       let saintName: string | null = null;
       let deityName: string | null = null;
+      let audioUrl: string | null = null;
 
       if (item.uploadedFileId) {
         try {
@@ -255,9 +279,37 @@ async function promoteAndPublish(item: any): Promise<void> {
               deityName = parsed.deityName ?? null;
             }
           }
+          if (uploadedFile?.extractedMetadata) {
+            try {
+              const extractedMeta = JSON.parse(uploadedFile.extractedMetadata);
+              audioUrl = extractedMeta?.audioUrl ?? null;
+            } catch {
+              // Non-critical
+            }
+          }
+          // Direct audio/recording uploads: the file itself is the audio
+          if (!audioUrl && uploadedFile?.storagePath && (item.sourceType === 'recording' || uploadedFile.format === 'audio')) {
+            try {
+              const { storage } = await import('./storage');
+              audioUrl = storage.getUrl(uploadedFile.storagePath);
+            } catch {
+              // Non-critical — composition still gets published with text only
+            }
+          }
+          // The uploader is the original creator of this content
+          submitterId = uploadedFile?.userId ?? null;
         } catch {
           // Non-critical — classification data is optional
         }
+      }
+
+      if (!submitterId) {
+        // Fall back to the legacy ManuscriptUpload volunteer for older uploads
+        const manuscript = await tx.manuscriptUpload.findUnique({
+          where: { id: item.sourceId },
+          select: { volunteerId: true },
+        }).catch(() => null);
+        submitterId = manuscript?.volunteerId ?? null;
       }
 
       // Map English type to Marathi if we have a classification
@@ -288,6 +340,12 @@ async function promoteAndPublish(item: any): Promise<void> {
         fullText: item.draftText,
         meaning: item.draftMeaning,
         reviewed: true,
+        source: item.sourceType === 'youtube' ? 'YouTube (user-submitted, transcribed)'
+          : item.sourceType === 'recording' ? 'User voice recording (transcribed)'
+          : undefined,
+        // Store as a JSON array string, matching how the rest of the app
+        // reads/writes this field (see Composition.audioLinks in schema).
+        audioLinks: audioUrl ? JSON.stringify([audioUrl]) : undefined,
       };
 
       // Try to resolve saint and deity from classification
@@ -317,9 +375,12 @@ async function promoteAndPublish(item: any): Promise<void> {
         if (deity) compData.deityId = deity.id;
       }
 
-      // Create composition
-      const comp = await tx.composition.create({ data: compData as any });
+      // Create composition — attribute creation to the original submitter
+      const comp = await tx.composition.create({
+        data: { ...compData, createdById: submitterId, lastEditedById: submitterId } as any,
+      });
       compositionId = comp.id;
+      isNewComposition = true;
 
       // Update upload status (try UploadedFile first, fallback to ManuscriptUpload)
       if (item.uploadedFileId) {
@@ -340,10 +401,12 @@ async function promoteAndPublish(item: any): Promise<void> {
 
       if (suggestion) {
         compositionId = suggestion.compositionId;
+        submitterId = suggestion.userId;
         await tx.composition.update({
           where: { id: suggestion.compositionId },
           data: {
             reviewed: true,
+            lastEditedById: suggestion.userId,
             [suggestion.fieldPath]: suggestion.newValue,
           },
         });
@@ -396,5 +459,33 @@ async function promoteAndPublish(item: any): Promise<void> {
         tier: 3, // Scholar lock tier reached
       },
     });
+
+    // Audit trail: who created/edited the composition, and who approved it
+    if (compositionId) {
+      await recordAuditLog(
+        {
+          actorId: approvedById ?? null,
+          action: isNewComposition ? 'CREATE' : 'UPDATE',
+          entityType: 'Composition',
+          entityId: compositionId,
+          metadata: {
+            source: item.sourceType,
+            moderationQueueId: item.id,
+            createdById: submitterId,
+          },
+        },
+        tx as any
+      );
+      await recordAuditLog(
+        {
+          actorId: approvedById ?? null,
+          action: 'APPROVE',
+          entityType: 'ModerationQueue',
+          entityId: item.id,
+          metadata: { compositionId, submitterId },
+        },
+        tx as any
+      );
+    }
   });
 }

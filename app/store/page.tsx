@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { canonicalMetadata } from '@/src/lib/seo';
-import { BookOpen, ShoppingCart, Gift, ArrowRight } from 'lucide-react';
+import { BookOpen, ShoppingCart, Gift } from 'lucide-react';
 
 export const metadata = {
   title: 'भंडार — पुस्तके आणि अधिक | डिजिटल पंढरपूर',

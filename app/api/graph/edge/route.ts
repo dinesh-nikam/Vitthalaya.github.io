@@ -12,8 +12,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createEdge, createBidirectionalEdge, deleteEdge, deleteEdgesForEntity } from '@/src/knowledge-graph/relationship-engine';
-import type { EntityType, RelationshipType } from '@/src/knowledge-graph/graph-ontology';
-import { ENTITY_TYPES, RELATIONSHIP_TYPES } from '@/src/knowledge-graph/graph-ontology';
+import type { RelationshipType } from '@/src/knowledge-graph/graph-ontology';
+import { ENTITY_TYPES } from '@/src/knowledge-graph/graph-ontology';
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {

@@ -23,7 +23,7 @@ function renderBookHtml(
   const lineHeight = layout.lineHeight;
 
   const sectionsHtml = structure.sections
-    .map((section, si) => {
+    .map((section, _si) => {
       const compsHtml = section.compositionIndices
         .map((ci) => {
           const comp = selection.compositions[ci];

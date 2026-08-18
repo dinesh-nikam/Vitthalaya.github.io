@@ -4,7 +4,7 @@
  */
 
 import { describe, test, expect } from 'bun:test';
-import { normalizeForComparison, extractDevanagari, isMarathiText, contentHash } from '../../src/canonical/normalization';
+import { normalizeForComparison, extractDevanagari, contentHash } from '../../src/canonical/normalization';
 
 describe('Scraper - Text Extraction', () => {
   test('TC-SCRAPER-001: Marathi text preserved', () => {

@@ -12,15 +12,7 @@
  * when source layouts change.
  */
 
-import type {
-  CrawlResult,
-  ExtractedComposition,
-  ExtractionStrategy,
-  SelfHealReport,
-  SelfHealAttempt,
-  CrawlError,
-  CrawlerEngine,
-} from './types';
+import type { CrawlResult, ExtractionStrategy, SelfHealReport, SelfHealAttempt, CrawlerEngine } from './types';
 
 export class SelfHealingCrawler {
   private engine: CrawlerEngine;
@@ -37,7 +29,7 @@ export class SelfHealingCrawler {
   async crawlWithHealing(
     url: string,
     primaryStrategy?: ExtractionStrategy,
-    overrides?: Record<string, unknown>,
+    _overrides?: Record<string, unknown>,
   ): Promise<{ result: CrawlResult; healReport?: SelfHealReport }> {
     const startTime = Date.now();
     const attempts: SelfHealAttempt[] = [];

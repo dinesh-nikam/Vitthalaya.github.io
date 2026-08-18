@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { db } from '@/src/db/client';
-import { ArrowLeft, ArrowRight, BookOpen, Layers } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen } from 'lucide-react';
 import { categorySchema, canonicalMetadata } from '@/src/lib/seo';
 
 export const dynamic = 'force-dynamic';

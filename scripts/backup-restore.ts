@@ -75,7 +75,7 @@ async function restoreFromBackup(filePath: string, dryRun: boolean): Promise<voi
   console.log(`▶ Executing restore...`);
 
   try {
-    const proc = await $`${cmd}`.quiet();
+    await $`${cmd}`.quiet();
     console.log('✅ Restore completed successfully');
   } catch (err) {
     console.error(`❌ Restore failed: ${err.stderr?.toString() || err.message}`);

@@ -59,7 +59,7 @@ export default function SignUpPage() {
           router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`);
         }, 1500);
       }
-    } catch (err) {
+    } catch {
       setError('नोंदणी करताना तांत्रिक अडचण आली. कृपया पुन्हा प्रयत्न करा.');
     } finally {
       setLoading(false);

@@ -2,17 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/src/lib/auth';
 import { db } from '@/src/db/client';
+import { ApiErrors, errorResponse } from '@/src/lib/api-response';
 
 export async function GET(_request: NextRequest): Promise<NextResponse> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+      return ApiErrors.UNAUTHORIZED('Unauthorized.');
     }
 
     const role = (session.user as any).role;
     if (!['MODERATOR', 'ADMIN'].includes(role)) {
-      return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
+      return ApiErrors.FORBIDDEN('Forbidden.');
     }
 
     const now = new Date();
@@ -133,6 +134,6 @@ export async function GET(_request: NextRequest): Promise<NextResponse> {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error('Moderation stats API error:', err);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return errorResponse(msg, 500, { code: 'INTERNAL_ERROR' });
   }
 }

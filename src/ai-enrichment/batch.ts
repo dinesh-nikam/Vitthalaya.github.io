@@ -9,12 +9,12 @@
  *  - Graceful shutdown on interrupt
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+
+
+
 
 import { db } from '../db/client';
-import { enqueueComposition, drainQueue, getQueueStats, retryFailedJobs } from './queue';
+import { enqueueComposition, getQueueStats, retryFailedJobs } from './queue';
 import { workCycle } from './queue';
 
 // ─── Types ──────────────────────────────────────────────────────────────────

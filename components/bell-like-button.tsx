@@ -65,7 +65,7 @@ export function BellLikeButton({ slug, className = '' }: BellLikeButtonProps) {
         osc.start(now);
         osc.stop(now + p.decay + 0.1);
       });
-    } catch (e) {
+    } catch {
       // Ignored if blocked
     }
   };

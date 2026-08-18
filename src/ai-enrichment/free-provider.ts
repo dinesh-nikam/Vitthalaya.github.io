@@ -204,7 +204,6 @@ export function resolveFreeConfig(): ResolvedConfig {
 
   // 5. Last resort: try Ollama default (stub for demo - would need proper ollama config)
   const ollamaDefault = ollamaConfig();
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   return {
     config: ollamaDefault!,
     provider: 'ollama',

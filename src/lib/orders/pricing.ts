@@ -80,7 +80,17 @@ export function estimateShipping(params: ShippingParams): number {
 
 // ── Tax ───────────────────────────────────────────────────────────────────────
 
-const GST_RATE = 0.05; // 5% GST on books in India
+/** GST on books in India, expressed as a percentage — single source of truth
+ *  for both tax math and the labels shown at checkout / order details. Change
+ *  it here and every surface updates at once. */
+export const GST_RATE_PERCENT = 5;
+
+/** GST as a fraction (0.05), used by calculateTax(). */
+export const GST_RATE = GST_RATE_PERCENT / 100;
+
+/** Human-readable GST label (e.g. "कर (GST 5%)"), derived from the rate above
+ *  so a rate change updates the checkout and order detail pages together. */
+export const GST_LABEL = `कर (GST ${GST_RATE_PERCENT}%)`;
 
 export function calculateTax(amount: number): number {
   return Math.round(amount * GST_RATE * 100) / 100;
@@ -147,4 +157,24 @@ export function computePrice(input: PricingInput): PriceBreakdown {
 export function getBasePrice(bookType: BookType, format: BookFormat): number {
   const tier = TIER_PRICES[bookType] ?? TIER_PRICES.STANDARD;
   return format.startsWith('DIGITAL_') ? tier.digital : tier.print;
+}
+
+/**
+ * The unit price a customer pays for one copy of an edition — single source
+ * of truth shared by the book detail page (what the customer sees), the cart,
+ * and /api/orders/create (what gets charged).
+ *
+ * An explicit edition price always wins; otherwise DIGITAL formats default to
+ * ₹99 and print formats to ₹299. Accepts Prisma Decimal via the toNumber()
+ * shape (or a number/string) so callers can pass edition.price directly.
+ */
+export function getUnitPrice(
+  editionPrice: number | string | { toNumber(): number } | null | undefined,
+  format: string
+): number {
+  if (editionPrice != null) {
+    const n = typeof editionPrice === 'object' ? editionPrice.toNumber() : Number(editionPrice);
+    if (Number.isFinite(n)) return n;
+  }
+  return format.startsWith('DIGITAL_') ? 99 : 299;
 }

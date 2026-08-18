@@ -44,15 +44,6 @@ export interface DBStats {
 import { contentHash } from '../canonical/normalization';
 
 
-// Local normalizeTitle for slugs
-function normalizeTitle(title: string): string {
-  return title
-    .trim()
-    .replace(/\s+/g, ' ')
-    .replace(/^[०१२३४५६७८९\. \s\-।,]+/, '')
-    .replace(/[०१२३४५६७८९\. \s\-।,]+$/, '')
-    .trim();
-}
 
 // ============================================================
 // Schema & Initialization
@@ -235,7 +226,6 @@ export function compositionExists(
   db: Database,
   fullText: string
 ): boolean {
-  const hash = contentHash(fullText);
   const result = db
     .query(
       `SELECT COUNT(*) as cnt FROM compositions

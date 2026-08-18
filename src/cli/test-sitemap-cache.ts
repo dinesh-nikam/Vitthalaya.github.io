@@ -30,7 +30,7 @@ async function runSprint2Tests() {
     } else {
       console.log('❌ FAIL: Sitemap caching did not behave as expected');
     }
-  } catch (err) {
+  } catch {
     console.log('⚠️ Could not connect to local server for sitemap test. Make sure "bun dev" is running.');
   }
 
@@ -41,7 +41,6 @@ async function runSprint2Tests() {
     console.log('\n🛡️ Test 2: AI Assistant Rate Limiting (POST /api/ai/assistant)...');
     
     let hitRateLimit = false;
-    let rateLimitHeaderReset = '';
 
     for (let i = 1; i <= 8; i++) {
       const res = await fetch(`${baseUrl}/api/ai/assistant`, {
@@ -57,7 +56,6 @@ async function runSprint2Tests() {
       
       if (res.status === 429) {
         hitRateLimit = true;
-        rateLimitHeaderReset = res.headers.get('X-RateLimit-Reset') || '';
         const body = await res.json();
         console.log(`Rate limit reached (429)! Message:`, body.error);
         break;
@@ -69,7 +67,7 @@ async function runSprint2Tests() {
     } else {
       console.log('❌ FAIL: Rate limiter did not trigger (exceeded request limit without 429 error)');
     }
-  } catch (err) {
+  } catch {
     console.log('⚠️ Could not connect to local server for rate limiting test.');
   }
 

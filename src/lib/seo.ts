@@ -68,14 +68,14 @@ export function absoluteUrl(path: string): string {
 /**
  * WebSite schema (site-wide, embed in root layout).
  */
-export function websiteSchema() {
+export function websiteSchema(locale: string = 'mr') {
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'डिजिटल पंढरपूर',
     alternateName: 'Digital Pandharpur',
     url: SITE_URL,
-    inLanguage: 'mr',
+    inLanguage: locale,
     description: 'मराठी भक्ती साहित्याचा वाढता डिजिटल संग्रह — अभंग, भजन, आरत्या, स्तोत्रे आणि संत साहित्य',
     potentialAction: {
       '@type': 'SearchAction',

@@ -48,7 +48,6 @@ export async function processAIQuery(query: string): Promise<AIResponse> {
 }
 
 function generateAnswerFromQuery(query: string, results: SearchDocument[]): string {
-  const lowerQuery = query.toLowerCase();
 
   // Check for saint-specific queries
   if (query.includes('तुकाराम') || query.includes('tukaram') || query.includes('तुकाराम महाराज')) {

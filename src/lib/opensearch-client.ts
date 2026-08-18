@@ -5,7 +5,7 @@
  */
 
 import { db } from '../db/client';
-import { getEmbedding } from './embeddings';
+import { getEmbedding, getEmbeddingsBatch } from './embeddings';
 
 const OPENSEARCH_URL = process.env.OPENSEARCH_URL || 'http://localhost:9200';
 const OPENSEARCH_USER = process.env.OPENSEARCH_USER || 'admin';
@@ -328,29 +328,37 @@ export async function indexAllCompositions(): Promise<number> {
 
   const bulkBody: any[] = [];
 
-  for (const comp of compositions) {
-    // Generate semantic vector embedding
-    const embeddingText = `${comp.titleMarathi} ${comp.fullText} ${comp.saint?.nameMarathi || ''}`.substring(0, 1000);
-    const embedding = await getEmbedding(embeddingText);
+  // Process in batches of 100 to optimize API latency
+  const BATCH_SIZE = 100;
+  for (let i = 0; i < compositions.length; i += BATCH_SIZE) {
+    const chunk = compositions.slice(i, i + BATCH_SIZE);
+    
+    // Generate semantic vector embeddings in a single batched network call
+    const embeddingTexts = chunk.map(comp => 
+      `${comp.titleMarathi} ${comp.fullText} ${comp.saint?.nameMarathi || ''}`.substring(0, 1000)
+    );
+    const embeddings = await getEmbeddingsBatch(embeddingTexts);
 
-    const doc: SearchDocument = {
-      id: comp.id,
-      slug: comp.slug,
-      type: comp.type,
-      reviewed: comp.reviewed,
-      titleMarathi: comp.titleMarathi,
-      titleTranslit: comp.titleTranslit,
-      fullText: comp.fullText,
-      meaning: comp.meaning,
-      saintName: comp.saint?.nameMarathi || null,
-      saintTranslit: comp.saint?.nameTranslit || null,
-      deityName: comp.deity?.nameMarathi || null,
-      popularityScore: 100, // Base popularity score
-      embedding,
-    };
+    chunk.forEach((comp, idx) => {
+      const doc: SearchDocument = {
+        id: comp.id,
+        slug: comp.slug,
+        type: comp.type,
+        reviewed: comp.reviewed,
+        titleMarathi: comp.titleMarathi,
+        titleTranslit: comp.titleTranslit,
+        fullText: comp.fullText,
+        meaning: comp.meaning,
+        saintName: comp.saint?.nameMarathi || null,
+        saintTranslit: comp.saint?.nameTranslit || null,
+        deityName: comp.deity?.nameMarathi || null,
+        popularityScore: 100, // Base popularity score
+        embedding: embeddings[idx],
+      };
 
-    bulkBody.push({ index: { _index: INDEX_NAME, _id: doc.id } });
-    bulkBody.push(doc);
+      bulkBody.push({ index: { _index: INDEX_NAME, _id: doc.id } });
+      bulkBody.push(doc);
+    });
   }
 
   if (bulkBody.length > 0) {
@@ -450,8 +458,7 @@ export async function searchHybrid(
   mode: 'keyword' | 'semantic' | 'hybrid' = 'hybrid'
 ): Promise<any[]> {
   if (!isOSConfigured) {
-    // Graceful fallback to SQL mock search when OpenSearch cluster is missing
-    return mockLocalSearch(query, filters, limit);
+    throw new Error('OpenSearch is not configured. Search is unavailable.');
   }
 
   try {
@@ -565,73 +572,11 @@ export async function searchHybrid(
     // RRF Hybrid
     return fuseRRF(lexicalHits, vectorHits).slice(0, limit);
   } catch (err) {
-    console.error('OpenSearch query failure, falling back to mock search:', err);
-    return mockLocalSearch(query, filters, limit);
+    console.error('OpenSearch query failure:', err);
+    throw err;
   }
 }
 
-/**
- * Fallback SQL-based mock search when OpenSearch is not running
- */
-async function mockLocalSearch(
-  query: string,
-  filters?: {
-    type?: string;
-    saintId?: string;
-    deityId?: string;
-  },
-  limit = 10
-): Promise<any[]> {
-  const hasLatin = /[a-zA-Z]/.test(query);
-  const expandedQuery = hasLatin ? transliterateLatinToMarathi(query) : query;
-
-  // Query PostgreSQL or SQLite database using Prisma
-  const compositions = await db.composition.findMany({
-    where: {
-      reviewed: true,
-      type: filters?.type || undefined,
-      saintId: filters?.saintId || undefined,
-      deityId: filters?.deityId || undefined,
-      OR: [
-        { titleMarathi: { contains: query } },
-        { titleMarathi: { contains: expandedQuery } },
-        { titleTranslit: { contains: query } },
-        { fullText: { contains: query } },
-        { fullText: { contains: expandedQuery } },
-      ],
-    },
-    include: {
-      saint: {
-        select: {
-          nameMarathi: true,
-          nameTranslit: true,
-        },
-      },
-      deity: {
-        select: {
-          nameMarathi: true,
-        },
-      },
-    },
-    take: limit,
-  });
-
-  return compositions.map((comp: any) => ({
-    id: comp.id,
-    slug: comp.slug,
-    type: comp.type,
-    reviewed: comp.reviewed,
-    titleMarathi: comp.titleMarathi,
-    titleTranslit: comp.titleTranslit,
-    fullText: comp.fullText,
-    meaning: comp.meaning,
-    saintName: comp.saint?.nameMarathi || null,
-    saintTranslit: comp.saint?.nameTranslit || null,
-    deityName: comp.deity?.nameMarathi || null,
-    popularityScore: 100,
-    score: 1.0,
-  }));
-}
 
 // Upsert a single composition to OpenSearch
 export async function upsertCompositionToIndex(id: string): Promise<void> {

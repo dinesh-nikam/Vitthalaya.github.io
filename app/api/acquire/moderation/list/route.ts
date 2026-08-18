@@ -3,17 +3,18 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/src/lib/auth';
 import { db } from '@/src/db/client';
 import { Prisma } from '@prisma/client';
+import { ApiErrors, errorResponse } from '@/src/lib/api-response';
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized. Please sign in.' }, { status: 401 });
+      return ApiErrors.UNAUTHORIZED('Unauthorized. Please sign in.');
     }
 
     const role = (session.user as any).role;
     if (!['MODERATOR', 'ADMIN'].includes(role)) {
-      return NextResponse.json({ error: 'Forbidden. Access restricted to moderators and admins.' }, { status: 403 });
+      return ApiErrors.FORBIDDEN('Forbidden. Access restricted to moderators and admins.');
     }
 
     // Parse query params for pagination, filtering, search
@@ -44,8 +45,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     if (query) {
       where.OR = [
-        { draftTitle: { contains: query, mode: 'insensitive' } },
-        { draftText: { contains: query, mode: 'insensitive' } },
+        { draftTitle: { contains: query } },
+        { draftText: { contains: query } },
       ];
     }
 
@@ -161,6 +162,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error('Moderation list API error:', err);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return errorResponse(msg, 500, { code: 'INTERNAL_ERROR' });
   }
 }

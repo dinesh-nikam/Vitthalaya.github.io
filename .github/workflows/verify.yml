@@ -29,5 +29,110 @@ jobs:
       - name: Lint
         run: bun run lint
 
+      - name: OpenAPI doc-lint
+        run: bun run doc:lint
+
       - name: Run Tests
         run: bun test
+
+  # Admin audio integration tests against a throwaway Postgres instance.
+  # Every PR gets a fresh ephemeral database — nothing here touches any dev
+  # or production database. Mirrors the app's own provisioning flow:
+  #   prisma db push (schema, incl. audio_processing_jobs / rights_records /
+  #   composition_matches) -> db:seed -> bun test (admin-audio-discovery).
+  integration-postgres:
+    name: Integration — Admin Audio (Postgres)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: varkari_ci_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d varkari_ci_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/varkari_ci_test
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: bunx prisma generate
+
+      - name: Provision schema (throwaway Postgres)
+        run: bunx prisma db push --accept-data-loss
+
+      - name: Seed catalog
+        run: bun run db:seed
+
+      - name: Run admin-audio integration tests
+        run: bun test tests/integration/admin-audio-discovery.test.ts --timeout 30000
+
+  # Playwright E2E — the critical user journey (guest → search → record →
+  # admin approve) against a throwaway Postgres with the real seeded catalog.
+  # The dev server is started by playwright.config.ts (webServer) and the
+  # background worker is invoked from the test itself (worker-runner --run-once).
+  e2e:
+    name: E2E — Guest Journey (Playwright)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: varkari_ci_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d varkari_ci_e2e"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/varkari_ci_e2e
+      NEXTAUTH_SECRET: e2e-nextauth-secret-not-for-production
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: bunx prisma generate
+
+      - name: Provision schema (throwaway Postgres)
+        run: bunx prisma db push --accept-data-loss
+
+      - name: Seed catalog
+        run: bun run db:seed
+
+      - name: Seed E2E accounts
+        run: bun run scripts/seed-e2e.ts
+
+      - name: Install Playwright Chromium
+        run: bunx playwright install --with-deps chromium
+
+      - name: Run E2E journey
+        run: bun run test:e2e

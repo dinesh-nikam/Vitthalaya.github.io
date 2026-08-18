@@ -1,0 +1,31 @@
+{
+  "common": {
+    "skipToMain": "Skip to main content",
+    "mainAriaLabel": "Main content",
+    "language": "Language",
+    "languageSwitcherAria": "Select language",
+    "languageNames": {
+      "mr": "मराठी",
+      "en": "English",
+      "hi": "हिंदी"
+    },
+    "siteName": "Digital Pandharpur",
+    "siteTagline": "The growing digital collection of Marathi devotional literature",
+    "siteDescription": "Lakhs of Abhangs, Bhajans, Gaulani, Aartis, Stotras and Saint literature in one place",
+    "loading": "Loading…",
+    "error": "Something went wrong. Please try again.",
+    "retry": "Try again",
+    "close": "Close",
+    "cancel": "Cancel",
+    "save": "Save",
+    "submit": "Submit",
+    "back": "Back",
+    "next": "Next",
+    "all": "All",
+    "viewAll": "View all",
+    "readMore": "Read more",
+    "noResults": "No results found",
+    "notFound": "Not found",
+    "backHome": "Back to home"
+  }
+}

@@ -53,7 +53,7 @@ function VerifyEmailForm() {
           router.push('/auth/signin');
         }, 1500);
       }
-    } catch (err) {
+    } catch {
       setError('पडताळणी करताना तांत्रिक अडचण आली. कृपया पुन्हा प्रयत्न करा.');
     } finally {
       setLoading(false);

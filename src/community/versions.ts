@@ -147,9 +147,9 @@ export async function diffVersions(
   ];
 
   for (const field of fields) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const oldVal = (from as any)[field] ?? null;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
     const newVal = (to as any)[field] ?? null;
     if (oldVal !== newVal) {
       changes[field] = { old: oldVal as string | null, new: newVal as string | null };

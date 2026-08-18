@@ -97,7 +97,7 @@ function generateContainerXml(): string {
 
 function generateOpf(
   config: EpubConfig,
-  structure: BookContent,
+  _structure: BookContent,
   _selection: CuratedSelection,
 ): string {
   const manifestItems = [
@@ -175,7 +175,7 @@ function generateContentHtml(
   selection: CuratedSelection,
   structure: BookContent,
   coverDesign: CoverDesign,
-  layout: LayoutConfig,
+  _layout: LayoutConfig,
 ): string {
   const sectionsHtml = structure.sections
     .map((section, si) => {

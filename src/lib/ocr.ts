@@ -79,5 +79,5 @@ export async function runOcr(buffer: Buffer, engine = 'paddleocr'): Promise<stri
     throw new Error('OCR_SERVICE_UNAVAILABLE: No OCR engine configured. Set GOOGLE_VISION_API_KEY in production.');
   }
 
-  return '[OCR_PENDING] - विकास क्लष्म आधी OCR सक्षम करा';
+  return '[OCR_PENDING] - विकास मोडमध्ये OCR सक्षम नाही';
 }

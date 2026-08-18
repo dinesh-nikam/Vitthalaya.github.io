@@ -9,7 +9,6 @@
  */
 
 import { db } from '../../db/client';
-import type { CompositionType } from '../../book-generation/types';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 

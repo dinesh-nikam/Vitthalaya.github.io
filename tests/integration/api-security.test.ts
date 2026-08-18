@@ -7,7 +7,7 @@
 
 import { describe, it, expect } from 'bun:test';
 import { sanitizeText, stripHtml, escapeHtml, isSafeString } from '@/src/lib/sanitize';
-import { circuitBreaker, createCircuitBreaker } from '@/src/lib/circuit-breaker';
+import { createCircuitBreaker } from '@/src/lib/circuit-breaker';
 
 // ─── Input Sanitization ──────────────────────────────────────────────────────
 

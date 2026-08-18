@@ -69,7 +69,6 @@ export function isSafeString(input: string): boolean {
   if (input.includes('\0')) return false;
 
   // Block control characters except \n \r \t
-  // eslint-disable-next-line no-control-regex
   if (/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/.test(input)) return false;
 
   // Block common SQL injection patterns (defense in depth — Prisma handles parameterization)

@@ -17,13 +17,9 @@ import { ContentExtractor } from './content-extractor';
 import { ContentSegmenter } from './content-segmenter';
 import { MetadataExtractor } from './metadata-extractor';
 import { QualityScorer } from './quality-scorer';
-import { contentHash, normalizeForDisplay } from '../canonical/normalization';
+import { contentHash, normalizeForDisplay, normalizeCompositionType } from '../canonical/normalization';
 import type { ContentSource } from '../discovery/types';
-import type {
-  ExtractedComposition,
-  CrawlResult,
-  ContentQualityReport,
-} from './types';
+import type { ExtractedComposition, ContentQualityReport } from './types';
 
 export interface PipelineResult {
   sourceId: string;
@@ -84,8 +80,8 @@ export class AcquisitionPipeline {
       console.log(`  [1/6] Crawling: ${source.url}`);
       const crawlResult = await this.engine.crawl(source.url, {
         strategy: (source.scraperType as any) ?? 'auto',
-        allowedPaths: source.allowedPaths ? JSON.parse(source.allowedPaths) : undefined,
-        excludedPaths: source.excludedPaths ? JSON.parse(source.excludedPaths) : undefined,
+        allowedPaths: source.allowedPaths ? (source.allowedPaths as any as string[]) : undefined,
+        excludedPaths: source.excludedPaths ? (source.excludedPaths as any as string[]) : undefined,
         mode: 'full',
       });
 
@@ -205,7 +201,7 @@ export class AcquisitionPipeline {
                 titleMarathi: comp.titleMarathi,
                 titleTranslit: comp.titleTranslit ?? '',
                 slug,
-                type: metadata.type ?? 'abhang',
+                type: normalizeCompositionType(metadata.type),
                 fullText: comp.fullText,
                 meaning: comp.meaning ?? null,
                 region: comp.region ?? null,
@@ -325,7 +321,6 @@ export class AcquisitionPipeline {
     const startTime = Date.now();
     const errors: string[] = [];
     const dryRun = options?.dryRun ?? this.config.dryRun;
-    const sourceUrl = options?.sourceUrl ?? 'archive.org';
     const sourceTrustScore = options?.sourceTrustScore ?? 0.7;
 
     console.log(`[Pipeline] Processing extracted compositions for: ${sourceName}`);
@@ -417,7 +412,7 @@ export class AcquisitionPipeline {
                 titleMarathi: comp.titleMarathi,
                 titleTranslit: comp.titleTranslit ?? '',
                 slug,
-                type: metadata.type ?? 'abhang',
+                type: normalizeCompositionType(metadata.type),
                 fullText: comp.fullText,
                 meaning: comp.meaning ?? null,
                 region: comp.region ?? null,

@@ -61,7 +61,7 @@ export async function GET(): Promise<NextResponse> {
     }
 
     const edges = await getEdgeStatistics();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
     const totalEdges = edges.totalEdges;
 
     // Average degree: (total edges * 2) / total entities

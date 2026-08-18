@@ -43,15 +43,20 @@ export const SUPPORTED_FORMATS = {
     mimeTypes: [
       'audio/mpeg', 'audio/wav', 'audio/aac', 'audio/ogg',
       'audio/flac', 'audio/x-m4a', 'audio/mp4',
+      // In-browser voice recordings (MediaRecorder produces
+      // audio/webm;codecs=opus — the codec parameter is stripped below).
+      'audio/webm',
     ],
     extensions: ['.mp3', '.wav', '.aac', '.ogg', '.flac', '.m4a'],
     maxSize: 200 * 1024 * 1024, // 200MB
-    description: 'Audio (MP3, WAV, AAC, OGG, FLAC, M4A)',
+    description: 'Audio (MP3, WAV, AAC, OGG, FLAC, M4A, WebM)',
   },
   video: {
     mimeTypes: [
       'video/mp4', 'video/quicktime', 'video/x-matroska',
       'video/avi', 'video/webm',
+      // 'video/webm;codecs=...' variants are matched via the parameter
+      // stripping in classifyUploadFormat.
     ],
     extensions: ['.mp4', '.mov', '.mkv', '.avi', '.webm'],
     maxSize: 500 * 1024 * 1024, // 500MB
@@ -63,20 +68,6 @@ export type UploadFormat = keyof typeof SUPPORTED_FORMATS;
 
 // ─── Format Classification ───────────────────────────────────────────────────
 
-/** Magic byte signatures for more reliable format detection */
-const MAGIC_BYTES: Record<string, string[]> = {
-  pdf: ['%PDF'],
-  doc: ['\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1'],
-  docx: ['PK\x03\x04'],
-  epub: ['PK\x03\x04'],
-  jpeg: ['\xFF\xD8\xFF'],
-  png: ['\x89PNG'],
-  webp: ['RIFF'],
-  gif: ['GIF8'],
-  bmp: ['BM'],
-  heic: ['ftypheic', 'ftypmif1', 'ftypmsf1'],
-};
-
 /**
  * Detect format category from MIME type and/or filename extension.
  */
@@ -85,7 +76,12 @@ export function classifyUploadFormat(
   filename: string
 ): UploadFormat | 'youtube' | 'unknown' {
   const ext = '.' + filename.split('.').pop()?.toLowerCase();
-  const mime = mimeType.toLowerCase();
+  // Strip MIME parameters (e.g. ";codecs=opus") so 'audio/webm;codecs=opus'
+  // from MediaRecorder matches the plain 'audio/webm' entry. The bare
+  // extension is only consulted when the MIME is absent/unknown, and audio is
+  // checked before video in the loop below, so real video/webm uploads (which
+  // always carry a video/webm MIME) still classify as video.
+  const mime = mimeType.toLowerCase().split(';')[0].trim();
 
   const knownFormats = SUPPORTED_FORMATS as unknown as Record<string, { mimeTypes: string[]; extensions: string[] }>;
   for (const [fmt, info] of Object.entries(knownFormats)) {

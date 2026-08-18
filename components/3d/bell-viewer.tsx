@@ -162,8 +162,6 @@ export function BellViewer() {
     const damping = 0.02; // Slows down over time
     const restLength = 1.5; // distance from top pivot
 
-    let isTriggered = false;
-
     // Swing trigger function
     const triggerSwing = () => {
       const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;

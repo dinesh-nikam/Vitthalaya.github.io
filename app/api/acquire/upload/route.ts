@@ -14,16 +14,29 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/src/lib/auth';
 import { db } from '@/src/db/client';
 import { storage } from '@/src/lib/storage';
-import { validateUpload, classifyUploadFormat, getFormatLabel } from '@/src/lib/file-validator';
-import { extractContent, isYouTubeUrl, extractYouTubeVideoId } from '@/src/lib/extractors';
+import { validateUpload, getFormatLabel } from '@/src/lib/file-validator';
+import { extractContent, isYouTubeUrl, extractYouTubeVideoId, AudioExtractor } from '@/src/lib/extractors';
 import { preprocessForOcr } from '@/src/lib/ocr/image-pipeline';
 import { runOcrConsensus } from '@/src/lib/ocr/consensus';
 import { submitToModeration } from '@/src/lib/moderation-workflow';
+import { enqueueAudioProcessingJob, enqueueAudioFileTranscriptionJob } from '@/src/lib/audio-processing';
+import { decideRights, type RightsInput } from '@/src/lib/rights';
 import { classifyContent } from '@/src/ai-enrichment/classifier';
+import {
+  checkUserRateLimit,
+  rateLimitExceededResponse,
+  addRateLimitHeaders,
+} from '@/src/lib/api-auth';
+import { ApiErrors, errorResponse } from '@/src/lib/api-response';
 
 // ─── Config ──────────────────────────────────────────────────────────────────
 
 const YOUTUBE_MIME_TYPE = 'youtube/url';
+
+// Per-user uploads per minute — uploads are heavy (multipart bodies, storage
+// writes, possible transcription enqueues), so the window is deliberately
+// small. In-memory like the v1 API-key limiter; Redis in production.
+const UPLOAD_RATE_LIMIT_PER_MINUTE = 10;
 
 // ─── Route ───────────────────────────────────────────────────────────────────
 
@@ -32,44 +45,64 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // 1. Authenticate
     const session = await getServerSession(authOptions);
     if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized. Please sign in to contribute.' },
-        { status: 401 }
-      );
+      return ApiErrors.UNAUTHORIZED('Unauthorized. Please sign in to contribute.');
     }
     const userId = (session.user as any).id;
+
+    // 1b. Per-user rate limit — checked BEFORE body parsing so a flood of
+    // oversized multipart requests is rejected cheaply.
+    const rateLimit = checkUserRateLimit(userId, UPLOAD_RATE_LIMIT_PER_MINUTE, 'upload');
+    if (!rateLimit.allowed) {
+      return rateLimitExceededResponse(rateLimit.resetAt);
+    }
+    const withRateHeaders = (res: NextResponse) =>
+      addRateLimitHeaders(res, rateLimit.remaining, rateLimit.resetAt);
 
     // 2. Parse input
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
     const url = formData.get('url')?.toString().trim() || '';
     let customTitle = formData.get('title')?.toString().trim() || '';
+    // Set by the in-browser voice recorder (see components/audio-recorder.tsx)
+    // to distinguish a live recording from an arbitrary audio file upload —
+    // both reuse this same pipeline, but recordings get sourceType 'recording'
+    // for clearer moderation/audit trails.
+    const isRecording = formData.get('isRecording')?.toString() === 'true';
 
     if (!file && !url) {
-      return NextResponse.json(
-        { error: 'Please provide a file or a YouTube URL.' },
-        { status: 400 }
+      return withRateHeaders(
+        ApiErrors.BAD_REQUEST('Please provide a file or a YouTube URL.')
       );
     }
 
     // 3. Handle YouTube URL
     if (url && isYouTubeUrl(url)) {
-      return await handleYouTubeUrl(url, customTitle, userId);
+      return withRateHeaders(await handleYouTubeUrl(url, customTitle, userId));
     }
 
     // 4. Handle file upload
     if (!file) {
-      return NextResponse.json(
-        { error: 'No file provided. Attach a file or provide a YouTube URL.' },
-        { status: 400 }
+      return withRateHeaders(
+        ApiErrors.BAD_REQUEST('No file provided. Attach a file or provide a YouTube URL.')
       );
     }
 
-    return await handleFileUpload(file, customTitle, userId);
+    // Rights/consent declarations come from the /record page (voice
+    // recordings only). They are stored on the RightsRecord and gate whether
+    // the recording may ever be submitted for publication.
+    const rightsInput: RightsInput = {
+      declaredStatus: formData.get('rightsStatus')?.toString() ?? null,
+      consentGranted: formData.get('consentGranted')?.toString() === 'true',
+      publicationPermission: formData.get('publicationPermission')?.toString() === 'true',
+      attribution: formData.get('attribution')?.toString() ?? null,
+      source: 'record',
+    };
+
+    return withRateHeaders(await handleFileUpload(file, customTitle, userId, isRecording, rightsInput));
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error('[Upload API] Error:', err);
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return errorResponse(msg, 500, { code: 'INTERNAL_ERROR' });
   }
 }
 
@@ -78,17 +111,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 async function handleFileUpload(
   file: File,
   customTitle: string,
-  userId: string
+  userId: string,
+  isRecording = false,
+  rightsInput: RightsInput = {}
 ): Promise<NextResponse> {
   const buffer = Buffer.from(await file.arrayBuffer());
 
   // 4a. Validate file
   const validation = validateUpload(file.type, file.size, file.name);
   if (!validation.valid) {
-    return NextResponse.json(
-      { error: validation.error },
-      { status: validation.format === 'unknown' ? 415 : 413 }
-    );
+    const status = validation.format === 'unknown' ? 415 : 413;
+    return errorResponse(validation.error ?? 'File validation failed.', status, {
+      code: validation.format === 'unknown' ? 'UNSUPPORTED_MEDIA_TYPE' : 'PAYLOAD_TOO_LARGE',
+    });
   }
 
   let uploadRecord: any = null;
@@ -123,6 +158,27 @@ async function handleFileUpload(
       },
     });
 
+    // Voice recordings carry an explicit rights/consent declaration (spec
+    // §17/§18). Stored once here; never auto-publishes anything.
+    let rightsRecord: { rightsStatus: string; canPublish: boolean; reasons: string[] } | null = null;
+    if (isRecording) {
+      const decision = decideRights(rightsInput);
+      await db.rightsRecord.create({
+        data: {
+          uploadedFileId: uploadRecord.id,
+          userId,
+          rightsStatus: decision.rightsStatus,
+          consentGranted: decision.consentGranted,
+          publicationPermission: decision.publicationPermission,
+          attribution: rightsInput.attribution ?? null,
+          source: rightsInput.source ?? 'record',
+          license: null,
+          notes: decision.reasons.length > 0 ? decision.reasons.join(' | ') : null,
+        },
+      });
+      rightsRecord = decision;
+    }
+
     // 4c. Route based on format
     let extractedText = '';
     let extractionConfidence = 0;
@@ -140,13 +196,57 @@ async function handleFileUpload(
       extractedText = extracted.text;
       extractionConfidence = extracted.confidence;
       detectedTitle = detectedTitle || extracted.title;
+    } else if (validation.format === 'audio' || isRecording) {
+      // Voice recordings and audio files go straight to the speech-to-text
+      // pipeline (AudioExtractor). `isRecording` is checked explicitly so a
+      // recording always routes here even if its format classification is
+      // ever ambiguous — webm/opus blobs never touch the video path.
+      if (isRecording) {
+        // Recordings do NOT block the request on a multi-minute Whisper call:
+        // enqueue a background job and return immediately. The worker
+        // (processAudioProcessingJobs, kind=audio_file) transcribes, persists
+        // the transcript, and submits to moderation. The /record page polls
+        // GET /api/acquire/upload/[id] for honest status.
+        await enqueueAudioFileTranscriptionJob({
+          uploadId: uploadRecord.id,
+          storagePath,
+        });
+
+        await db.uploadedFile.update({
+          where: { id: uploadRecord.id },
+          data: {
+            processingStatus: 'transcribing',
+            processingSteps: JSON.stringify(['uploaded', 'transcription_queued']),
+            // Keep the user's typed title — it is the strongest composition
+            // match signal for the worker (used by CompositionMatcher).
+            detectedMetadata: customTitle.trim()
+              ? JSON.stringify({ userTitle: customTitle.trim() })
+              : undefined,
+          },
+        });
+
+        return NextResponse.json({
+          success: true,
+          uploadId: uploadRecord.id,
+          needsTranscription: true,
+          format: validation.format,
+          message: 'रेकॉर्डिंग जतन झाली. ट्रान्सक्रिप्शन पार्श्वभूमीवर सुरू आहे — स्थिती खाली दिसेल.',
+          rights: rightsRecord,
+        });
+      }
+
+      const audioResult = await processAudio(buffer, file.name, uploadRecord.id);
+      extractedText = audioResult.text;
+      extractionConfidence = audioResult.confidence;
+      detectedTitle = detectedTitle || audioResult.title;
     } else {
-      // Document, ebook, audio, video → format extractor
+      // Document, ebook, video → format extractor
       const result = await extractContent(buffer, file.name, file.type);
 
       if (result.error) {
-        // If extraction failed but it's an audio/video file, try audio processing
-        if ((validation.format === 'audio' || validation.format === 'video') && !result.text) {
+        // If extraction failed but it's a video file, try audio processing
+        // (audio files are handled by the branch above, never here)
+        if (validation.format === 'video' && !result.text) {
           const audioResult = await processAudio(buffer, file.name, uploadRecord.id);
           extractedText = audioResult.text;
           extractionConfidence = audioResult.confidence;
@@ -185,14 +285,18 @@ async function handleFileUpload(
         uploadId: uploadRecord.id,
         extractedText: '',
         detection: null,
-        message: 'File uploaded but no text could be extracted.',
+        message: isRecording
+          ? 'Recording saved, but no speech could be transcribed. You can still keep the audio and add lyrics manually.'
+          : 'File uploaded but no text could be extracted.',
         format: validation.format,
       });
     }
 
-    // 4f. Submit to moderation queue
+    // 4f. Submit to moderation queue as a draft — nothing is published until
+    // an admin/moderator approves it (see submitPeerVote/promoteAndPublish).
+    const moderationSourceType = isRecording ? 'recording' : 'ocr';
     const queueId = await submitToModeration(
-      'ocr',
+      moderationSourceType,
       uploadRecord.id,
       detectedTitle || file.name,
       extractedText
@@ -257,10 +361,7 @@ async function handleYouTubeUrl(
 ): Promise<NextResponse> {
   const videoId = extractYouTubeVideoId(url);
   if (!videoId) {
-    return NextResponse.json(
-      { error: 'Invalid YouTube URL. Could not extract video ID.' },
-      { status: 400 }
-    );
+    return ApiErrors.BAD_REQUEST('Invalid YouTube URL. Could not extract video ID.');
   }
 
   // Create upload record
@@ -299,20 +400,41 @@ async function handleYouTubeUrl(
     });
 
     if (!extractedText) {
+      // No captions/subtitles available. Do NOT block this request on a
+      // multi-minute yt-dlp download + Whisper transcription — enqueue a
+      // background job instead. The worker daemon (src/cli/worker-runner.ts,
+      // processAudioProcessingJobs) will transcribe the audio, persist the
+      // transcript, and submit it to the moderation queue as a YouTube draft.
+      await enqueueAudioProcessingJob({
+        uploadId: uploadRecord.id,
+        videoId,
+        url,
+      });
+
+      await db.uploadedFile.update({
+        where: { id: uploadRecord.id },
+        data: {
+          processingStatus: 'needs_audio_processing',
+          processingSteps: JSON.stringify(['url-received', 'extracted', 'audio_processing_queued']),
+        },
+      });
+
       return NextResponse.json({
         success: true,
         uploadId: uploadRecord.id,
         videoId,
         extractedText: '',
         detection: null,
-        message: 'YouTube metadata fetched but no captions found. Audio processing may be needed.',
+        needsAudioProcessing: true,
+        message: 'YouTube metadata fetched but no captions were found. Audio transcription has been queued and will complete in the background.',
         metadata: result.metadata,
       });
     }
 
-    // Submit to moderation
+    // Submit to moderation — stored purely as a draft until an admin
+    // approves it (promoteAndPublish creates the real Composition then).
     const queueId = await submitToModeration(
-      'ocr',
+      'youtube',
       uploadRecord.id,
       detectedTitle,
       extractedText
@@ -348,7 +470,6 @@ async function handleYouTubeUrl(
       metadata: result.metadata,
     });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
     await db.uploadedFile.update({
       where: { id: uploadRecord.id },
       data: { processingStatus: 'failed' },
@@ -428,7 +549,7 @@ async function processImage(
 async function processPdf(
   buffer: Buffer,
   filename: string,
-  uploadId: string
+  _uploadId: string
 ): Promise<{ text: string; confidence: number; title: string }> {
   const result = await extractContent(buffer, filename, 'application/pdf');
 
@@ -459,14 +580,20 @@ async function processPdf(
 }
 
 /**
- * Process audio: transcribe via Whisper
+ * Process audio: transcribe via Whisper using the audio extractor directly.
+ *
+ * Called for audio uploads and in-browser voice recordings (webm/opus). The
+ * extractor is invoked directly (not via the format registry) so the real
+ * filename reaches the Whisper API calls — webm recordings are submitted as
+ * webm instead of being mislabeled as mp3.
  */
 async function processAudio(
   buffer: Buffer,
   filename: string,
   _uploadId: string
 ): Promise<{ text: string; confidence: number; title: string }> {
-  const result = await extractContent(buffer, filename, 'audio/mpeg');
+  const extractor = new AudioExtractor();
+  const result = await extractor.extract(buffer, filename, { language: ['mr', 'hi', 'en'] });
 
   return {
     text: result.text,

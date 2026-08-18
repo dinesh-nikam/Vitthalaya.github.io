@@ -6,12 +6,16 @@
     "dev": "next dev",
     "build": "bun scripts/switch-provider.ts && prisma generate && prisma db push --accept-data-loss && bun run db:seed && next build",
     "start": "next start",
-    "lint": "eslint . --ext .ts,.tsx",
+    "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
+    "test:e2e": "playwright test",
     "typecheck": "tsc --noEmit",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:migrate:prod": "prisma migrate deploy",
-    "db:seed": "bun run src/db/seed.ts",
+    "db:seed": "bun run scripts/apply-sql-migrations.ts && bun run src/db/seed.ts",
+    "seed:entities": "bun run scripts/seed-entities.ts",
+    "seed:daily": "bun run scripts/seed-daily.ts",
+    "db:sqlmigrate": "bun run scripts/apply-sql-migrations.ts",
     "db:studio": "prisma studio",
     "scrape": "bun run src/cli/scrape.ts",
     "scrape:pg": "bun run scripts/scrape-to-postgres.ts",
@@ -28,7 +32,9 @@
     "lyrics:denoise": "bun run scripts/denoise-compositions.ts",
     "lyrics:import": "bun run scripts/import-compositions.ts",
     "seed:scaling": "bun run scripts/generate-scaling-data.ts",
-    "graph:build": "bun run scripts/build-graph.ts"
+    "graph:build": "bun run scripts/build-graph.ts",
+    "eval:seed": "bun run scripts/seed-eval.ts",
+    "doc:lint": "bun run scripts/doc-lint-openapi.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",
@@ -46,6 +52,7 @@
     "meilisearch": "^0.58.0",
     "next": "^15.0.0",
     "next-auth": "^4.24.14",
+    "next-intl": "^4.13.6",
     "pdf-parse": "^2.4.5",
     "playwright": "^1.61.0",
     "puppeteer-core": "^25.1.0",
@@ -60,6 +67,7 @@
     "ws": "^8.21.0"
   },
   "devDependencies": {
+    "@babel/types": "^7.26.0",
     "@tailwindcss/typography": "^0.5.0",
     "@types/bun": "latest",
     "@types/node": "^22.0.0",

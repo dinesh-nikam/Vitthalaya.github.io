@@ -37,8 +37,8 @@ export const authOptions: NextAuthOptions = {
   },
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || (process.env.NODE_ENV !== 'production' ? 'mock-google-client-id' : ''),
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || (process.env.NODE_ENV !== 'production' ? 'mock-google-client-secret' : ''),
+      clientId: process.env.GOOGLE_CLIENT_ID || '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
     }),
     CredentialsProvider({
       name: 'मराठी वारकरी लॉगिन (Credentials)',

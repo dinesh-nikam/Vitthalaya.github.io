@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
-import { Inter, Noto_Sans_Devanagari, Tiro_Devanagari_Marathi } from 'next/font/google';
+import { NextIntlClientProvider } from 'next-intl';
+import { getLocale, getMessages, getTranslations } from 'next-intl/server';
 import { websiteSchema } from '@/src/lib/seo';
 import { ConsentBanner } from '@/components/consent-banner';
 import { FloatingPlayer } from '@/components/floating-player';
@@ -7,58 +8,43 @@ import { BottomTabBar } from '@/components/bottom-tab-bar';
 import { SearchOverlay } from '@/components/search-overlay';
 import './globals.css';
 
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
-});
-
-const notoSansDevanagari = Noto_Sans_Devanagari({
-  subsets: ['devanagari'],
-  variable: '--font-devanagari',
-  display: 'swap',
-  weight: ['300', '400', '500', '600', '700'],
-});
-
-const tiroDevanagari = Tiro_Devanagari_Marathi({
-  subsets: ['devanagari'],
-  variable: '--font-devanagari-heading',
-  display: 'swap',
-  weight: '400',
-  style: 'normal',
-});
-
-export const metadata: Metadata = {
-  title: 'डिजिटल पंढरपूर - मराठी भक्ती साहित्याचा वाढता डिजिटल संग्रह',
-  description: 'लाखो अभंग, भजन, गौळणी, आरत्या, स्तोत्रे आणि संत साहित्य एका ठिकाणी',
-  keywords: 'अभंग, भजन, हरिपाठ, आरती, स्तोत्र, विठ्ठल, वारकरी, तुकाराम, द्न्यादेश्वर',
-  robots: {
-    index: true,
-    follow: true,
-    'max-snippet': -1,
-    'max-video-preview': -1,
-  },
-  openGraph: {
-    title: 'डिजिटल पंढरपूर',
-    description: 'मराठी भक्ती साहित्याचा वाढता डिजिटल संग्रह',
-    locale: 'mr_IN',
-    type: 'website',
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('common');
+  return {
+    title: t('siteName') + ' - ' + t('siteTagline'),
+    description: t('siteDescription'),
+    keywords: 'अभंग, भजन, हरिपाठ, आरती, स्तोत्र, विठ्ठल, वारकरी, तुकाराम, द्न्यादेश्वर',
+    robots: {
+      index: true,
+      follow: true,
+      'max-snippet': -1,
+      'max-video-preview': -1,
+    },
+    openGraph: {
+      title: t('siteName'),
+      description: t('siteTagline'),
+      locale: 'mr_IN',
+      type: 'website',
+    },
+  };
+}
 
 import { Providers } from '@/components/providers';
 import { HeaderNav } from '@/components/header-nav';
 import { SiteFooter } from '@/components/site-footer';
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
     <html
-      lang="mr"
-      className={`${inter.variable} ${notoSansDevanagari.variable} ${tiroDevanagari.variable}`}
+      lang={locale}
+      className="font-vars"
       suppressHydrationWarning
     >
       <head>
@@ -70,37 +56,57 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
         <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png" />
         <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512x512.png" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var stored = localStorage.getItem('theme');
+                  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                  var shouldBeDark = stored ? stored === 'dark' : prefersDark;
+                  if (shouldBeDark) {
+                    document.documentElement.classList.add('dark');
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
       </head>
       <body className="min-h-dvh bg-background antialiased">
         {/* Site-wide JSON-LD Structured Data — WebSite + SearchAction */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(websiteSchema()),
+            __html: JSON.stringify(websiteSchema(locale)),
           }}
         />
         <Providers>
-          <div className="relative flex min-h-dvh flex-col">
-            {/* Skip Navigation Link - WCAG 2.4.1 */}
-            <a
-              href="#main-content"
-              className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-lg focus:bg-saffron focus:px-4 focus:py-2 focus:text-white focus:outline-none focus:ring-2 focus:ring-white"
-            >
-              मुख्य सामग्रीवर जा
-            </a>
-            <header role="banner" className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-sm">
-              <div className="container mx-auto flex h-16 items-center justify-between px-4">
-                <a href="/" className="font-marathiHeading text-xl text-saffron">
-                  डिजिटल पंढरपूर
-                </a>
-                <HeaderNav />
-              </div>
-            </header>
-            <main role="main" aria-label="मुख्य सामग्री" className="flex-1 pb-16 lg:pb-0" id="main-content">
-              {children}
-            </main>
-            <SiteFooter />
-          </div>
+          <NextIntlClientProvider messages={messages}>
+            <div className="relative flex min-h-dvh flex-col">
+              {/* Skip Navigation Link - WCAG 2.4.1 */}
+              <a
+                href="#main-content"
+                className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[100] focus:rounded-lg focus:bg-saffron focus:px-4 focus:py-2 focus:text-white focus:outline-none focus:ring-2 focus:ring-white"
+              >
+                मुख्य सामग्रीवर जा
+              </a>
+              <header role="banner" className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-sm">
+                <div className="container mx-auto flex h-16 items-center justify-between px-4">
+                  <a href="/" className="font-marathiHeading text-xl text-saffron">
+                    डिजिटल पंढरपूर
+                  </a>
+                  <HeaderNav />
+                </div>
+              </header>
+              <main role="main" aria-label="मुख्य सामग्री" className="flex-1 pb-16 lg:pb-0" id="main-content">
+                {children}
+              </main>
+              <SiteFooter />
+            </div>
+          </NextIntlClientProvider>
         </Providers>
         <ConsentBanner />
         <FloatingPlayer />

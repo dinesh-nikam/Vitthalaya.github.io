@@ -26,18 +26,25 @@ export class AudioExtractor implements IExtractor {
     'audio/flac',
     'audio/x-m4a',
     'audio/mp4',
+    // In-browser voice recordings (MediaRecorder → audio/webm;codecs=opus)
+    'audio/webm',
   ];
 
   canHandle(mimeType: string, extension: string): boolean {
+    // Strip MIME parameters so 'audio/webm;codecs=opus' matches directly.
+    // (findExtractor also normalizes, but this keeps the extractor robust
+    // when invoked standalone.)
+    const mime = mimeType.toLowerCase().split(';')[0].trim();
     const mimes = this.supportedMimeTypes;
     const exts = ['.mp3', '.wav', '.aac', '.ogg', '.flac', '.m4a'];
-    return mimes.includes(mimeType) || exts.includes(extension.toLowerCase());
+    return mimes.includes(mime) || exts.includes(extension.toLowerCase());
   }
 
   async extract(buffer: Buffer, filename: string, options?: ExtractionOptions): Promise<ExtractionResult> {
     try {
-      // Step 1: Run speech-to-text
-      const transcript = await this.transcribe(buffer, options?.language ?? ['mr', 'hi', 'en']);
+      // Step 1: Run speech-to-text (pass the real filename so webm/opus
+      // recordings are submitted to the API with the correct container type)
+      const transcript = await this.transcribe(buffer, options?.language ?? ['mr', 'hi', 'en'], filename);
 
       if (!transcript || transcript.length < 10) {
         return {
@@ -90,15 +97,30 @@ export class AudioExtractor implements IExtractor {
 
   private selectedMethod = 'none';
 
-  // ─── Speech-to-Text ──────────────────────────────────────────────────────
+  /**
+   * Public entry point for callers outside this extractor (e.g. the YouTube
+   * extractor's audio-fallback pipeline) that need a raw transcript plus
+   * which engine produced it, without going through the full lyrics
+   * formatting/verse-detection pipeline in `extract()`.
+   */
+  async transcribeBuffer(
+    buffer: Buffer,
+    language: string[] = ['mr', 'hi', 'en'],
+    filename?: string
+  ): Promise<{ text: string; method: string }> {
+    const text = await this.transcribe(buffer, language, filename);
+    return { text, method: this.selectedMethod };
+  }
 
-  private async transcribe(buffer: Buffer, language: string[]): Promise<string> {
+  // ─── Speech-to-Text ────────────────────────────────────────────
+
+  private async transcribe(buffer: Buffer, language: string[], filename?: string): Promise<string> {
     // Try OpenAI Whisper API
     const openAiKey = process.env.OPENAI_API_KEY;
     if (openAiKey) {
       try {
         this.selectedMethod = 'openai-whisper';
-        return await this.transcribeWithOpenAI(buffer, language[0] ?? 'mr');
+        return await this.transcribeWithOpenAI(buffer, language[0] ?? 'mr', filename);
       } catch {
         // Fall through
       }
@@ -109,7 +131,7 @@ export class AudioExtractor implements IExtractor {
     if (groqKey) {
       try {
         this.selectedMethod = 'groq-whisper';
-        return await this.transcribeWithGroq(buffer, language[0] ?? 'mr');
+        return await this.transcribeWithGroq(buffer, language[0] ?? 'mr', filename);
       } catch {
         // Fall through
       }
@@ -128,12 +150,13 @@ export class AudioExtractor implements IExtractor {
     );
   }
 
-  private async transcribeWithOpenAI(buffer: Buffer, language: string): Promise<string> {
+  private async transcribeWithOpenAI(buffer: Buffer, language: string, filename?: string): Promise<string> {
     const apiKey = process.env.OPENAI_API_KEY!;
     const formData = new FormData();
     const uint8 = new Uint8Array(buffer);
-    const blob = new Blob([uint8], { type: 'audio/mpeg' });
-    formData.append('file', blob, 'audio.mp3');
+    const isWebm = filename ? filename.toLowerCase().endsWith('.webm') : false;
+    const blob = new Blob([uint8], { type: isWebm ? 'audio/webm' : 'audio/mpeg' });
+    formData.append('file', blob, isWebm ? 'recording.webm' : 'audio.mp3');
     formData.append('model', 'whisper-1');
     formData.append('language', language);
     formData.append('response_format', 'text');
@@ -153,12 +176,13 @@ export class AudioExtractor implements IExtractor {
     return await response.text();
   }
 
-  private async transcribeWithGroq(buffer: Buffer, language: string): Promise<string> {
+  private async transcribeWithGroq(buffer: Buffer, language: string, filename?: string): Promise<string> {
     const apiKey = process.env.GROQ_API_KEY!;
     const formData = new FormData();
     const uint8 = new Uint8Array(buffer);
-    const blob = new Blob([uint8], { type: 'audio/mpeg' });
-    formData.append('file', blob, 'audio.mp3');
+    const isWebm = filename ? filename.toLowerCase().endsWith('.webm') : false;
+    const blob = new Blob([uint8], { type: isWebm ? 'audio/webm' : 'audio/mpeg' });
+    formData.append('file', blob, isWebm ? 'recording.webm' : 'audio.mp3');
     formData.append('model', 'whisper-large-v3');
     formData.append('language', language);
     formData.append('response_format', 'text');

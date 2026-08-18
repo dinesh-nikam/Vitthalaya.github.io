@@ -38,10 +38,6 @@ function fail(msg: string, detail?: string): void {
   failCount++;
   console.log(`  ${R}\u2717${X} ${msg}${detail ? R + ' \u2014 ' + detail + X : ''}`);
 }
-function skip(msg: string, reason: string): void {
-  skipCount++;
-  console.log(`  ${Y}\u2298${X} ${msg}${D} \u2014 ${reason}${X}`);
-}
 function info(msg: string): void {
   console.log(`  ${C}\u2192${X} ${msg}`);
 }
@@ -256,7 +252,6 @@ async function main(): Promise<void> {
         sourceAttribution: 'Test',
         language: 'mr',
       };
-      const meta = metadataExtractor.extractLocal(comp);
       const report = qualityScorer.score(comp, 0.5);
 
       const sc = report.overall >= 0.8 ? G : report.overall >= 0.5 ? Y : R;

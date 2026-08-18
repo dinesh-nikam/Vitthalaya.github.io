@@ -13,8 +13,8 @@ interface Source {
   scrapeInterval: number;
   rateLimitMs: number;
   robotsTxt: string | null;
-  allowedPaths: string | null; // JSON string or null
-  excludedPaths: string | null; // JSON string or null
+  allowedPaths: any; // JSON array
+  excludedPaths: any; // JSON array
   trustScore: number;
   totalCompositions: number;
   verifiedCompositions: number;
@@ -28,7 +28,7 @@ interface Source {
   attributionTemplate: string | null;
   status: string;
   isAutoDiscovered: boolean;
-  tags: string | null;
+  tags: any;
   language: string;
   region: string | null;
   notes: string | null;

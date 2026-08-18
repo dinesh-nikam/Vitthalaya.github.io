@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { Network } from 'vis-network';
 import { DataSet } from 'vis-data';
-import { Search, Loader2, ZoomIn, ZoomOut, RotateCw, Filter, X, ExternalLink } from 'lucide-react';
+import { Search, Loader2, RotateCw, X, ExternalLink } from 'lucide-react';
 
 interface GraphNode {
   id: string;

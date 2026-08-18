@@ -5,7 +5,7 @@
  * Used by /api/v1/* routes.
  */
 
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { errorResponse } from './api-response';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -62,6 +62,92 @@ export function validateApiKey(key: string): ApiKeyInfo | null {
   // Update last used
   info.lastUsedAt = new Date();
   return info;
+}
+
+// ─── Per-User Rate Limiting (session-authenticated routes) ──────────────────
+
+// In production this would live in Redis (see src/lib/auth-rate-limit.ts)
+const USER_RATE_LIMITS = new Map<string, { count: number; resetAt: Date }>();
+
+/**
+ * Check rate limit for a user id.
+ *
+ * Mirrors checkRateLimit but keys the in-memory window by the session
+ * user id, for routes that authenticate via getServerSession instead of
+ * an X-API-Key header (e.g. /api/acquire/upload and the correction route).
+ *
+ * `scope` names the bucket (e.g. 'upload' vs 'correction') so different
+ * routes on the same user keep independent windows — same prefixed-key
+ * convention as src/lib/auth-rate-limit.ts ('auth:attempts:<id>').
+ */
+export function checkUserRateLimit(
+  userId: string,
+  limit: number,
+  scope: string = 'default'
+): RateLimitResult {
+  const key = `${scope}:${userId}`;
+  const now = new Date();
+  const record = USER_RATE_LIMITS.get(key);
+
+  // No record or expired window
+  if (!record || now > record.resetAt) {
+    const resetAt = new Date(now.getTime() + 60 * 1000); // 1 minute window
+    USER_RATE_LIMITS.set(key, { count: 1, resetAt });
+    return {
+      allowed: true,
+      remaining: limit - 1,
+      resetAt,
+    };
+  }
+
+  // Within window
+  if (record.count >= limit) {
+    return {
+      allowed: false,
+      remaining: 0,
+      resetAt: record.resetAt,
+    };
+  }
+
+  // Increment count
+  record.count++;
+  return {
+    allowed: true,
+    remaining: limit - record.count,
+    resetAt: record.resetAt,
+  };
+}
+
+/**
+ * Build the 429 response for an exceeded limit, with Retry-After (seconds
+ * until the window resets) and X-RateLimit-* headers so clients know when
+ * to retry.
+ */
+export function rateLimitExceededResponse(resetAt: Date): NextResponse {
+  const response = errorResponse('Rate limit exceeded. Try again later.', 429, {
+    code: 'RATE_LIMITED',
+  });
+  const retryAfter = Math.max(1, Math.ceil((resetAt.getTime() - Date.now()) / 1000));
+  response.headers.set('Retry-After', String(retryAfter));
+  response.headers.set('X-RateLimit-Remaining', '0');
+  response.headers.set('X-RateLimit-Reset', resetAt.toISOString());
+  return response;
+}
+
+/**
+ * Full per-user check: returns the 429 response when the limit is exceeded,
+ * or null when the request may proceed. `scope` names the per-route bucket.
+ */
+export function enforceUserRateLimit(
+  userId: string,
+  limit: number,
+  scope: string = 'default'
+): NextResponse | null {
+  const result = checkUserRateLimit(userId, limit, scope);
+  if (!result.allowed) {
+    return rateLimitExceededResponse(result.resetAt);
+  }
+  return null;
 }
 
 // ─── Rate Limiting ──────────────────────────────────────────────────────────
@@ -184,13 +270,13 @@ if (process.env.NODE_ENV === 'development') {
 // ─── Utility: Add Rate Limit Headers ────────────────────────────────────────
 
 /**
- * Add rate limit headers to response
+ * Add rate limit headers to response (preserves the concrete Response type)
  */
-export function addRateLimitHeaders(
-  response: Response,
+export function addRateLimitHeaders<T extends Response>(
+  response: T,
   remaining: number,
   resetAt: Date
-): Response {
+): T {
   response.headers.set('X-RateLimit-Remaining', String(remaining));
   response.headers.set('X-RateLimit-Reset', resetAt.toISOString());
   return response;

@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { signIn } from 'next-auth/react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Search, Loader2, LogIn, AlertCircle } from 'lucide-react';
+import { Loader2, LogIn, AlertCircle } from 'lucide-react';
 
 function SignInForm() {
   const router = useRouter();
@@ -45,7 +45,7 @@ function SignInForm() {
         router.push(callbackUrl);
         router.refresh();
       }
-    } catch (err) {
+    } catch {
       setLocalError('लॉगिन करताना त्रुटी आली. कृपया पुन्हा प्रयत्न करा.');
     } finally {
       setLoading(false);

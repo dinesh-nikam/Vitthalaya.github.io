@@ -19,15 +19,7 @@
  *   < 0.50: REVIEW — Flag for human review
  */
 
-import type {
-  QualityScore,
-  QualityComponents,
-  QualityTier,
-  ExtractedComposition,
-  ContentQualityReport,
-  QualityIssue,
-  CrawlResult,
-} from './types';
+import type { QualityScore, QualityComponents, QualityTier, ExtractedComposition, ContentQualityReport, QualityIssue } from './types';
 
 export class QualityScorer {
   /**
@@ -96,7 +88,6 @@ export class QualityScorer {
    */
   private scoreCompleteness(comp: ExtractedComposition): number {
     const text = comp.fullText?.trim() ?? '';
-    const wordCount = text.split(/\s+/).length;
     const charCount = text.length;
 
     // Missing text
@@ -311,7 +302,7 @@ export class QualityScorer {
     return suggestions;
   }
 
-  private getRecommendation(tier: QualityTier, components: QualityComponents): string {
+  private getRecommendation(tier: QualityTier, _components: QualityComponents): string {
     switch (tier) {
       case 'premium':
         return 'Auto-approve: High quality content ready for immediate publishing';

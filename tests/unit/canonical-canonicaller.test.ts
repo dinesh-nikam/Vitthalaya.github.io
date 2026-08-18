@@ -3,28 +3,13 @@
  * Tests TC-CANON-001 to TC-CANON-063
  */
 
-import { describe, test, expect, beforeEach } from 'bun:test';
-import {
-  normalizeForComparison,
-  normalizeForDisplay,
-  contentHash,
-  tokenize,
-  isMarathiText,
-  splitIntoLines
-} from '../../src/canonical/normalization';
+import { describe, test, expect } from 'bun:test';
+import { normalizeForComparison } from '../../src/canonical/normalization';
 import { computeAllScores, lineLevelSimilarity } from '../../src/canonical/fuzzy-matcher';
 import { canonicalEngine } from '../../src/canonical/canonical-engine';
 import { UNICODE_FIXTURES } from '../setup';
 
-function calculateSimilarity(a: string, b: string): number {
-  const scores = computeAllScores(a, b);
-  const sum = scores.reduce((acc, s) => acc + s.score, 0);
-  return sum / scores.length;
-}
 
-function normalizeMarathiText(text: string): string {
-  return normalizeForComparison(text);
-}
 
 async function detectDuplicate(comp: any, list: any[], threshold = 0.5): Promise<{ isDuplicate: boolean; confidence: number; matchedSlug?: string }> {
   const candidates = list.map((c) => ({
@@ -91,7 +76,6 @@ describe('Canonicalization Engine - Text Normalization', () => {
   });
 
   test('TC-CANON-036: Zero-width characters stripped', () => {
-    const normalized = normalizeForComparison(UNICODE_FIXTURES.zeroWidth);
     // The normalization strips ZWJ/ZWNJ patterns
     expect(() => normalizeForComparison(UNICODE_FIXTURES.zeroWidth)).not.toThrow();
   });

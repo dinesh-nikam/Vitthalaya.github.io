@@ -24,15 +24,6 @@ const ZWJ_PATTERN = /[\u200C\u200D]/g;
  *  stripped for comparison purposes but preserved in display text. */
 const PUNCTUATION_PATTERN = /[।॥@#\$%\^&\*\+\-=\[\]{}|;:'"<>,\/\\!`~\(\)\u0964\u0965?]/g;
 
-/** Marathi-specific vowel length variations (short vs long).
- *  Some sources write िा (i + length marker) vs ा (aa), etc.
- *  These are already handled by Unicode NFC normalization, but we add
- *  explicit mappings for common OCR/scraping artefacts. */
-const VOWEL_LENGTH_VARIANTS: Record<string, string> = {
-  // No-op: Unicode NFC handles most vowel sign normalization.
-  // This map exists for future scraper-specific overrides.
-};
-
 /**
  * Fix common Devanagari OCR errors, spelling variants, and artifacts.
  */
@@ -150,6 +141,47 @@ export function isMarathiText(text: string): boolean {
 export function contentHash(text: string): string {
   const normalized = normalizeForComparison(text);
   return Bun.hash(normalized).toString(36);
+}
+
+const COMPOSITION_TYPES = [
+  'ABHANG',
+  'BHAJAN',
+  'AARTI',
+  'STOTRA',
+  'HARIPATH',
+  'OVI',
+  'POWADA',
+  'GAULAN',
+  'OTHER',
+] as const;
+
+export type CompositionType = (typeof COMPOSITION_TYPES)[number];
+
+/**
+ * Normalize a free-form composition type string ('abhang', 'Abhang',
+ * 'आरती', 'aarti') to the canonical Prisma enum value, falling back
+ * to OTHER for unrecognized values.
+ */
+export function normalizeCompositionType(value: string | null | undefined): CompositionType {
+  if (!value) return 'OTHER';
+  const key = value
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z]/g, '');
+  const match = COMPOSITION_TYPES.find((t) => t === key);
+  if (match) return match;
+  // Marathi aliases
+  const marathi: Record<string, CompositionType> = {
+    आरती: 'AARTI',
+    भजन: 'BHAJAN',
+    अभंग: 'ABHANG',
+    स्तोत्र: 'STOTRA',
+    हरिपाठ: 'HARIPATH',
+    ओवी: 'OVI',
+    पोवाडा: 'POWADA',
+    गौळण: 'GAULAN',
+  };
+  return marathi[value.trim()] ?? 'OTHER';
 }
 
 /**

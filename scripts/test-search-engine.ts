@@ -1,7 +1,7 @@
 import { transliterateLatinToMarathi, fuseRRF, searchHybrid } from '../src/lib/opensearch-client';
 import { getEmbedding } from '../src/lib/embeddings';
 import { redis } from '../src/lib/redis';
-import { db } from '../src/db/client';
+import '../src/db/client';
 
 async function runTests() {
   console.log('🧪 Starting Search & Recommendation Engine Verification...\n');
@@ -65,7 +65,6 @@ async function runTests() {
       console.log(`    Rank ${idx + 1}: ${doc.titleMarathi} (Score: ${doc.score})`);
     });
 
-    const isDoc2Top = fused[0].id === 'doc-2'; // Doc 2 was ranked highly in both list 1 and list 2, should be #1 or #2
     console.log(`  - Duplicated documents fused and ranked properly [✓]`);
     console.log('✅ RRF Blending tests passed!\n');
   } catch (err) {

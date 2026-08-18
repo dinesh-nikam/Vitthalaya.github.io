@@ -9,13 +9,7 @@
  */
 
 import { db } from './client';
-import type {
-  MergeAction,
-  MappingType,
-  ChangeReason,
-  BatchStats,
-  BatchConfig,
-} from '../canonical/types';
+import type { MergeAction, MappingType, ChangeReason } from '../canonical/types';
 import { contentHash } from '../canonical/normalization';
 
 // ─── Public Data Types ──────────────────────────────────────────────────────
@@ -95,7 +89,7 @@ export async function getCompositionSummaries(
     offset?: number;
   }
 ): Promise<CompositionSummary[]> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const where: Record<string, any> = {};
 
   if (options?.skipCanonicalized) {
@@ -134,18 +128,18 @@ export async function getCompositionSummaries(
  * Fetch comprehensive stats about the canonical system.
  */
 export async function getCanonicalStats(): Promise<CanonicalStats> {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
   const [totalRecords, totalMapped, totalCompositions, mappings, typeGroups] = await Promise.all([
     db.canonicalRecord.count(),
     db.canonicalSourceMapping.count(),
     db.composition.count(),
     // These methods are Prisma-specific - stub for SQLite
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+
     db.canonicalSourceMapping.groupBy({
       by: ['mappingType'],
       _count: { id: true },
     }),
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+
     db.canonicalRecord.groupBy({
       by: ['type'],
       _count: { id: true },
@@ -153,14 +147,14 @@ export async function getCanonicalStats(): Promise<CanonicalStats> {
   ]);
 
   const typeBreakdown: Record<string, number> = {};
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+
   for (const g of typeGroups as Array<{ type: string; _count: { id: number } }>) {
     typeBreakdown[g.type] = g._count.id;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
   let autoMergedCount = 0;
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
   let pendingReviewCount = 0;
   for (const m of mappings as Array<{ mappingType: string; _count: { id: number } }>) {
     if (m.mappingType === 'duplicate') autoMergedCount += m._count.id;
@@ -200,7 +194,7 @@ export async function getAllCanonicalRecords(
     orderBy: { canonicalVersion: 'asc' },
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   return records.map((r: any) => ({
     id: r.id,
     title: r.titleMarathi,
@@ -287,7 +281,7 @@ export async function createCanonicalRecord(compositionId: string): Promise<stri
   });
 
   // Create primary source mapping
-  const mapping = await db.canonicalSourceMapping.create({
+  await db.canonicalSourceMapping.create({
     data: {
       canonicalId: record.id,
       compositionId: composition.id,
@@ -336,7 +330,7 @@ export async function mergeIntoCanonical(
   const hash = contentHash(composition.fullText);
 
   // Create source mapping
-  const mapping = await db.canonicalSourceMapping.create({
+  await db.canonicalSourceMapping.create({
     data: {
       canonicalId,
       compositionId: composition.id,

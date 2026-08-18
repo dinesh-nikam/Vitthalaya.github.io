@@ -24,7 +24,7 @@ export async function exportKindle(
 ): Promise<{ filePath: string; mobiPath?: string; kpfReady: boolean }> {
   // 1. Generate EPUB 3 first (base format for Kindle)
   const epubPath = outputPath.replace(/\.(mobi|azw3|kpf)$/i, '.epub');
-  const epubResult = await exportEpub3(selection, structure, coverDesign, layout, epubPath);
+  await exportEpub3(selection, structure, coverDesign, layout, epubPath);
 
   // 2. Try kindlegen auto-conversion
   const kindlegenPath = findKindlegen();

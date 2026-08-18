@@ -21,18 +21,18 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 // Discovery & Crawling
-import { parseSitemap, crawlLinkGraph, discoverYouTubePlaylists } from '../scraper/discovery';
+import { parseSitemap, discoverYouTubePlaylists } from '../scraper/discovery';
 import { TukaramGathaScraper } from '../scraper/tukaram-gatha';
 import { MarathiSourceScraper } from '../scraper/marathi-source';
-import { PDFCrawler } from '../scraper/pdf-crawler';
-import { EPUBCrawler } from '../scraper/epub-crawler';
+import '../scraper/pdf-crawler';
+import '../scraper/epub-crawler';
 import { UploadCrawler } from '../scraper/upload-crawler';
 import { OCRCrawler } from '../scraper/ocr-crawler';
 
 // Normalization & Deduplication
 import { normalizeForDisplay, contentHash } from '../canonical/normalization';
 import { canonicalEngine } from '../canonical/canonical-engine';
-import { getCompositionSummaries, getAllCanonicalRecords, createCanonicalRecord, mergeIntoCanonical } from '../db/canonical';
+import { getAllCanonicalRecords, createCanonicalRecord, mergeIntoCanonical } from '../db/canonical';
 
 // DB & Integrator
 import { db } from '../db/client';
@@ -44,7 +44,7 @@ import { KnowledgeGraphBuilder } from '../lib/knowledge-graph-builder';
 // Search Index
 import { indexAllCompositions as indexAllOS } from '../lib/opensearch-client';
 import { indexAllCompositions as indexAllMeili } from '../lib/search-client';
-import { processSearchSyncJobs, processAiEnrichmentJobs } from '../lib/workers';
+import { processSearchSyncJobs } from '../lib/workers';
 
 // ============================================================
 // CLI Setup & Directory Init

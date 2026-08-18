@@ -1,9 +1,14 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/src/lib/auth';
 import { db } from '../../../src/db/client';
+import { canAccessOrder } from '@/src/lib/orders/order-access';
+import { GST_LABEL } from '@/src/lib/orders/pricing';
 
 interface Props {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ token?: string; email?: string }>;
 }
 
 const STATUS_STEPS = ['PENDING', 'CONFIRMED', 'PROCESSING', 'PRINTING', 'SHIPPED', 'DELIVERED'] as const;
@@ -21,8 +26,10 @@ const STATUS_LABELS: Record<string, string> = {
 
 export const dynamic = 'force-dynamic';
 
-export default async function OrderDetailPage({ params }: Props) {
+export default async function OrderDetailPage({ params, searchParams }: Props) {
   const { id } = await params;
+  const query = await searchParams;
+  const session = await getServerSession(authOptions);
 
   const order = await db.order.findUnique({
     where: { id },
@@ -37,7 +44,18 @@ export default async function OrderDetailPage({ params }: Props) {
     },
   });
 
-  if (!order) notFound();
+  // Gated: only the order owner (session), a shareable-token holder, or the
+  // guest who used this email at checkout may view it. Unauthorized viewers
+  // get a 404 so the order's existence is not revealed.
+  const sessionUserId = session?.user ? (session.user as any).id : null;
+  if (!order || !canAccessOrder({
+    order,
+    sessionUserId,
+    token: query.token ?? null,
+    email: query.email ?? null,
+  })) {
+    notFound();
+  }
 
   const isCancelled = order.status === 'CANCELLED' || order.status === 'REFUNDED';
   const currentStep = isCancelled ? -1 : STATUS_STEPS.indexOf(order.status as any);
@@ -116,7 +134,7 @@ export default async function OrderDetailPage({ params }: Props) {
           <div className="space-y-2 text-sm">
             <Row label="उप-एकूण" value={`₹${Number(order.subtotal).toLocaleString('en-IN')}`} />
             <Row label="शिपिंग" value={order.shippingCost ? `₹${Number(order.shippingCost).toLocaleString('en-IN')}` : 'मोफत'} />
-            <Row label="कर (GST)" value={`₹${Number(order.tax).toLocaleString('en-IN')}`} />
+            <Row label={GST_LABEL} value={`₹${Number(order.tax).toLocaleString('en-IN')}`} />
             <Row label="एकूण" value={`₹${Number(order.total).toLocaleString('en-IN')}`} bold />
             {order.paymentId && <Row label="पेमेंट आयडी" value={order.paymentId} />}
           </div>

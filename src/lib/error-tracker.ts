@@ -3,6 +3,8 @@
  * Simple error tracking with structured logging and optional Sentry integration
  * In production, sends to Sentry if DSN configured, otherwise logs structured errors
  */
+import * as Sentry from '@sentry/nextjs';
+
 
 interface ErrorContext {
   requestId?: string;
@@ -48,16 +50,11 @@ export function trackError(
 
   // In production, send to Sentry if configured
   if (process.env.NODE_ENV === 'production' && process.env.SENTRY_DSN) {
-    // Placeholder for Sentry integration
-    // In real implementation, use @sentry/nextjs
-    void fetch(process.env.SENTRY_DSN, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(trackedError),
-      // Fire and forget - don't wait for response
-    }).catch(() => {
-      // Silently fail on Sentry send
-    });
+    if (typeof error === 'string') {
+      Sentry.captureMessage(error, { extra: context });
+    } else {
+      Sentry.captureException(error, { extra: context });
+    }
   }
 
   return trackedError;
