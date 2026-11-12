@@ -65,6 +65,20 @@ const BOOK_TYPES: { value: BookType; label: string; desc: string }[] = [
   { value: 'TEMPLE', label: 'मंदिर', desc: '8.5×11, मोठे टाईप' },
 ];
 
+
+const POPULAR_SAINTS = [
+  { id: 'c550a9ee-2664-4d92-a0d2-df47fc7b5ae8', name: 'ज्ञानेश्वर महाराज' },
+  { id: '0f2c6cb5-eec7-4ee4-97c4-695a7a1c5661', name: 'तुकाराम महाराज' },
+  { id: '795a09ef-ed15-4630-8ea2-d1233926653d', name: 'नामदेव महाराज' },
+  { id: '32c24505-14af-4d95-baad-54aab4914a6d', name: 'एकनाथ महाराज' },
+  { id: '9df4dfef-af5d-4335-8d15-4812cb004926', name: 'संत जनाबाई' },
+  { id: '36459d0f-e5c9-48cb-bdd4-e09c0a56db84', name: 'संत मुक्ताबाई' },
+  { id: '3c47c50f-d801-4a3d-9e9b-cc4a3e508877', name: 'संत चोखामेळा' },
+  { id: 'ab82903e-828d-4980-826c-6a3934a1934e', name: 'संत सावता माळी' },
+  { id: '6761a546-b163-4552-a4cc-316480551564', name: 'संत गोरा कुंभार' },
+  { id: 'd9166e0a-041b-4ba1-ae5e-6b8a14f92e69', name: 'संत कान्होपात्रा' },
+];
+
 const COMPOSITION_TYPES: { value: CompositionType; label: string }[] = [
   { value: 'abhang', label: 'अभंग' },
   { value: 'aarti', label: 'आरती' },
@@ -105,6 +119,16 @@ export default function BookGeneratePage() {
       case 2: return true;
       case 3: return true;
     }
+  };
+
+  
+  const toggleSaint = (id: string) => {
+    setState((s) => ({
+      ...s,
+      saintIds: s.saintIds.includes(id)
+        ? s.saintIds.filter((x) => x !== id)
+        : [...s.saintIds, id],
+    }));
   };
 
   const toggleCompositionType = (t: CompositionType) => {
@@ -286,9 +310,28 @@ export default function BookGeneratePage() {
                   </div>
                 </div>
 
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">संत निवड (पर्यायी)</label>
+                  <div className="flex flex-wrap gap-2">
+                    {POPULAR_SAINTS.map((s) => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => toggleSaint(s.id)}
+                        className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                          state.saintIds.includes(s.id)
+                            ? 'bg-[#6B1E1E] text-white border-[#6B1E1E]'
+                            : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        {s.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
                 <p className="text-xs text-gray-400 italic">
-                  सर्व प्रकार निवडल्यास सर्व उपलब्ध रचनांमधून निवड होईल.
-                  संत किंवा देवता निवड — हे वैशिष्ट्य लवकरच उपलब्ध होईल.
+                  संत किंवा रचना प्रकार निवड न केल्यास समग्र उपलब्ध रचनांमधून संकलन केले जाईल.
                 </p>
               </div>
             )}

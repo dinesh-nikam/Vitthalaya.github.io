@@ -2,17 +2,29 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { Bookmark, Library, ArrowRight, Trash2 } from 'lucide-react';
+import { Bookmark, Library, ArrowRight, Trash2, ChevronRight, BookOpen } from 'lucide-react';
 import { getBookmarks, clearBookmarks } from '@/src/db/bookmark';
-import { V4PageShell, V4ArtifactLink } from '@/components/v4-page-shell';
+import '@/app/homepage.css';
+
+interface PublicList {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  compositionCount: number;
+  createdAt: string;
+  creator?: {
+    name?: string | null;
+  };
+}
 
 export default function CollectionsPage() {
   const [activeTab, setActiveTab] = React.useState<'bookmarks' | 'public'>('bookmarks');
   const [bookmarks, setBookmarks] = React.useState<Array<{ slug: string; title: string }>>([]);
-  const [compositions, setCompositions] = React.useState<any[]>([]);
-  
-  // Public collections states
-  const [publicLists, setPublicLists] = React.useState<any[]>([]);
+  const [compositions, setCompositions] = React.useState<Array<{ slug: string; titleMarathi: string; titleTranslit: string }>>([]);
+
+  // Public collections state
+  const [publicLists, setPublicLists] = React.useState<PublicList[]>([]);
   const [publicTotal, setPublicTotal] = React.useState(0);
   const [loadingPublic, setLoadingPublic] = React.useState(false);
   const [loadingLocal, setLoadingLocal] = React.useState(true);
@@ -27,7 +39,7 @@ export default function CollectionsPage() {
           stored.map((b) => ({
             slug: b.slug,
             titleMarathi: b.title,
-            titleTranslit: b.slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
+            titleTranslit: b.slug.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' '),
           }))
         );
       } catch (e) {
@@ -67,170 +79,226 @@ export default function CollectionsPage() {
   };
 
   return (
-    <>
-      <title>संग्रह आणि आवडते | डिजिटल पंढरपूर</title>
-      <meta name="description" content="तुमचे आवडते अभंग आणि वारकरी समुदायाचे सार्वजनिक संग्रह एका ठिकाणी पहा." />
-      
-      <V4PageShell
-        eyebrow="माझे भक्ती साहित्य"
-        title="संग्रह आणि आवडते"
-        description="तुमचे आवडते अभंग आणि वारकरी समुदायाने तयार केलेले सार्वजनिक संग्रह पहा आणि अभ्यासा."
-        stats={[
-          { label: 'माझे बुकमार्क', value: bookmarks.length },
-          { label: 'सार्वजनिक संग्रह', value: publicTotal || '...' },
-        ]}
-      >
-        <div className="mt-8 space-y-8">
-          {/* Custom Tabs */}
-          <div className="flex border-b border-saffron/10 gap-6">
-            <button
-              onClick={() => setActiveTab('bookmarks')}
-              className={`pb-4 text-lg font-marathi font-medium transition-colors relative ${
-                activeTab === 'bookmarks' ? 'text-saffron' : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              बुकमार्क ({bookmarks.length})
-              {activeTab === 'bookmarks' && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-saffron" />
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab('public')}
-              className={`pb-4 text-lg font-marathi font-medium transition-colors relative ${
-                activeTab === 'public' ? 'text-saffron' : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              सार्वजनिक संग्रह ({publicTotal})
-              {activeTab === 'public' && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-saffron" />
-              )}
-            </button>
-          </div>
+    <div className="vitthalaya-shell min-h-screen py-10">
+      <div className="vitthalaya-container max-w-4xl">
+        {/* Breadcrumb */}
+        <nav className="mb-6" aria-label="ब्रेडक्रंब">
+          <ol className="flex items-center gap-2 text-xs font-marathi text-[var(--dp-muted)]">
+            <li>
+              <Link href="/" className="hover:text-[var(--dp-gold)] transition-colors">
+                मुख्यपृष्ठ
+              </Link>
+            </li>
+            <li aria-hidden="true"><ChevronRight size={12} /></li>
+            <li className="text-[var(--dp-ink)]">संग्रह व आवडते</li>
+          </ol>
+        </nav>
 
-          {/* Bookmarks Tab Content */}
-          {activeTab === 'bookmarks' && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-saffron-300 text-xl font-marathi font-medium">
-                  माझे आवडते साहित्य
-                </h2>
+        {/* Page Header */}
+        <header className="mb-10 text-center">
+          <p className="text-xs text-[var(--dp-gold)] font-marathi mb-1">
+            वैयक्तिक व सार्वजनिक वाचन
+          </p>
+          <h1 className="vitthalaya-display text-3xl sm:text-4xl md:text-5xl font-bold mb-3">
+            संग्रह आणि आवडते साहित्य
+          </h1>
+          <p className="vitthalaya-prose text-sm sm:text-base text-[var(--dp-ink-dim)] max-w-xl mx-auto">
+            आपले आवडते अभंग आणि वारकरी समुदायाने तयार केलेल्या सार्वजनिक संग्रहांचा अभ्यास करा.
+          </p>
+        </header>
 
-                {bookmarks.length > 0 && (
-                  <button
-                    onClick={handleClearAll}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-destructive/20 text-xs text-destructive hover:bg-destructive/10 transition-colors"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    <span>सर्व बुकमार्क हटवा</span>
-                  </button>
-                )}
-              </div>
+        {/* Tabs Bar */}
+        <div className="flex border-b border-[var(--dp-rule)] gap-6 mb-8">
+          <button
+            type="button"
+            onClick={() => setActiveTab('bookmarks')}
+            className={`pb-3 text-base font-marathi font-medium transition-colors relative focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--dp-focus)] active:translate-y-px disabled:opacity-50 disabled:cursor-not-allowed ${
+              activeTab === 'bookmarks'
+                ? 'text-[var(--dp-gold)] font-bold'
+                : 'text-[var(--dp-muted)] hover:text-[var(--dp-ink)]'
+            }`}
+          >
+            माझे बुकमार्क ({bookmarks.length})
+            {activeTab === 'bookmarks' && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--dp-gold)]" />
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('public')}
+            className={`pb-3 text-base font-marathi font-medium transition-colors relative focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--dp-focus)] active:translate-y-px disabled:opacity-50 disabled:cursor-not-allowed ${
+              activeTab === 'public'
+                ? 'text-[var(--dp-gold)] font-bold'
+                : 'text-[var(--dp-muted)] hover:text-[var(--dp-ink)]'
+            }`}
+          >
+            सार्वजनिक संग्रह ({publicTotal})
+            {activeTab === 'public' && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--dp-gold)]" />
+            )}
+          </button>
+        </div>
 
-              {loadingLocal ? (
-                <p className="text-muted-foreground text-center py-8">लोड होत आहे...</p>
-              ) : compositions.length === 0 ? (
-                <div className="text-center py-16 bg-saffron-50/10 rounded-2xl border border-saffron/5">
-                  <Bookmark className="w-12 h-12 mx-auto mb-4 text-muted-foreground/60" />
-                  <h3 className="text-lg font-marathi font-medium mb-1">अजून कोणतेही बुकमार्क नाहीत</h3>
-                  <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-6">
-                    अभंग किंवा आरत्या वाचताना उजवीकडील बुकमार्क आयकॉनवर क्लिक करून ते येथे जतन करा.
-                  </p>
-                  <Link
-                    href="/search"
-                    className="inline-flex items-center gap-2 px-6 py-2.5 bg-saffron text-white rounded-full font-semibold hover:bg-saffron/90 transition-all text-sm"
-                  >
-                    साहित्य शोधा <ArrowRight className="w-4 h-4" />
-                  </Link>
-                </div>
-              ) : (
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {compositions.map((comp: any) => (
-                    <V4ArtifactLink
-                      key={comp.slug}
-                      href={`/abhang/${comp.slug}`}
-                      title={comp.titleMarathi}
-                      subtitle={comp.titleTranslit}
-                      meta="अभंग"
-                      variant="gold"
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Public Collections Tab Content */}
-          {activeTab === 'public' && (
-            <div className="space-y-6">
-              <h2 className="text-saffron-300 text-xl font-marathi font-medium">
-                वारकरी समुदायाचे सार्वजनिक संग्रह
+        {/* Bookmarks Tab */}
+        {activeTab === 'bookmarks' && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="vitthalaya-display text-xl font-bold">
+                माझे आवडते अभंग
               </h2>
 
-              {loadingPublic ? (
-                <p className="text-muted-foreground text-center py-8">लोड होत आहे...</p>
-              ) : publicLists.length === 0 ? (
-                <div className="text-center py-16 bg-saffron-50/10 rounded-2xl border border-saffron/5">
-                  <Library className="w-12 h-12 mx-auto mb-4 text-muted-foreground/60" />
-                  <h3 className="text-lg font-marathi font-medium mb-1">कोणतेही सार्वजनिक संग्रह नाहीत</h3>
-                  <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-                    वारकरी समुदायाने तयार केलेले संग्रह लवकरच येथे जोडले जातील.
-                  </p>
-                </div>
-              ) : (
-                <div className="grid gap-6 sm:grid-cols-2">
-                  {publicLists.map((list) => (
-                    <div
-                      key={list.id}
-                      className="group bg-card rounded-2xl p-6 border border-saffron/10 hover:border-saffron/30 hover:shadow-lg transition-all flex flex-col justify-between"
-                    >
-                      <div>
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-saffron/10 text-saffron font-bold uppercase tracking-wider">
-                            {list.compositionCount} रचना
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            {new Date(list.createdAt).toLocaleDateString('mr-IN', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric',
-                            })}
-                          </span>
-                        </div>
-                        <h3 className="text-xl font-marathi font-medium text-foreground group-hover:text-saffron transition-colors mb-2">
-                          {list.name}
-                        </h3>
-                        {list.description && (
-                          <p className="text-sm text-muted-foreground line-clamp-2 mb-4 leading-relaxed">
-                            {list.description}
-                          </p>
-                        )}
-                      </div>
-                      
-                      <div className="flex items-center justify-between border-t border-saffron/5 pt-4 mt-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-saffron/20 flex items-center justify-center text-[10px] font-bold text-saffron">
-                            {list.creator?.name?.charAt(0) || 'वा'}
-                          </div>
-                          <span className="text-xs text-muted-foreground">
-                            {list.creator?.name || 'वारकरी'}
-                          </span>
-                        </div>
-
-                        <Link
-                          href={`/reading-lists/${list.slug}`}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-saffron hover:underline"
-                        >
-                          उघडा <ArrowRight className="w-3.5 h-3.5" />
-                        </Link>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+              {bookmarks.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleClearAll}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded border border-[var(--dp-rule)] text-xs text-[var(--dp-muted)] hover:text-[var(--dp-ink)] hover:border-[var(--dp-gold)] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--dp-focus)] active:translate-y-px disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Trash2 size={13} aria-hidden="true" />
+                  <span>सर्व बुकमार्क हटवा</span>
+                </button>
               )}
             </div>
-          )}
-        </div>
-      </V4PageShell>
-    </>
+
+            {loadingLocal ? (
+              <p className="text-[var(--dp-muted)] text-center py-12 font-marathi text-sm">
+                लोड होत आहे…
+              </p>
+            ) : compositions.length === 0 ? (
+              <div className="text-center py-16 vitthalaya-card rounded p-8">
+                <Bookmark className="w-10 h-10 mx-auto mb-3 text-[var(--dp-muted)]" aria-hidden="true" />
+                <h3 className="vitthalaya-display text-lg font-bold mb-1">अजून कोणतेही बुकमार्क नाहीत</h3>
+                <p className="text-xs text-[var(--dp-ink-dim)] max-w-sm mx-auto mb-6 font-marathi leading-relaxed">
+                  अभंग किंवा आरत्या वाचताना बुकमार्क बटणावर क्लिक करून ते येथे जतन करा.
+                </p>
+                <Link
+                  href="/search"
+                  className="vitthalaya-btn-primary text-xs"
+                >
+                  साहित्य शोधा
+                  <ArrowRight size={13} aria-hidden="true" />
+                </Link>
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {compositions.map((comp) => (
+                  <Link
+                    key={comp.slug}
+                    href={`/abhang/${comp.slug}`}
+                    className="vitthalaya-card rounded p-4 group block hover:border-[var(--dp-gold)] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--dp-focus)] active:translate-y-px"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="font-marathi font-medium text-sm text-[var(--dp-ink)] group-hover:text-[var(--dp-gold)] transition-colors">
+                          {comp.titleMarathi}
+                        </p>
+                        <p className="text-xs text-[var(--dp-muted)] font-marathi mt-1">
+                          {comp.titleTranslit}
+                        </p>
+                      </div>
+                      <span className="text-xs font-semibold text-[var(--dp-gold)] font-marathi">
+                        अभंग
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Public Collections Tab */}
+        {activeTab === 'public' && (
+          <div className="space-y-6">
+            <h2 className="vitthalaya-display text-xl font-bold">
+              वारकरी समुदायाचे संग्रह
+            </h2>
+
+            {loadingPublic ? (
+              <p className="text-[var(--dp-muted)] text-center py-12 font-marathi text-sm">
+                लोड होत आहे…
+              </p>
+            ) : publicLists.length === 0 ? (
+              <div className="text-center py-12 vitthalaya-card rounded p-8 space-y-6">
+                <Library className="w-10 h-10 mx-auto text-[var(--dp-muted)]" aria-hidden="true" />
+                <div className="max-w-md mx-auto space-y-2">
+                  <h3 className="vitthalaya-display text-lg font-bold">सार्वजनिक वाचन संग्रह उपलब्ध नाहीत</h3>
+                  <p className="text-xs text-[var(--dp-ink-dim)] font-marathi leading-relaxed">
+                    वारकरी समुदायाचे वैयक्तिक सार्वजनिक संग्रह अद्याप प्रकाशित नाहीत. आपण स्वतःचा वाचन संग्रह तयार करू शकता किंवा खालील नित्य संग्रह अभ्यासू शकता.
+                  </p>
+                </div>
+                <div className="flex flex-wrap justify-center gap-3 pt-2">
+                  <Link
+                    href="/reading-lists"
+                    className="vitthalaya-btn-primary text-xs"
+                  >
+                    नवीन संग्रह तयार करा
+                    <ArrowRight size={13} aria-hidden="true" />
+                  </Link>
+                  <Link
+                    href="/search?q=हरिपाठ"
+                    className="px-4 py-2 border border-[var(--dp-rule)] hover:border-[var(--dp-gold)] text-xs rounded transition-colors"
+                  >
+                    हरिपाठ संग्रह
+                  </Link>
+                  <Link
+                    href="/search?q=काकड+आरती"
+                    className="px-4 py-2 border border-[var(--dp-rule)] hover:border-[var(--dp-gold)] text-xs rounded transition-colors"
+                  >
+                    नित्य काकड आरती
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {publicLists.map((list) => (
+                  <div
+                    key={list.id}
+                    className="vitthalaya-card rounded p-5 flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-marathi text-[var(--dp-gold)]">
+                          {list.compositionCount} रचना
+                        </span>
+                        <span className="text-xs text-[var(--dp-muted)] font-marathi">
+                          {new Date(list.createdAt).toLocaleDateString('mr-IN', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                        </span>
+                      </div>
+                      <h3 className="vitthalaya-display text-lg font-bold mb-1">
+                        {list.name}
+                      </h3>
+                      {list.description && (
+                        <p className="text-xs text-[var(--dp-ink-dim)] line-clamp-2 mb-4 font-marathi leading-relaxed">
+                          {list.description}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between border-t border-[var(--dp-rule)] pt-3 mt-3">
+                      <span className="text-xs text-[var(--dp-muted)] font-marathi">
+                        संकलक: {list.creator?.name || 'वारकरी'}
+                      </span>
+
+                      <Link
+                        href={`/reading-lists/${list.slug}`}
+                        className="inline-flex items-center gap-1 text-xs font-semibold font-marathi text-[var(--dp-gold)] hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--dp-focus)] active:translate-y-px"
+                      >
+                        <BookOpen size={13} aria-hidden="true" />
+                        उघडा
+                        <ArrowRight size={13} aria-hidden="true" />
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

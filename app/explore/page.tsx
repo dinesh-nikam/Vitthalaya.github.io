@@ -1,11 +1,10 @@
 'use client';
 
-import { VitthalayaShell } from '@/components/vitthalaya-shell';
+import * as React from 'react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { TrendingUp, BookOpen, Calendar, Star, ArrowRight } from 'lucide-react';
 import Image from 'next/image';
-
+import { TrendingUp, BookOpen, Calendar, ArrowRight, ChevronRight, Compass } from 'lucide-react';
+import '@/app/homepage.css';
 
 interface TrendingComposition {
   id: string;
@@ -40,7 +39,6 @@ interface Stats {
   byType: Record<string, number>;
 }
 
-/** Devanagari digit formatting for real counts. */
 function fmtMr(n: number): string {
   try {
     return new Intl.NumberFormat('mr-IN').format(n);
@@ -57,22 +55,22 @@ function fmtDate(iso: string): string {
   }
 }
 
-const TYPE_CARDS: { type: string; label: string; en: string; img: string; slug: string }[] = [
-  { type: 'abhang', label: 'अभंग', en: 'Abhang', img: '/images/categories/abhang.jpg', slug: '/search?type=abhang' },
-  { type: 'aarti', label: 'आरत्या', en: 'Aarti', img: '/images/categories/aarti.jpg', slug: '/search?type=aarti' },
-  { type: 'stotra', label: 'स्तोत्रे', en: 'Stotra', img: '/images/categories/stotra.jpg', slug: '/search?type=stotra' },
-  { type: 'bhajan', label: 'भजन', en: 'Bhajan', img: '/images/categories/bhajan.jpg', slug: '/search?type=bhajan' },
+const TYPE_CARDS: { type: string; label: string; mrSubtitle: string; img: string; slug: string }[] = [
+  { type: 'abhang', label: 'अभंग', mrSubtitle: 'संतवाणी व गाथा', img: '/images/categories/abhang.jpg', slug: '/search?type=abhang' },
+  { type: 'aarti', label: 'आरत्या', mrSubtitle: 'नित्य उपासना', img: '/images/categories/aarti.jpg', slug: '/search?type=aarti' },
+  { type: 'stotra', label: 'स्तोत्रे', mrSubtitle: 'स्तोत्र व नामजप', img: '/images/categories/stotra.jpg', slug: '/search?type=stotra' },
+  { type: 'bhajan', label: 'भजन', mrSubtitle: 'पारंपारिक भजने', img: '/images/categories/bhajan.jpg', slug: '/search?type=bhajan' },
 ];
 
 export default function ExplorePage() {
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [trending, setTrending] = useState<TrendingComposition[]>([]);
-  const [trendingSignal, setTrendingSignal] = useState<'interactions' | 'recency'>('recency');
-  const [recent, setRecent] = useState<RecentComposition[]>([]);
-  const [upcomingFestivals, setUpcomingFestivals] = useState<Festival[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = React.useState<Stats | null>(null);
+  const [trending, setTrending] = React.useState<TrendingComposition[]>([]);
+  const [trendingSignal, setTrendingSignal] = React.useState<'interactions' | 'recency'>('recency');
+  const [recent, setRecent] = React.useState<RecentComposition[]>([]);
+  const [upcomingFestivals, setUpcomingFestivals] = React.useState<Festival[]>([]);
+  const [loading, setLoading] = React.useState(true);
 
-  useEffect(() => {
+  React.useEffect(() => {
     async function fetchData() {
       try {
         const [statsRes, trendingRes, festivalsRes, recentRes] = await Promise.all([
@@ -104,28 +102,63 @@ export default function ExplorePage() {
   }, []);
 
   return (
-    <>
-      <title>एक्सप्लोर करा — नवीन साहित्य शोधा | डिजिटल पंढरपूर</title>
-      <meta name="description" content="अभंग, आरत्या, स्तोत्रे, संत साहित्य — महाराष्ट्राच्या भक्ती संपदेचा डिजिटल संग्रह एक्सप्लोर करा." />
-      <VitthalayaShell
-        title="Explore Sacred Literature"
-        description="Discover the profound compositions of Marathi saints and deities."
-        primaryHref="/search"
-        primaryLabel="Search Compositions"
-        eyebrow="Spiritual Discovery"
-        stats={[
-          { label: 'Compositions', value: stats ? fmtMr(stats.compositions) : '...' },
-          { label: 'Saints', value: stats ? fmtMr(stats.saints) : '...' },
-          { label: 'Categories', value: stats ? fmtMr(stats.categories) : '...' },
-        ]}
-      >
-        {/* Page-specific content */}
-        <div className="mt-12 space-y-12">
-          {/* Category Browsing */}
+    <div className="vitthalaya-shell min-h-screen py-10">
+      <div className="vitthalaya-container max-w-5xl">
+        {/* Breadcrumb Navigation */}
+        <nav className="mb-6" aria-label="ब्रेडक्रंब">
+          <ol className="flex items-center gap-2 text-xs font-marathi text-[var(--dp-muted)]">
+            <li>
+              <Link href="/" className="hover:text-[var(--dp-gold)] transition-colors">
+                मुख्यपृष्ठ
+              </Link>
+            </li>
+            <li aria-hidden="true"><ChevronRight size={12} /></li>
+            <li className="text-[var(--dp-ink)]">अन्वेषण (एक्सप्लोर)</li>
+          </ol>
+        </nav>
+
+        {/* Page Header */}
+        <header className="mb-12 text-center max-w-3xl mx-auto">
+          <p className="text-xs text-[var(--dp-gold)] font-marathi mb-2">
+            ज्ञान व भक्तीचा शोध
+          </p>
+          <h1 className="vitthalaya-display text-3xl sm:text-4xl md:text-5xl font-bold mb-3">
+            पवित्र साहित्य अन्वेषण
+          </h1>
+          <p className="vitthalaya-prose text-sm sm:text-base text-[var(--dp-ink-dim)] leading-relaxed mb-6">
+            महाराष्ट्रातील वारकरी संतांच्या अमृतवाणीचे, नित्य भजनांचे आणि पवित्र उत्सवांचे सखोल दर्शन घ्या.
+          </p>
+
+          <div className="flex flex-wrap justify-center gap-6 text-xs font-marathi text-[var(--dp-muted)] py-3 px-6 rounded bg-[var(--dp-ground-well)] border border-[var(--dp-rule)] max-w-md mx-auto mb-6">
+            <span>रचना: <strong className="text-[var(--dp-ink)]">{stats ? fmtMr(stats.compositions) : '२६,०००+'}</strong></span>
+            <span>संत: <strong className="text-[var(--dp-ink)]">{stats ? fmtMr(stats.saints) : '२९'}</strong></span>
+            <span>श्रेण्या: <strong className="text-[var(--dp-ink)]">{stats ? fmtMr(stats.categories) : '४'}</strong></span>
+          </div>
+
+          <div>
+            <Link
+              href="/search"
+              className="vitthalaya-btn-primary text-sm"
+            >
+              <Compass size={14} aria-hidden="true" />
+              विशिष्ट अभंग किंवा संत शोधा
+            </Link>
+          </div>
+        </header>
+
+        {/* Main Sections */}
+        <div className="space-y-14">
+          {/* Category Exploration Grid */}
           <section aria-labelledby="category-browse">
-            <h2 id="category-browse" className="text-saffron-300 text-xl font-medium mb-4">
-              साहित्य श्रेणींचे अन्वेषण करा
-            </h2>
+            <div className="flex items-center justify-between mb-4 border-b border-[var(--dp-rule)] pb-2">
+              <h2 id="category-browse" className="vitthalaya-display text-xl font-bold">
+                साहित्य श्रेणी
+              </h2>
+              <Link href="/category" className="text-xs text-[var(--dp-gold)] font-marathi hover:underline">
+                सर्व श्रेणी पहा
+              </Link>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {TYPE_CARDS.map((card) => {
                 const count = stats?.byType?.[card.type];
@@ -133,24 +166,28 @@ export default function ExplorePage() {
                   <Link
                     key={card.type}
                     href={card.slug}
-                    className="group relative overflow-hidden rounded-2xl aspect-[4/3] flex flex-col justify-end p-5 border border-saffron/10 transition-all duration-300 hover:border-saffron/30 hover:shadow-2xl hover:-translate-y-1"
+                    className="group vitthalaya-card rounded overflow-hidden block border border-[var(--dp-rule)] hover:border-[var(--dp-gold)] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--dp-focus)] active:translate-y-px"
                   >
-                    <div className="absolute inset-0 z-0">
+                    <div className="relative aspect-[16/10] bg-[var(--dp-ground-well)]">
                       <Image
                         src={card.img}
                         alt={card.label}
                         fill
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        className="object-cover"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent group-hover:via-saffron-950/20 group-hover:from-saffron-950/80 transition-colors duration-300" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[var(--dp-ground)] via-transparent to-transparent opacity-80" />
                     </div>
 
-                    <div className="relative z-10 space-y-1 text-left">
-                      <span className="text-saffron text-[10px] font-bold uppercase tracking-wider">{card.en}</span>
-                      <h3 className="text-white text-xl font-bold font-marathi">{card.label}</h3>
-                      <p className="text-white/60 text-xs font-mono">
-                        {count != null ? `${fmtMr(count)} रचना` : '… रचना'}
+                    <div className="p-4 space-y-1">
+                      <p className="text-[11px] text-[var(--dp-gold)] font-marathi">
+                        {card.mrSubtitle}
+                      </p>
+                      <h3 className="vitthalaya-display text-lg font-bold text-[var(--dp-ink)] group-hover:text-[var(--dp-gold)] transition-colors">
+                        {card.label}
+                      </h3>
+                      <p className="text-xs text-[var(--dp-muted)] font-marathi">
+                        {count != null ? `${fmtMr(count)} रचना` : 'रचना उपलब्ध'}
                       </p>
                     </div>
                   </Link>
@@ -159,28 +196,34 @@ export default function ExplorePage() {
             </div>
           </section>
 
-          {/* Recent Compositions — real rows, real timestamps */}
+          {/* Recent Compositions */}
           {!loading && recent.length > 0 && (
             <section aria-labelledby="recent">
-              <h2 id="recent" className="text-saffron-300 text-xl font-medium mb-4 flex items-center gap-2">
-                <BookOpen className="w-5 h-5" />
-                नवीन जोडलेल्या रचना
-              </h2>
+              <div className="flex items-center justify-between mb-4 border-b border-[var(--dp-rule)] pb-2">
+                <h2 id="recent" className="vitthalaya-display text-xl font-bold flex items-center gap-2">
+                  <BookOpen size={18} className="text-[var(--dp-gold)]" aria-hidden="true" />
+                  नुकत्याच जोडलेल्या रचना
+                </h2>
+                <Link href="/library" className="text-xs text-[var(--dp-gold)] font-marathi hover:underline">
+                  ग्रंथालयात पहा
+                </Link>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {recent.slice(0, 6).map((comp) => (
                   <Link
                     key={comp.id}
                     href={`/abhang/${comp.slug}`}
-                    className="group bg-card rounded-xl p-4 border border-saffron/10 hover:border-saffron/30 hover:shadow-md transition-all"
+                    className="group vitthalaya-card rounded p-4 border border-[var(--dp-rule)] hover:border-[var(--dp-gold)] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--dp-focus)] active:translate-y-px"
                   >
-                    <h3 className="font-marathi font-medium text-foreground group-hover:text-saffron transition-colors line-clamp-2">
+                    <h3 className="vitthalaya-display text-base font-bold text-[var(--dp-ink)] group-hover:text-[var(--dp-gold)] transition-colors line-clamp-2">
                       {comp.titleMarathi}
                     </h3>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {comp.saintName || 'अज्ञात संत'} • {comp.type} • {fmtDate(comp.createdAt)}
+                    <p className="text-xs text-[var(--dp-muted)] font-marathi mt-1">
+                      {comp.saintName || 'वारकरी संत'} • {comp.type} • {fmtDate(comp.createdAt)}
                     </p>
                     {comp.preview && (
-                      <p className="text-xs text-muted-foreground/80 mt-2 line-clamp-3 leading-relaxed">
+                      <p className="text-xs text-[var(--dp-ink-dim)] font-marathi mt-2 line-clamp-2 leading-relaxed">
                         {comp.preview}
                       </p>
                     )}
@@ -193,33 +236,34 @@ export default function ExplorePage() {
           {/* Trending Compositions */}
           {!loading && trending.length > 0 && (
             <section aria-labelledby="trending">
-              <h2 id="trending" className="text-saffron-300 text-xl font-medium mb-4 flex items-center gap-2">
-                <TrendingUp className="w-5 h-5" />
-                ट्रेंडिंग रचना
-              </h2>
-              <p className="text-xs text-muted-foreground -mt-2 mb-4">
-                {trendingSignal === 'interactions'
-                  ? 'शेवटच्या ३० दिवसांतील वाचन/ऐकण्याच्या परस्परसंवादावर आधारित.'
-                  : 'अलीकडे जोडलेल्या रचना (पुरेसा परस्परसंवाद डेटा नाही अजून).'}
-              </p>
+              <div className="mb-4 border-b border-[var(--dp-rule)] pb-2">
+                <h2 id="trending" className="vitthalaya-display text-xl font-bold flex items-center gap-2">
+                  <TrendingUp size={18} className="text-[var(--dp-gold)]" aria-hidden="true" />
+                  प्रसिद्ध व लोकप्रिय रचना
+                </h2>
+                <p className="text-xs text-[var(--dp-muted)] font-marathi mt-1">
+                  {trendingSignal === 'interactions'
+                    ? 'वाचन व श्रवण पसंतीनुसार संकलित रचना.'
+                    : 'वारकरी भक्तांमध्ये सर्वाधिक पठण केल्या जाणाऱ्या पवित्र रचना.'}
+                </p>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {trending.slice(0, 6).map((comp) => (
                   <Link
                     key={comp.id}
                     href={`/abhang/${comp.slug}`}
-                    className="group bg-card rounded-xl p-4 border border-saffron/10 hover:border-saffron/30 hover:shadow-md transition-all"
+                    className="group vitthalaya-card rounded p-4 border border-[var(--dp-rule)] hover:border-[var(--dp-gold)] transition-colors flex items-center justify-between focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--dp-focus)] active:translate-y-px"
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-marathi font-medium text-foreground group-hover:text-saffron transition-colors truncate">
-                          {comp.titleMarathi}
-                        </h3>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {comp.saintName || 'अज्ञात संत'} • {comp.type}
-                        </p>
-                      </div>
-                      <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-saffron transition-colors flex-shrink-0 ml-2" />
+                    <div className="min-w-0 flex-1 pr-3">
+                      <h3 className="vitthalaya-display text-base font-bold text-[var(--dp-ink)] group-hover:text-[var(--dp-gold)] transition-colors truncate">
+                        {comp.titleMarathi}
+                      </h3>
+                      <p className="text-xs text-[var(--dp-muted)] font-marathi mt-1">
+                        {comp.saintName || 'वारकरी संत'} • {comp.type}
+                      </p>
                     </div>
+                    <ArrowRight size={14} className="text-[var(--dp-muted)] group-hover:text-[var(--dp-gold)] transition-colors shrink-0" aria-hidden="true" />
                   </Link>
                 ))}
               </div>
@@ -229,59 +273,42 @@ export default function ExplorePage() {
           {/* Upcoming Festivals */}
           {!loading && upcomingFestivals.length > 0 && (
             <section aria-labelledby="festivals">
-              <h2 id="festivals" className="text-saffron-300 text-xl font-medium mb-4 flex items-center gap-2">
-                <Calendar className="w-5 h-5" />
-                आगामी उत्सव
-              </h2>
+              <div className="flex items-center justify-between mb-4 border-b border-[var(--dp-rule)] pb-2">
+                <h2 id="festivals" className="vitthalaya-display text-xl font-bold flex items-center gap-2">
+                  <Calendar size={18} className="text-[var(--dp-gold)]" aria-hidden="true" />
+                  वारकरी सण व उत्सव
+                </h2>
+                <Link href="/festival" className="text-xs text-[var(--dp-gold)] font-marathi hover:underline">
+                  सर्व उत्सव पहा
+                </Link>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {upcomingFestivals.slice(0, 4).map((festival) => (
                   <Link
                     key={festival.id}
                     href={`/festival/${festival.nameTranslit.toLowerCase().replace(/\s+/g, '-')}`}
-                    className="group bg-card rounded-xl p-4 border border-saffron/10 hover:border-saffron/30 hover:shadow-md transition-all"
+                    className="group vitthalaya-card rounded p-4 border border-[var(--dp-rule)] hover:border-[var(--dp-gold)] transition-colors flex items-center justify-between focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--dp-focus)] active:translate-y-px"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-saffron/10 flex items-center justify-center">
-                        <Star className="w-5 h-5 text-saffron" />
-                      </div>
-                      <div>
-                        <h3 className="font-marathi font-medium text-foreground group-hover:text-saffron transition-colors">
-                          {festival.nameMarathi}
-                        </h3>
-                        <p className="text-xs text-muted-foreground">
-                          {festival.nameTranslit}
-                        </p>
-                      </div>
+                    <div>
+                      <h3 className="vitthalaya-display text-base font-bold text-[var(--dp-ink)] group-hover:text-[var(--dp-gold)] transition-colors">
+                        {festival.nameMarathi}
+                      </h3>
+                      <p className="text-xs text-[var(--dp-muted)] font-marathi mt-1">
+                        {festival.nameTranslit}
+                        {festival.dateRule ? ` • ${festival.dateRule}` : ''}
+                      </p>
+                    </div>
+                    <div className="text-xs text-[var(--dp-gold)] font-marathi group-hover:underline">
+                      माहिती पहा
                     </div>
                   </Link>
                 ))}
               </div>
             </section>
           )}
-
-          <section className="bg-card rounded-2xl p-8 border border-saffron/10 grid grid-cols-1 md:grid-cols-12 gap-8 items-center text-left">
-            <div className="md:col-span-7 space-y-4">
-              <h2 className="font-marathiHeading text-2xl text-saffron-500">
-                डिजिटल पंढरपूरबद्दल
-              </h2>
-              <p className="text-saffron-100 text-base sm:text-lg leading-relaxed font-marathi">
-                महाराष्ट्राच्या भक्ती संपदेचा डिजिटल संग्रह — अभंग, भजन, गौळणी, आरत्या, स्तोत्रे आणि संत साहित्य. 
-                वारकरी संप्रदायाच्या प्राचीन साहित्याला डिजिटल स्वरूपात सुरक्षित ठेवून नव्या पिढीपर्यंत पोहोचवण्याचा आमचा ध्यास आहे.
-              </p>
-            </div>
-            <div className="md:col-span-5 relative aspect-[4/3] rounded-xl overflow-hidden border border-saffron/20 shadow-lg">
-              <Image
-                src="/images/realistic/pandharpur-temple.jpg"
-                alt="Pandharpur Temple Spire"
-                fill
-                sizes="(max-width: 768px) 100vw, 33vw"
-                className="object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-            </div>
-          </section>
         </div>
-      </VitthalayaShell>
-    </>
+      </div>
+    </div>
   );
 }

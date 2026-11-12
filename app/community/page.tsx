@@ -1,11 +1,12 @@
 import Link from 'next/link';
 import { canonicalMetadata } from '@/src/lib/seo';
-import { Trophy, GitCompare, History, Users, ArrowRight, Star, BookOpen, CheckCircle, TrendingUp } from 'lucide-react';
+import { Trophy, GitCompare, History, Users, ArrowRight, ChevronRight, BookOpen, TrendingUp } from 'lucide-react';
 import { db } from '@/src/db/client';
+import '@/app/homepage.css';
 
 export const metadata = {
-  title: 'समुदाय — वारकरी समुदाय | डिजिटल पंढरपूर',
-  description: 'डिजिटल पंढरपूर समुदायात सहभागी व्हा — लीडरबोर्ड, सुधारणा, आणि योगदान.',
+  title: 'वारकरी समुदाय : डिजिटल पंढरपूर',
+  description: 'डिजिटल पंढरपूर समुदायात सहभागी व्हा : लीडरबोर्ड, सुधारणा, आणि सामूहिक भक्ती योगदान.',
   ...canonicalMetadata({ canonical: '/community' }),
 };
 
@@ -14,38 +15,35 @@ const COMMUNITY_FEATURES = [
     href: '/leaderboard',
     icon: Trophy,
     label: 'लीडरबोर्ड',
-    desc: 'सर्वात जास्त वाचणारे, योगदान देणारे वारकरी',
-    color: 'text-gold bg-gold/10',
+    desc: 'सर्वात जास्त वाचन व अभ्यास करणारे सक्रिय वारकरी भक्त',
   },
   {
     href: '/corrections',
     icon: GitCompare,
-    label: 'सुधारणा',
-    desc: 'साहित्यातील चुका दुरुस्त करा — समुदायाच्या मदतीने',
-    color: 'text-saffron bg-saffron/10',
+    label: 'पाठभेद सुधारणा',
+    desc: 'साहित्यातील अशुद्ध शब्द दुरुस्त करा : समुदायाच्या सहकार्याने',
   },
   {
     href: '/version-history',
     icon: History,
     label: 'आवृत्ती इतिहास',
-    desc: 'प्रत्येक रचनेचे बदल आणि इतिहास पहा',
-    color: 'text-maroon bg-maroon/10',
+    desc: 'प्रत्येक रचनेचे संपादन बदल व अधिकृत इतिहास तपासा',
   },
 ];
 
 export default async function CommunityPage() {
-  // Fetch dynamic community stats
   const [
     totalUsers,
     totalCorrections,
     totalVersions,
+    reviewedCompositions,
     recentCorrections,
     topContributors,
   ] = await Promise.all([
     db.user.count(),
     db.correctionSuggestion.count(),
     db.compositionVersion.count(),
-    // Recent corrections
+    db.composition.count({ where: { reviewed: true } }),
     db.correctionSuggestion.findMany({
       take: 5,
       orderBy: { createdAt: 'desc' },
@@ -54,7 +52,6 @@ export default async function CommunityPage() {
         composition: { select: { titleMarathi: true, slug: true } },
       },
     }),
-    // Top contributors by reputation
     db.user.findMany({
       take: 5,
       orderBy: { reputationScore: 'desc' },
@@ -70,210 +67,177 @@ export default async function CommunityPage() {
   ]);
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      {/* Breadcrumb */}
-      <nav className="mb-6" aria-label="ब्रेडक्रंब">
-        <ol className="flex items-center gap-2 text-sm text-muted-foreground">
-          <li><Link href="/" className="hover:text-saffron">मुख्यपृष्ठ</Link></li>
-          <li aria-hidden="true">›</li>
-          <li className="text-foreground">समुदाय</li>
-        </ol>
-      </nav>
+    <div className="vitthalaya-shell min-h-screen py-10">
+      <div className="vitthalaya-container max-w-5xl">
+        {/* Breadcrumb Navigation */}
+        <nav className="mb-6" aria-label="ब्रेडक्रंब">
+          <ol className="flex items-center gap-2 text-xs font-marathi text-[var(--dp-muted)]">
+            <li>
+              <Link href="/" className="hover:text-[var(--dp-gold)] transition-colors">
+                मुख्यपृष्ठ
+              </Link>
+            </li>
+            <li aria-hidden="true"><ChevronRight size={12} /></li>
+            <li className="text-[var(--dp-ink)]">समुदाय</li>
+          </ol>
+        </nav>
 
-      {/* Header */}
-      <header className="mb-12 space-y-3">
-        <div className="flex items-center gap-3">
-          <Users className="w-8 h-8 text-saffron" />
-          <h1 className="text-3xl sm:text-4xl font-marathiHeading text-maroon dark:text-saffron font-bold">
-            समुदाय
+        {/* Page Header */}
+        <header className="mb-12 text-center max-w-3xl mx-auto">
+          <p className="text-xs text-[var(--dp-gold)] font-marathi mb-2">
+            वारकरी अभ्यासक मंडळ
+          </p>
+          <h1 className="vitthalaya-display text-3xl sm:text-4xl md:text-5xl font-bold mb-3">
+            वारकरी भक्ती समुदाय
           </h1>
-        </div>
-        <p className="text-muted-foreground text-sm sm:text-base max-w-2xl ml-0 sm:ml-11">
-          डिजिटल पंढरपूर समुदायात सहभागी व्हा. वाचा, योगदान द्या, आणि भक्ती साहित्याच्या जतनात मदत करा.
-        </p>
-      </header>
+          <p className="vitthalaya-prose text-sm sm:text-base text-[var(--dp-ink-dim)] leading-relaxed mb-6">
+            डिजिटल पंढरपूर समुदायात सहभागी व्हा. वाचा, योगदान द्या, आणि भक्ती साहित्याच्या जतनात मदत करा.
+          </p>
 
-      {/* Community Stats */}
-      <section className="mb-12" aria-labelledby="community-stats">
-        <h2 id="community-stats" className="sr-only">समुदाय टक्केवारी</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-card rounded-xl p-4 border border-saffron/10 text-center">
-            <Users className="w-6 h-6 text-saffron mx-auto mb-2" />
-            <p className="text-2xl font-bold text-maroon">{totalUsers.toLocaleString()}</p>
-            <p className="text-xs text-muted-foreground">वापरकर्ते</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl mx-auto text-center">
+            <div className="vitthalaya-card rounded p-3 border border-[var(--dp-rule)]">
+              <Users size={16} className="text-[var(--dp-gold)] mx-auto mb-1" aria-hidden="true" />
+              <p className="vitthalaya-display text-lg font-bold">{totalUsers.toLocaleString('mr-IN')}</p>
+              <p className="text-[11px] text-[var(--dp-muted)] font-marathi">वापरकर्ते</p>
+            </div>
+            <div className="vitthalaya-card rounded p-3 border border-[var(--dp-rule)]">
+              <GitCompare size={16} className="text-[var(--dp-gold)] mx-auto mb-1" aria-hidden="true" />
+              <p className="vitthalaya-display text-lg font-bold">{totalCorrections.toLocaleString('mr-IN')}</p>
+              <p className="text-[11px] text-[var(--dp-muted)] font-marathi">सुधारणा</p>
+            </div>
+            <div className="vitthalaya-card rounded p-3 border border-[var(--dp-rule)]">
+              <History size={16} className="text-[var(--dp-gold)] mx-auto mb-1" aria-hidden="true" />
+              <p className="vitthalaya-display text-lg font-bold">{totalVersions.toLocaleString('mr-IN')}</p>
+              <p className="text-[11px] text-[var(--dp-muted)] font-marathi">आवृत्त्या</p>
+            </div>
+            <div className="vitthalaya-card rounded p-3 border border-[var(--dp-rule)]">
+              <BookOpen size={16} className="text-[var(--dp-gold)] mx-auto mb-1" aria-hidden="true" />
+              <p className="vitthalaya-display text-lg font-bold">{reviewedCompositions.toLocaleString('mr-IN')}</p>
+              <p className="text-[11px] text-[var(--dp-muted)] font-marathi">प्रमाणित रचना</p>
+            </div>
           </div>
-          <div className="bg-card rounded-xl p-4 border border-saffron/10 text-center">
-            <GitCompare className="w-6 h-6 text-saffron mx-auto mb-2" />
-            <p className="text-2xl font-bold text-maroon">{totalCorrections.toLocaleString()}</p>
-            <p className="text-xs text-muted-foreground">सुधारणा</p>
-          </div>
-          <div className="bg-card rounded-xl p-4 border border-saffron/10 text-center">
-            <History className="w-6 h-6 text-saffron mx-auto mb-2" />
-            <p className="text-2xl font-bold text-maroon">{totalVersions.toLocaleString()}</p>
-            <p className="text-xs text-muted-foreground">आवृत्त्या</p>
-          </div>
-          <div className="bg-card rounded-xl p-4 border border-saffron/10 text-center">
-            <BookOpen className="w-6 h-6 text-saffron mx-auto mb-2" />
-            <p className="text-2xl font-bold text-maroon">
-              {(await db.composition.count({ where: { reviewed: true } })).toLocaleString()}
-            </p>
-            <p className="text-xs text-muted-foreground">प्रमाणित रचना</p>
-          </div>
-        </div>
-      </section>
+        </header>
 
-      {/* Community Features Grid */}
-      <section className="mb-12" aria-labelledby="community-features">
-        <h2 id="community-features" className="sr-only">समुदाय वैशिष्ट्ये</h2>
-        <div className="grid gap-6 sm:grid-cols-3">
-          {COMMUNITY_FEATURES.map(({ href, icon: Icon, label, desc, color }) => (
-            <Link
-              key={href}
-              href={href}
-              className="group bg-card rounded-2xl p-6 border border-saffron/10 hover:border-saffron/30 hover:shadow-lg transition-all text-center"
-            >
-              <div className={`w-14 h-14 mx-auto mb-4 rounded-xl ${color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                <Icon className="w-7 h-7" />
+        {/* Feature Cards */}
+        <section className="mb-14" aria-labelledby="community-features">
+          <h2 id="community-features" className="sr-only">समुदाय वैशिष्ट्ये</h2>
+          <div className="grid gap-6 sm:grid-cols-3">
+            {COMMUNITY_FEATURES.map(({ href, icon: Icon, label, desc }) => (
+              <Link
+                key={href}
+                href={href}
+                className="group vitthalaya-card rounded p-6 border border-[var(--dp-rule)] hover:border-[var(--dp-gold)] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--dp-focus)] active:translate-y-px text-center flex flex-col justify-between"
+              >
+                <div>
+                  <div className="w-12 h-12 mx-auto mb-4 rounded bg-[var(--dp-ground-well)] border border-[var(--dp-rule)] flex items-center justify-center text-[var(--dp-gold)]">
+                    <Icon size={20} aria-hidden="true" />
+                  </div>
+                  <h3 className="vitthalaya-display text-lg font-bold text-[var(--dp-ink)] group-hover:text-[var(--dp-gold)] transition-colors mb-2">
+                    {label}
+                  </h3>
+                  <p className="text-xs text-[var(--dp-ink-dim)] font-marathi leading-relaxed mb-4">
+                    {desc}
+                  </p>
+                </div>
+                <div className="inline-flex items-center justify-center gap-1 text-xs font-semibold font-marathi text-[var(--dp-gold)] group-hover:underline">
+                  <span>पहा</span>
+                  <ArrowRight size={13} aria-hidden="true" />
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* Two Column Layout: Activity + Top Contributors */}
+        <div className="grid md:grid-cols-2 gap-8">
+          {/* Recent Activity */}
+          <section aria-labelledby="recent-activity" className="space-y-4">
+            <h2 id="recent-activity" className="vitthalaya-display text-lg font-bold flex items-center gap-2 pb-2 border-b border-[var(--dp-rule)]">
+              <TrendingUp size={16} className="text-[var(--dp-gold)]" aria-hidden="true" />
+              अलीकडील सुधारणा व क्रियाकलाप
+            </h2>
+
+            {recentCorrections.length === 0 ? (
+              <div className="vitthalaya-card rounded p-6 border border-[var(--dp-rule)] text-center text-xs font-marathi text-[var(--dp-muted)]">
+                सध्या कोणतीही नवीन सुधारणा नोंदवलेली नाही.
               </div>
-              <h3 className="text-lg font-marathiHeading font-bold text-maroon dark:text-saffron mb-2 group-hover:text-saffron transition-colors">
-                {label}
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                {desc}
-              </p>
-              <span className="inline-flex items-center gap-1 text-xs font-semibold text-saffron group-hover:underline">
-                पहा <ArrowRight className="w-3 h-3" />
-              </span>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* Two Column Layout: Activity + Top Contributors */}
-      <div className="grid md:grid-cols-2 gap-8">
-        {/* Recent Activity */}
-        <section aria-labelledby="recent-activity">
-          <h2 id="recent-activity" className="font-marathiHeading text-xl text-maroon mb-4 flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-saffron" />
-            अलीकडील क्रियाकलाप
-          </h2>
-          {recentCorrections.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8 bg-card rounded-xl border border-saffron/10">
-              अजून क्रियाकलाप नाही
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {recentCorrections.map((correction) => (
-                <div
-                  key={correction.id}
-                  className="bg-card rounded-xl p-4 border border-saffron/10 hover:border-saffron/20 transition-colors"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-saffron/20 flex items-center justify-center flex-shrink-0">
-                      <span className="text-xs font-medium text-saffron">
-                        {correction.user?.name?.charAt(0) || '?'}
-                      </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm">
-                        <span className="font-medium text-foreground">
-                          {correction.user?.name || 'अज्ञात'}
-                        </span>
-                        <span className="text-muted-foreground"> ने सुधारणा केली </span>
-                        {correction.composition && (
-                          <Link
-                            href={`/abhang/${correction.composition.slug}`}
-                            className="text-saffron hover:underline"
-                          >
-                            {correction.composition.titleMarathi}
-                          </Link>
-                        )}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {correction.fieldPath} — {correction.status}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* Top Contributors */}
-        <section aria-labelledby="top-contributors">
-          <h2 id="top-contributors" className="font-marathiHeading text-xl text-maroon mb-4 flex items-center gap-2">
-            <Star className="w-5 h-5 text-saffron" />
-            शीर्ष योगदानकर्ते
-          </h2>
-          {topContributors.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8 bg-card rounded-xl border border-saffron/10">
-              अजून योगदान नाही
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {topContributors.map((contributor, index) => (
-                <div
-                  key={contributor.id}
-                  className="bg-card rounded-xl p-4 border border-saffron/10 hover:border-saffron/20 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <div className="w-10 h-10 rounded-full bg-saffron/20 flex items-center justify-center">
-                        <span className="text-sm font-medium text-saffron">
-                          {contributor.name?.charAt(0) || '?'}
-                        </span>
+            ) : (
+              <div className="space-y-3">
+                {recentCorrections.map((correction) => (
+                  <div
+                    key={correction.id}
+                    className="vitthalaya-card rounded p-3.5 border border-[var(--dp-rule)] text-xs font-marathi"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="w-7 h-7 rounded-full bg-[var(--dp-ground-well)] border border-[var(--dp-rule)] flex items-center justify-center text-[var(--dp-gold)] font-bold text-[11px] shrink-0">
+                        {correction.user?.name?.charAt(0) || 'वा'}
                       </div>
-                      {index < 3 && (
-                        <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-gold flex items-center justify-center">
-                          <span className="text-xs font-bold text-white">{index + 1}</span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-foreground truncate">
-                        {contributor.name || 'अज्ञात'}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {contributor.reputationScore} प्रतिष्ठा • {contributor._count.corrections} सुधारणा
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <CheckCircle className="w-4 h-4 text-saffron" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[var(--dp-ink)] leading-relaxed">
+                          <span className="font-semibold">{correction.user?.name || 'वारकरी अभ्यासक'}</span>
+                          <span className="text-[var(--dp-muted)]"> यांनी सुधारणा केली : </span>
+                          {correction.composition && (
+                            <Link
+                              href={`/abhang/${correction.composition.slug}`}
+                              className="text-[var(--dp-gold)] hover:underline font-semibold"
+                            >
+                              {correction.composition.titleMarathi}
+                            </Link>
+                          )}
+                        </p>
+                        <p className="text-[10px] text-[var(--dp-muted)] mt-1">
+                          स्थिती : {correction.status}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-      </div>
+                ))}
+              </div>
+            )}
+          </section>
 
-      {/* Call to Action */}
-      <section className="mt-12 text-center bg-card rounded-2xl p-8 border border-saffron/10">
-        <h2 className="font-marathiHeading text-2xl text-maroon mb-3">
-          समुदायात सहभागी व्हा
-        </h2>
-        <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-          डिजिटल पंढरपूर समुदायाचा भाग व्हा. भक्ती साहित्याचे जतन करण्यात आणि सुधारण्यात मदत करा.
-        </p>
-        <div className="flex flex-wrap justify-center gap-4">
-          <Link
-            href="/leaderboard"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-saffron text-white rounded-lg font-medium hover:bg-saffron/90 transition-colors"
-          >
-            <Trophy className="w-4 h-4" />
-            लीडरबोर्ड पहा
-          </Link>
-          <Link
-            href="/corrections"
-            className="inline-flex items-center gap-2 px-6 py-3 border border-saffron text-saffron rounded-lg font-medium hover:bg-saffron/5 transition-colors"
-          >
-            <GitCompare className="w-4 h-4" />
-            सुधारणा सुरू करा
-          </Link>
+          {/* Top Contributors */}
+          <section aria-labelledby="top-contributors" className="space-y-4">
+            <h2 id="top-contributors" className="vitthalaya-display text-lg font-bold flex items-center gap-2 pb-2 border-b border-[var(--dp-rule)]">
+              <Trophy size={16} className="text-[var(--dp-gold)]" aria-hidden="true" />
+              प्रमुख योगदानकर्ते
+            </h2>
+
+            {topContributors.length === 0 ? (
+              <div className="vitthalaya-card rounded p-6 border border-[var(--dp-rule)] text-center text-xs font-marathi text-[var(--dp-muted)]">
+                अजून योगदानकर्त्यांची नोंद सुरू आहे.
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {topContributors.map((user, idx) => (
+                  <div
+                    key={user.id}
+                    className="vitthalaya-card rounded p-3.5 border border-[var(--dp-rule)] flex items-center justify-between text-xs font-marathi"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="font-bold text-[var(--dp-gold)] w-4 text-center">
+                        {idx + 1}
+                      </span>
+                      <div className="w-7 h-7 rounded-full bg-[var(--dp-ground-well)] border border-[var(--dp-rule)] flex items-center justify-center text-[var(--dp-gold)] font-bold text-[11px] shrink-0">
+                        {user.name?.charAt(0) || 'वा'}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-[var(--dp-ink)]">{user.name || 'वारकरी अभ्यासक'}</p>
+                        <p className="text-[10px] text-[var(--dp-muted)]">
+                          {user._count.corrections} सुधारणा • {user._count.versions} आवृत्त्या
+                        </p>
+                      </div>
+                    </div>
+                    <span className="px-2 py-0.5 rounded bg-[var(--dp-ground-well)] text-[var(--dp-gold)] border border-[var(--dp-rule)] text-[10px] font-bold">
+                      {user.reputationScore} गुण
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
         </div>
-      </section>
+      </div>
     </div>
   );
 }

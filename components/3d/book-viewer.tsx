@@ -38,7 +38,7 @@ export function BookViewer3D({
 
     // ── Scene ──────────────────────────────────────────────────────────────
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf2e8d8);
+    // scene.background = new THREE.Color(0xf2e8d8);
 
     // ── Camera ─────────────────────────────────────────────────────────────
     const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);

@@ -654,6 +654,173 @@ const FESTIVALS: Array<{
   },
 ];
 
+// ─── Deities ─────────────────────────────────────────────────────────────
+// Core deities worshipped across Maharashtra devotional traditions.
+const DEITIES: Array<{
+  nameMarathi: string;
+  nameTranslit: string;
+  iconName: string;
+}> = [
+  { nameMarathi: 'विठ्ठल', nameTranslit: 'Vitthal', iconName: 'Flame' },
+  { nameMarathi: 'रुक्मिणी', nameTranslit: 'Rukmini', iconName: 'Heart' },
+  { nameMarathi: 'गणपती', nameTranslit: 'Ganpati', iconName: 'Sparkles' },
+  { nameMarathi: 'शिव', nameTranslit: 'Shiva', iconName: 'Moon' },
+  { nameMarathi: 'देवी', nameTranslit: 'Devi', iconName: 'Sun' },
+  { nameMarathi: 'राम', nameTranslit: 'Rama', iconName: 'Compass' },
+  { nameMarathi: 'कृष्ण', nameTranslit: 'Krishna', iconName: 'Music' },
+  { nameMarathi: 'मारुती', nameTranslit: 'Maruti', iconName: 'Shield' },
+  { nameMarathi: 'दत्तात्रेय', nameTranslit: 'Dattatreya', iconName: 'Book' },
+  { nameMarathi: 'खंडोबा', nameTranslit: 'Khandoba', iconName: 'Sword' },
+];
+
+// ─── Wari Pilgrimage Stops ───────────────────────────────────────────────
+// Real, documented halts on the Alandi / Dehu to Pandharpur Palkhi route.
+const WARI_STOPS: Array<{
+  nameMarathi: string;
+  nameTranslit: string;
+  slug: string;
+  distanceKm: number;
+  description: string;
+  icon: string;
+  sortOrder: number;
+}> = [
+  {
+    nameMarathi: 'आळंदी / देहू',
+    nameTranslit: 'Alandi / Dehu',
+    slug: 'alandi-dehu',
+    distanceKm: 0,
+    description: 'पालखीचे प्रस्थान स्थान — श्री संत ज्ञानेश्वर महाराज (आळंदी) व श्री संत तुकाराम महाराज (देहू) यांच्या संजीवन समाधी स्थळांवरून वारीचे प्रस्थान.',
+    icon: '🚩',
+    sortOrder: 1,
+  },
+  {
+    nameMarathi: 'पुणे',
+    nameTranslit: 'Pune',
+    slug: 'pune',
+    distanceKm: 25,
+    description: 'ज्ञानोबा-तुकारामांच्या पालख्यांचे पुण्यात ऐतिहासिक आगमन; भवानी पेठ व नाना पेठ येथे मुक्काम.',
+    icon: '🏠',
+    sortOrder: 2,
+  },
+  {
+    nameMarathi: 'सासवड',
+    nameTranslit: 'Saswad',
+    slug: 'saswad',
+    distanceKm: 55,
+    description: 'दिवे घाटातील अद्भूत व नयनरम्य प्रवासानंतर संत सोपानदेवांच्या समाधी नगरीत आगमन व दोन दिवसांचा मुक्काम.',
+    icon: '⛰️',
+    sortOrder: 3,
+  },
+  {
+    nameMarathi: 'जेजुरी',
+    nameTranslit: 'Jejuri',
+    slug: 'jejuri',
+    distanceKm: 72,
+    description: 'खंडोबा देवाचे पवित्र क्षेत्र; गडकोटावर वारकऱ्यांचा भंडारा उधळण्याचा सोहळा.',
+    icon: '✨',
+    sortOrder: 4,
+  },
+  {
+    nameMarathi: 'वाल्हे',
+    nameTranslit: 'Valhe',
+    slug: 'valhe',
+    distanceKm: 86,
+    description: 'महर्षी वाल्मिकींची तपोभूमी मानले जाणारे गाव; पालखीचा दुपारचा विसावा व मुक्काम.',
+    icon: '📍',
+    sortOrder: 5,
+  },
+  {
+    nameMarathi: 'लोणंद',
+    nameTranslit: 'Lonand',
+    slug: 'lonand',
+    distanceKm: 104,
+    description: 'सातारा जिल्ह्यातील प्रवेश; नीरा नदीकाठावर पालखीचे भव्य स्वागत व रिंगण परंपरा.',
+    icon: '🌊',
+    sortOrder: 6,
+  },
+  {
+    nameMarathi: 'तरडगाव',
+    nameTranslit: 'Taradgaon',
+    slug: 'taradgaon',
+    distanceKm: 120,
+    description: 'दत्त महात्म्याची पार्श्वभूमी असलेला मुक्काम; वारकऱ्यांच्या भोजनाची विशेष सोय.',
+    icon: '🌾',
+    sortOrder: 7,
+  },
+  {
+    nameMarathi: 'फलटण',
+    nameTranslit: 'Phaltan',
+    slug: 'phaltan',
+    distanceKm: 142,
+    description: 'महानुभाव संप्रदाय व ऐतिहासिक संस्थान नगरी; शहरात भव्य स्वागत व भजन कीर्तन.',
+    icon: '🏛️',
+    sortOrder: 8,
+  },
+  {
+    nameMarathi: 'बरड',
+    nameTranslit: 'Barad',
+    slug: 'barad',
+    distanceKm: 160,
+    description: 'सातारा व सोलापूर जिल्ह्यांच्या सीमेवरील महत्त्वाचा मुक्काम.',
+    icon: '📍',
+    sortOrder: 9,
+  },
+  {
+    nameMarathi: 'नातेपुते',
+    nameTranslit: 'Natepute',
+    slug: 'natepute',
+    distanceKm: 180,
+    description: 'सोलापूर जिल्ह्यात प्रवेश; येथे पालखीचे पहिले उभे रिंगण पार पडते.',
+    icon: '🐎',
+    sortOrder: 10,
+  },
+  {
+    nameMarathi: 'माळशिरस',
+    nameTranslit: 'Malshiras',
+    slug: 'malshiras',
+    distanceKm: 198,
+    description: 'विठू नामाचा गजर शिगेला पोहोचणारा मुक्काम; वारकऱ्यांच्या पालखीचा मुक्काम.',
+    icon: '📍',
+    sortOrder: 11,
+  },
+  {
+    nameMarathi: 'वेळापूर',
+    nameTranslit: 'Velapur',
+    slug: 'velapur',
+    distanceKm: 216,
+    description: 'येथे गोल रिंगण आणि हरिनामाचा गजर होतो; ऐतिहासिक मंदिर परिसर.',
+    icon: '⭕',
+    sortOrder: 12,
+  },
+  {
+    nameMarathi: 'भंडीशेगाव',
+    nameTranslit: 'Bhandishegaon',
+    slug: 'bhandishegaon',
+    distanceKm: 232,
+    description: 'पंढरपूरच्या वेशीवर पोहोचतानाचा मुख्य थांबा; वारकऱ्यांमध्ये अंतिम टप्प्याची उत्सुकता.',
+    icon: '📍',
+    sortOrder: 13,
+  },
+  {
+    nameMarathi: 'वाखरी',
+    nameTranslit: 'Wakhari',
+    slug: 'wakhari',
+    distanceKm: 245,
+    description: 'येथे ज्ञानोबा-तुकोबांच्या पालख्यांचे अंतिम मोठे रिंगण होते; सर्व पालख्या येथे एकत्र येतात.',
+    icon: '🐎',
+    sortOrder: 14,
+  },
+  {
+    nameMarathi: 'पंढरपूर (चंद्रभागा / मंदिर)',
+    nameTranslit: 'Pandharpur',
+    slug: 'pandharpur',
+    distanceKm: 255,
+    description: 'आषाढी वारीचा अंतिम मुक्काम — चंद्रभागेत पवित्र स्नान, नगरप्रदक्षिणा आणि श्री विठ्ठल-रुक्मिणीचे दर्शन.',
+    icon: '🛕',
+    sortOrder: 15,
+  },
+];
+
 // ─── Composition → saint linking ─────────────────────────────────────────
 // The composition `source` field and title patterns identify authorship
 // reliably for the imported corpora. Matches run on a snapshot so every
@@ -662,42 +829,99 @@ async function linkCompositionsToSaints() {
   const saints = await prisma.saint.findMany();
   const bySlug = new Map(saints.map((s) => [s.slug, s]));
 
-  const rules: Array<{ slug: string; test: (source: string, title: string) => boolean }> = [
+  const rules: Array<{ slug: string; test: (source: string, titleTranslit: string, titleMarathi: string) => boolean }> = [
     {
-      slug: 'tukaram-maharaj',
-      test: (source, _title) =>
-        /तुकाराम|Tukaram|tukaram|तुका/i.test(source) &&
-        !/नामदेव|एकनाथ|ज्ञानदेव|Dnyaneshwar|Eknath|Namdev/i.test(source),
+      slug: 'janabai',
+      test: (s, t, tm) => /जनाबाई|Janabai|जनी म्हणे|दासी जनी/i.test(`${s} ${t} ${tm}`),
     },
     {
-      slug: 'namdev-maharaj',
-      test: (source, _title) => /नामदेव|Namdev|namdev/i.test(source),
+      slug: 'chokhamela',
+      test: (s, t, tm) => /चोखामेळा|Chokhamela|चोखोबा|Chokhoba|चोखा म्हणे/i.test(`${s} ${t} ${tm}`),
     },
     {
-      slug: 'eknath-maharaj',
-      test: (source, title) =>
-        /एकनाथ|Eknath|eknath|Eknaath|eknaath/i.test(source) ||
-        /^Eknath |^Eknaathii|^Eknathii/i.test(title),
+      slug: 'bhanudas',
+      test: (s, t, tm) => /भानुदास|Bhanudas/i.test(`${s} ${t} ${tm}`),
     },
     {
-      slug: 'dnyaneshwar-maharaj',
-      test: (source, title) =>
-        /हरिपाठ|ज्ञानदेव|Dnyaneshwar|dnyaneshwar|Dnyaneshwari|dnyaneshwari|अमृतानुभव|Amrutanubhav|चांगदेव|Changdev/i.test(
-          source + ' ' + title
-        ),
+      slug: 'muktabai',
+      test: (s, t, tm) => /मुक्ताबाई|Muktabai|ताटीचे अभंग/i.test(`${s} ${t} ${tm}`) && !/ज्ञानदेव|निवृत्ति/i.test(t),
+    },
+    {
+      slug: 'nivruttinath',
+      test: (s, t, tm) => /निवृत्तिनाथ|Nivruttinath|निवृत्ती महाराज/i.test(`${s} ${t} ${tm}`),
+    },
+    {
+      slug: 'sopandev',
+      test: (s, t, tm) => /सोपानदेव|Sopandev/i.test(`${s} ${t} ${tm}`),
+    },
+    {
+      slug: 'gora-kumbhar',
+      test: (s, t, tm) => /गोरा कुंभार|Gora Kumbhar/i.test(`${s} ${t} ${tm}`),
+    },
+    {
+      slug: 'sena-nhavi',
+      test: (s, t, tm) => /सेना न्हावी|Sena Nhavi/i.test(`${s} ${t} ${tm}`),
+    },
+    {
+      slug: 'savata-mali',
+      test: (s, t, tm) => /सावता माळी|Savata Mali/i.test(`${s} ${t} ${tm}`),
+    },
+    {
+      slug: 'narhari-sonar',
+      test: (s, t, tm) => /नरहरी सोनार|Narhari Sonar/i.test(`${s} ${t} ${tm}`),
+    },
+    {
+      slug: 'kanhopatra',
+      test: (s, t, tm) => /कान्होपात्रा|Kanhopatra/i.test(`${s} ${t} ${tm}`),
+    },
+    {
+      slug: 'bahinabai',
+      test: (s, t, tm) => /बहिणाबाई|Bahinabai/i.test(`${s} ${t} ${tm}`),
+    },
+    {
+      slug: 'gadge-maharaj',
+      test: (s, t, tm) => /गाडगे महाराज|Gadge Maharaj/i.test(`${s} ${t} ${tm}`),
+    },
+    {
+      slug: 'tukdoji-maharaj',
+      test: (s, t, tm) => /तुकडोजी महाराज|Tukdoji Maharaj|ग्रामगीता|Gramgeeta/i.test(`${s} ${t} ${tm}`),
     },
     {
       slug: 'samarth-ramdas',
-      test: (source, title) =>
-        /रामदास|Ramdas|ramdas|दासबोध|Dasbodh|मनाचे श्लोक|Manache Shlok|आत्माराम/i.test(
-          source + ' ' + title
+      test: (s, t, tm) =>
+        /रामदास|Ramdas|ramdas|दासबोध|Dasbodh|मनाचे श्लोक|Manache Shlok|आत्माराम|आनंदवनभुवनी|बुद्धी दे रघुनायका/i.test(
+          `${s} ${t} ${tm}`
         ),
+    },
+    {
+      slug: 'eknath-maharaj',
+      test: (s, t, tm) =>
+        /एकनाथ|Eknath|eknath|Eknaath|भावार्थरामायण|Bhawarth Ramayan|एकनाथी भागवत/i.test(
+          `${s} ${t} ${tm}`
+        ),
+    },
+    {
+      slug: 'dnyaneshwar-maharaj',
+      test: (s, t, tm) =>
+        /हरिपाठ|ज्ञानदेव|Dnyaneshwar|dnyaneshwar|Dnyaneshwari|ज्ञानेश्वरी|अमृतानुभव|Amrutanubhav|चांगदेव|Dnyaneshwer/i.test(
+          `${s} ${t} ${tm}`
+        ),
+    },
+    {
+      slug: 'tukaram-maharaj',
+      test: (s, t, _tm) =>
+        (/तुकाराम|Tukaram|tukaram/i.test(s) || /Tukaram Abhang/i.test(t)) &&
+        !/नामदेव|एकनाथ|ज्ञानदेव|Dnyaneshwar|Eknath|Namdev/i.test(s),
+    },
+    {
+      slug: 'namdev-maharaj',
+      test: (s, t, tm) => /नामदेव|Namdev|namdev/i.test(`${s} ${t} ${tm}`),
     },
   ];
 
   // Snapshot all compositions once (title + source only — 26k rows).
   const all = await prisma.composition.findMany({
-    select: { id: true, source: true, titleTranslit: true, saintId: true },
+    select: { id: true, source: true, titleTranslit: true, titleMarathi: true, saintId: true },
   });
 
   // Build per-saint candidate sets from the rules (first rule wins).
@@ -710,10 +934,11 @@ async function linkCompositionsToSaints() {
   for (const c of all) {
     if (c.saintId) continue; // already linked — never overwrite
     const source = c.source || '';
-    const title = c.titleTranslit || '';
+    const titleTranslit = c.titleTranslit || '';
+    const titleMarathi = c.titleMarathi || '';
     let matched = false;
     for (const rule of rules) {
-      if (rule.test(source, title)) {
+      if (rule.test(source, titleTranslit, titleMarathi)) {
         assign[rule.slug].push(c.id);
         matched = true;
         break;
@@ -744,6 +969,96 @@ async function linkCompositionsToSaints() {
       .join(', ')}); ${unlinked.length} unlinked (already had saintId: ${
       all.length - unlinked.length - linked
     })`
+  );
+}
+
+// ─── Composition → deity linking ─────────────────────────────────────────
+async function linkCompositionsToDeities() {
+  const deities = await prisma.deity.findMany();
+  const byTranslit = new Map(deities.map((d) => [d.nameTranslit, d]));
+
+  const deityRules: Array<{ nameTranslit: string; test: (t: string, tm: string, text: string) => boolean }> = [
+    {
+      nameTranslit: 'Ganpati',
+      test: (t, tm) => /गणेश|गणपती|विनायक|लंबोदर|गजानन|Ganesh|Ganpati|Siddhivinayak/i.test(`${t} ${tm}`),
+    },
+    {
+      nameTranslit: 'Shiva',
+      test: (t, tm) => /शंकराची|महाशिव|शंभू|त्र्यंबकेश्वर|भीमाशंकर|Shiva|Mahadev|Bhimashankar/i.test(`${t} ${tm}`) && !/शिवाजी/i.test(tm),
+    },
+    {
+      nameTranslit: 'Devi',
+      test: (t, tm) => /भवानी|दुर्गा|महालक्ष्मी|तुळजाभवानी|अंबाबाई|Bhavani|Durga|Mahalakshmi/i.test(`${t} ${tm}`),
+    },
+    {
+      nameTranslit: 'Rama',
+      test: (t, tm) => /श्रीराम|रामचंद्र|रघुनाथ|रघुनायका|Ramayana|Ramayan|Rama/i.test(`${t} ${tm}`) && !/परशुराम/i.test(tm),
+    },
+    {
+      nameTranslit: 'Krishna',
+      test: (t, tm) => /श्रीकृष्ण|गोपाळ|गोविंद|मुरलीधर|गवळण|Gaulan|Krishna/i.test(`${t} ${tm}`),
+    },
+    {
+      nameTranslit: 'Maruti',
+      test: (t, tm) => /मारुती|हनुमान|बजरंगबली|पवनपुत्र|Maruti|Hanuman/i.test(`${t} ${tm}`),
+    },
+    {
+      nameTranslit: 'Dattatreya',
+      test: (t, tm) => /दत्तात्रेय|दत्तगुरू|गुरुचरित्र|Gurucharitra|Dattatreya/i.test(`${t} ${tm}`),
+    },
+    {
+      nameTranslit: 'Khandoba',
+      test: (t, tm) => /खंडोबा|मल्हारी|म्हाळसा|Khandoba/i.test(`${t} ${tm}`),
+    },
+    {
+      nameTranslit: 'Vitthal',
+      test: (t, tm, text) =>
+        /विठ्ठल|पांडुरंग|पंढरीनाथ|रखुमाई|चंद्रभागा|Vitthal|Pandurang/i.test(`${t} ${tm}`) ||
+        /विठोबा|पांडुरंग/i.test(text.slice(0, 80)),
+    },
+  ];
+
+  const unlinked = await prisma.composition.findMany({
+    where: { deityId: null },
+    select: { id: true, titleTranslit: true, titleMarathi: true, fullText: true },
+  });
+
+  const assign: Record<string, string[]> = {};
+  for (const rule of deityRules) {
+    assign[rule.nameTranslit] = [];
+  }
+
+  for (const c of unlinked) {
+    const t = c.titleTranslit || '';
+    const tm = c.titleMarathi || '';
+    const text = c.fullText || '';
+    for (const rule of deityRules) {
+      if (rule.test(t, tm, text)) {
+        assign[rule.nameTranslit].push(c.id);
+        break;
+      }
+    }
+  }
+
+  let linked = 0;
+  for (const [nameTranslit, ids] of Object.entries(assign)) {
+    const deity = byTranslit.get(nameTranslit);
+    if (!deity || ids.length === 0) continue;
+    for (let i = 0; i < ids.length; i += 500) {
+      const chunk = ids.slice(i, i + 500);
+      await prisma.composition.updateMany({
+        where: { id: { in: chunk }, deityId: null },
+        data: { deityId: deity.id },
+      });
+      linked += chunk.length;
+    }
+  }
+
+  console.log(
+    `  → linked ${linked} compositions to deities (${Object.entries(assign)
+      .filter(([, v]) => v.length)
+      .map(([d, v]) => `${d}:${v.length}`)
+      .join(', ')})`
   );
 }
 
@@ -806,10 +1121,50 @@ async function main() {
   );
   console.log(`  ✓ ${festivals.length} festivals`);
 
+  // ── Deities ──
+  const deities = await Promise.all(
+    DEITIES.map((d) =>
+      prisma.deity.upsert({
+        where: { nameTranslit: d.nameTranslit },
+        update: { iconName: d.iconName, nameMarathi: d.nameMarathi },
+        create: {
+          nameMarathi: d.nameMarathi,
+          nameTranslit: d.nameTranslit,
+          iconName: d.iconName,
+        },
+      })
+    )
+  );
+  console.log(`  ✓ ${deities.length} deities`);
+
+  // ── Wari Stops ──
+  const wariStops = await Promise.all(
+    WARI_STOPS.map((w) =>
+      prisma.wariStop.upsert({
+        where: { slug: w.slug },
+        update: {
+          nameMarathi: w.nameMarathi,
+          nameTranslit: w.nameTranslit,
+          distanceKm: w.distanceKm,
+          description: w.description,
+          icon: w.icon,
+          sortOrder: w.sortOrder,
+        },
+        create: {
+          nameMarathi: w.nameMarathi,
+          nameTranslit: w.nameTranslit,
+          slug: w.slug,
+          distanceKm: w.distanceKm,
+          description: w.description,
+          icon: w.icon,
+          sortOrder: w.sortOrder,
+        },
+      })
+    )
+  );
+  console.log(`  ✓ ${wariStops.length} wari stops`);
+
   // ── Fix known typos in the 4 original seed saints (canonical spellings) ──
-  // The original seed wrote "द्न्यादेश्वर" (→ ज्ञानेश्वर), "होंडले" (→ होते),
-  // "अलंदी" (→ आळंदी), "संघाटीचे" (→ संप्रदायाचे) etc. Correct in place so
-  // existing links keep working.
   const typoFixes: Array<{ slug: string; nameMarathi: string; biography: string }> = [
     {
       slug: 'dnyaneshwar-maharaj',
@@ -846,15 +1201,21 @@ async function main() {
   // ── Link compositions to saints ──
   await linkCompositionsToSaints();
 
+  // ── Link compositions to deities ──
+  await linkCompositionsToDeities();
+
   // ── Summary ──
-  const [saintCount, templeCount, festivalCount, compWithSaint] = await Promise.all([
+  const [saintCount, templeCount, festivalCount, deityCount, wariStopCount, compWithSaint, compWithDeity] = await Promise.all([
     prisma.saint.count(),
     prisma.temple.count(),
     prisma.festival.count(),
+    prisma.deity.count(),
+    prisma.wariStop.count(),
     prisma.composition.count({ where: { saintId: { not: null } } }),
+    prisma.composition.count({ where: { deityId: { not: null } } }),
   ]);
   console.log(
-    `\nDone: ${saintCount} saints · ${templeCount} temples · ${festivalCount} festivals · ${compWithSaint} compositions linked to saints`
+    `\nDone: ${saintCount} saints · ${templeCount} temples · ${festivalCount} festivals · ${deityCount} deities · ${wariStopCount} wari stops · ${compWithSaint} compositions linked to saints · ${compWithDeity} compositions linked to deities`
   );
 }
 

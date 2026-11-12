@@ -17,6 +17,8 @@ module.exports = [
       'prisma/*.db*',
       'data/*.db*',
       'next-env.d.ts',
+      'music_intelligence_platform/**',
+      '**/.venv/**',
     ],
   },
   {

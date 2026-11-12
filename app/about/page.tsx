@@ -1,171 +1,202 @@
 import { canonicalMetadata } from '@/src/lib/seo';
 import Link from 'next/link';
 import Image from 'next/image';
+import { ChevronRight, ArrowRight, Compass, ShieldCheck, HeartHandshake, BookOpen, Network, Cpu } from 'lucide-react';
+import '@/app/homepage.css';
 
 export const metadata = {
-  title: 'डिजिटल पंढरपूरबद्दल — About Digital Pandharpur',
-  description: 'डिजिटल पंढरपूर — मराठी भक्ती साहित्याचा वाढता डिजिटल संग्रह. वारकरी संप्रदायाचे साहित्य, संत, अभंग आणि परंपरा डिजिटल रूपात सुरक्षित करण्याचे आमचे ध्येय.',
+  title: 'डिजिटल पंढरपूर : परिचय व ध्येय',
+  description: 'डिजिटल पंढरपूर : मराठी भक्ती साहित्याचा वाढता डिजिटल संग्रह. वारकरी संप्रदायाचे साहित्य, संत, अभंग आणि परंपरा डिजिटल रूपात जतन करण्याचे आमचे उद्दिष्ट.',
   ...canonicalMetadata({ canonical: '/about' }),
 };
 
 const FEATURES = [
   {
+    icon: Compass,
     title: 'शोध व संकलन',
     titleEn: 'Search & Discovery',
-    desc: 'Meilisearch द्वारे देवनागरी आणि ट्रान्स्लिटरेशनमध्ये तात्काळ शोध. अभंग, भजन, आरत्या, स्तोत्रे आणि संत साहित्य शोधा.',
+    desc: 'देवनागरी आणि इंग्रजी ट्रान्स्लिटरेशनमध्ये तात्काळ शोध. अभंग, भजन, आरत्या, स्तोत्रे आणि संत साहित्य सहज उपलब्ध.',
   },
   {
-    title: 'वाचन अनुभव',
+    icon: BookOpen,
+    title: 'अमृततुल्य वाचन अनुभव',
     titleEn: 'Reading Experience',
-    desc: 'वाचन मोड, अर्थ, ऑडियो एम्बेड, बुकमार्क आणि क्वोट कार्ड निर्मिती — सर्व एका ठिकाणी.',
+    desc: 'विश्रामदायी वाचन मोड, भावार्थ, ऑडियो पठण, बुकमार्क आणि सुविचार कार्ड निर्मिती एकाच ठिकाणी.',
   },
   {
-    title: 'समुदाय',
-    titleEn: 'Community',
-    desc: 'सुधारणा सूचना, आवृत्ती इतिहास, लीडरबोर्ड आणि सामूहिक योगदान — वारकरी समुदायासोबत एकत्र.',
+    icon: HeartHandshake,
+    title: 'वारकरी समुदाय',
+    titleEn: 'Community Collaboration',
+    desc: 'सुधारणा सूचना, आवृत्ती इतिहास आणि वारकरी अभ्यासकांचे सामूहिक संपादन योगदान.',
   },
   {
-    title: 'पुस्तक व्यवसाय',
-    titleEn: 'Book Commerce',
-    desc: 'छापील प्रती, कॉफी टेबल बुक्स आणि भेट वस्तू — भक्ती साहित्य भौतिक रूपात उपलब्ध.',
+    icon: ShieldCheck,
+    title: 'प्रमाणित ग्रंथ भांडार',
+    titleEn: 'Sacred Publications',
+    desc: 'छापील ग्रंथ, पॉकेट गाथा आणि संग्राहक आवृत्त्या : भक्ती साहित्य प्रत्यक्ष ग्रंथरूपात उपलब्ध.',
   },
   {
-    title: 'ज्ञान ग्राफ',
+    icon: Network,
+    title: 'भक्ती ज्ञान नकाशा',
     titleEn: 'Knowledge Graph',
-    desc: 'संत, देवता, उत्सव आणि रचना यांच्या दुव्यांचे संबंध शोधा — एक अंतर्दृष्टीपूर्ण नकाशा.',
+    desc: 'संत, आराध्य दैवते, तीर्थक्षेत्रे आणि रचना यांच्या परस्परसंबंधांचे ऐतिहासिक ज्ञान दर्शन.',
   },
   {
-    title: 'AI समृद्धी',
-    titleEn: 'AI Enrichment',
-    desc: 'स्वतंत्र LLM प्रदात्द्वारे (Groq, Gemini, Ollama) अर्थ, व्याख्या आणि संदर्भ समृद्ध करा.',
+    icon: Cpu,
+    title: 'कृत्रिम बुद्धिमत्ता समृद्धी',
+    titleEn: 'AI Context & Meaning',
+    desc: 'अमृततुल्य अभंगांचे भाषांतर, गूढ आध्यात्मिक भावार्थ आणि व्याकरण संदर्भांचे विश्लेषण.',
   },
 ];
 
 const TECH_STACK = [
-  { name: 'Next.js 15', role: 'App Router, Server Components, Streaming' },
-  { name: 'React 19', role: 'UI Framework' },
-  { name: 'TypeScript', role: 'Type Safety' },
-  { name: 'Prisma', role: 'ORM (CockroachDB/PostgreSQL)' },
-  { name: 'Meilisearch', role: 'Full-Text Search' },
-  { name: 'Tailwind CSS', role: 'Design System' },
-  { name: 'next-auth', role: 'Authentication' },
+  { name: 'Next.js 14', role: 'App Router, Server Components' },
+  { name: 'React', role: 'Responsive UI Architecture' },
+  { name: 'TypeScript', role: 'End-to-End Type Safety' },
+  { name: 'Prisma SQLite', role: 'Structured Devotional Storage' },
+  { name: 'Three.js', role: 'Interactive 3D Manuscript Viewer' },
+  { name: 'Tailwind CSS', role: 'Hallmark Devotional Token System' },
 ];
 
 export default function AboutPage() {
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      {/* Breadcrumb */}
-      <nav className="mb-6" aria-label="ब्रेडक्रंब">
-        <ol className="flex items-center gap-2 text-sm text-muted-foreground">
-          <li><Link href="/" className="hover:text-saffron">मुख्यपृष्ठ</Link></li>
-          <li aria-hidden="true">›</li>
-          <li className="text-foreground">बद्दल</li>
-        </ol>
-      </nav>
+    <div className="vitthalaya-shell min-h-screen py-10">
+      <div className="vitthalaya-container max-w-4xl">
+        {/* Breadcrumb Navigation */}
+        <nav className="mb-6" aria-label="ब्रेडक्रंब">
+          <ol className="flex items-center gap-2 text-xs font-marathi text-[var(--dp-muted)]">
+            <li>
+              <Link href="/" className="hover:text-[var(--dp-gold)] transition-colors">
+                मुख्यपृष्ठ
+              </Link>
+            </li>
+            <li aria-hidden="true"><ChevronRight size={12} /></li>
+            <li className="text-[var(--dp-ink)]">परिचय व ध्येय</li>
+          </ol>
+        </nav>
 
-      {/* Hero */}
-      <header className="mb-12 text-center space-y-4">
-        <h1 className="text-3xl sm:text-4xl font-marathiHeading text-maroon dark:text-saffron font-bold">
-          डिजिटल पंढरपूरबद्दल 🙏
-        </h1>
-        <p className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
-          मराठी भक्ती साहित्याचा वाढता डिजिटल संग्रह — अभंग, भजन, गौळणी, आरत्या, स्तोत्रे आणि संत साहित्य एका ठिकाणी.
-        </p>
-      </header>
-
-      {/* Mission */}
-      <section className="mb-12 bg-card rounded-2xl p-8 border border-saffron/10">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center text-left">
-          <div className="md:col-span-7 space-y-4">
-            <h2 className="text-2xl font-marathiHeading text-maroon dark:text-saffron font-bold">
-              आमचे ध्येय
-            </h2>
-            <div className="space-y-4 text-foreground/80 leading-relaxed font-marathi text-sm sm:text-base">
-              <p>
-                डिजिटल पंढरपूर हा महाराष्ट्राच्या वारकरी संप्रदायाच्या समृद्ध साहित्यिक संपदेचा डिजिटल संग्रह आहे.
-                आमचे ध्येय म्हणजे हजारो वर्षांचे भक्ती साहित्य — अभंग, भजन, गौळणी, आरत्या आणि स्तोत्रे —
-                डिजिटल रूपात सुरक्षित करणे आणि सर्वांना सुलभ करणे.
-              </p>
-              <p>
-                हा प्लॅटफॉर्म केवळ व्यावसायिक नाही — हा एक सांस्कृतिक आणि आध्यात्मिक उपक्रम आहे.
-                प्रत्येक डिझाइन निर्णय पवित्रता, प्रामाणिकता आणि सांस्कृतिक अधिकारप्राप्तीला प्राधान्य देतो.
-              </p>
-              <p className="font-medium text-saffron dark:text-saffron-400">
-                "विठ्ठलाच्या चरणी अर्पण" — ही आमची प्रेरणा आणि दिशा आहे.
-              </p>
-            </div>
-          </div>
-          <div className="md:col-span-5 relative aspect-[4/3] rounded-xl overflow-hidden border border-saffron/20 shadow-lg">
-            <Image
-              src="/images/realistic/pandharpur-temple.jpg"
-              alt="Pandharpur Temple spire"
-              fill
-              sizes="(max-width: 768px) 100vw, 33vw"
-              className="object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="mb-12">
-        <h2 className="text-2xl font-marathiHeading text-maroon dark:text-saffron font-bold mb-6">
-          प्रमुख वैशिष्ट्ये
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {FEATURES.map((f) => (
-            <div key={f.title} className="bg-card rounded-xl p-6 border border-saffron/10 hover:border-saffron/30 transition-colors">
-              <h3 className="text-lg font-marathiHeading font-bold text-foreground mb-1">{f.title}</h3>
-              <p className="text-xs text-muted-foreground mb-2">{f.titleEn}</p>
-              <p className="text-sm text-foreground/70 leading-relaxed">{f.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Tech Stack */}
-      <section className="mb-12 bg-card rounded-2xl p-8 border border-saffron/10">
-        <h2 className="text-2xl font-marathiHeading text-maroon dark:text-saffron font-bold mb-6">
-          तंत्रज्ञान स्टॅक
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {TECH_STACK.map((t) => (
-            <div key={t.name} className="flex items-start gap-3 p-3 rounded-lg bg-background/50">
-              <span className="text-saffron font-mono text-sm font-bold mt-0.5">{t.name}</span>
-              <span className="text-sm text-muted-foreground">{t.role}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Community & Contributing */}
-      <section className="mb-12">
-        <h2 className="text-2xl font-marathiHeading text-maroon dark:text-saffron font-bold mb-4">
-          समुदाय आणि योगदान
-        </h2>
-        <div className="space-y-4 text-foreground/80 leading-relaxed">
-          <p>
-            डिजिटल पंढरपूर समुदायावर आधारित आहे. तुम्ही खालील मार्गांनी योगदान करू शकता:
+        {/* Hero Header */}
+        <header className="mb-12 text-center max-w-3xl mx-auto">
+          <p className="text-xs text-[var(--dp-gold)] font-marathi mb-2">
+            ज्ञानोबा तुकाराम परंपरा
           </p>
-          <ul className="list-disc list-inside space-y-2 ml-4">
-            <li>रचनांमधील चुका दुरुस्त करा (सुधारणा सूचना)</li>
-            <li>नवीन साहित्य समाविष्ट करा</li>
-            <li>संतांच्या चरित्रांची माहिती भरा</li>
-            <li>ऑडियो रेकॉर्डिंग आणि सामग्री दान करा</li>
-          </ul>
-        </div>
-      </section>
+          <h1 className="vitthalaya-display text-3xl sm:text-4xl md:text-5xl font-bold mb-3">
+            डिजिटल पंढरपूर : आमचे ध्येय व संकल्प
+          </h1>
+          <p className="vitthalaya-prose text-sm sm:text-base text-[var(--dp-ink-dim)] leading-relaxed mb-6">
+            महाराष्ट्राच्या आठ शतकांच्या वारकरी भक्ती संपदेचे, संत साहित्याचे आणि पंढरपूर वारी परंपरेचे अधिकृत डिजिटल संकलन.
+          </p>
+        </header>
 
-      {/* CTA */}
-      <section className="text-center py-8">
-        <Link
-          href="/explore"
-          className="inline-block bg-saffron text-white font-medium py-3 px-8 rounded-full hover:bg-saffron/90 transition-colors"
-        >
-          आत्ताच अन्वेषण करा →
-        </Link>
-      </section>
+        {/* Mission Section */}
+        <section className="vitthalaya-card rounded p-6 sm:p-8 mb-12 border border-[var(--dp-rule)]" aria-labelledby="mission-heading">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+            <div className="md:col-span-7 space-y-4">
+              <h2 id="mission-heading" className="vitthalaya-display text-2xl font-bold">
+                अखंड भक्ती परंपरेचे जतन
+              </h2>
+              <div className="vitthalaya-prose text-sm space-y-3 leading-relaxed">
+                <p>
+                  डिजिटल पंढरपूर हा वारकरी संप्रदायातील समृद्ध संत साहित्याचा डिजिटल संग्रह आहे. हजारो वर्षांचे भक्ती साहित्य, अभंग, भजन, गौळणी, आरत्या आणि स्तोत्रे पुढील पिढ्यांसाठी विनामूल्य व शुद्ध स्वरूपात जतन करणे हे आमचे उद्दिष्ट आहे.
+                </p>
+                <p>
+                  हा उपक्रम निव्वळ तांत्रिक नसून एक सांस्कृतिक आणि आध्यात्मिक सेवा आहे. प्रत्येक डिझाइन आणि तांत्रिक निर्णय प्रामाणिकता आणि सांस्कृतिक पवित्रतेला सर्वोच्च प्राधान्य देतो.
+                </p>
+                <p className="text-xs font-semibold text-[var(--dp-gold)] pt-1">
+                  विठ्ठलाच्या चरणी सादर : आमची निष्ठा आणि सेवा.
+                </p>
+              </div>
+            </div>
+            <div className="md:col-span-5 relative aspect-[4/3] rounded overflow-hidden border border-[var(--dp-rule)]">
+              <Image
+                src="/images/realistic/pandharpur-temple.jpg"
+                alt="पंढरपूर श्री विठ्ठल रुक्मिणी मंदिर शिखर"
+                fill
+                sizes="(max-width: 768px) 100vw, 33vw"
+                className="object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[var(--dp-ground)] via-transparent to-transparent opacity-60" />
+            </div>
+          </div>
+        </section>
+
+        {/* Features Grid */}
+        <section className="mb-12" aria-labelledby="features-heading">
+          <h2 id="features-heading" className="vitthalaya-display text-xl font-bold mb-6 pb-2 border-b border-[var(--dp-rule)]">
+            व्यासपीठाची प्रमुख वैशिष्ट्ये
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {FEATURES.map((f) => {
+              const Icon = f.icon;
+              return (
+                <div
+                  key={f.title}
+                  className="vitthalaya-card rounded p-5 border border-[var(--dp-rule)] hover:border-[var(--dp-gold)] transition-colors"
+                >
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-9 h-9 rounded bg-[var(--dp-ground-well)] border border-[var(--dp-rule)] flex items-center justify-center text-[var(--dp-gold)] shrink-0">
+                      <Icon size={16} aria-hidden="true" />
+                    </div>
+                    <div>
+                      <h3 className="vitthalaya-display text-base font-bold text-[var(--dp-ink)]">
+                        {f.title}
+                      </h3>
+                      <p className="text-[10px] text-[var(--dp-muted)] font-marathi">
+                        {f.titleEn}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-[var(--dp-ink-dim)] font-marathi leading-relaxed">
+                    {f.desc}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Tech Stack */}
+        <section className="vitthalaya-card rounded p-6 sm:p-8 mb-12 border border-[var(--dp-rule)]" aria-labelledby="tech-heading">
+          <h2 id="tech-heading" className="vitthalaya-display text-xl font-bold mb-4 pb-2 border-b border-[var(--dp-rule)]">
+            आधुनिक तंत्रज्ञान व वास्तुकला
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-marathi">
+            {TECH_STACK.map((t) => (
+              <div key={t.name} className="flex items-center justify-between p-3 rounded bg-[var(--dp-ground-well)] border border-[var(--dp-rule)]">
+                <span className="font-semibold text-[var(--dp-gold)] font-mono">{t.name}</span>
+                <span className="text-[var(--dp-muted)]">{t.role}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Community & Contributing */}
+        <section className="vitthalaya-card rounded p-6 sm:p-8 mb-12 border border-[var(--dp-rule)]" aria-labelledby="community-heading">
+          <h2 id="community-heading" className="vitthalaya-display text-xl font-bold mb-3 pb-2 border-b border-[var(--dp-rule)]">
+            वारकरी समुदाय व सहभाग
+          </h2>
+          <p className="text-xs text-[var(--dp-ink-dim)] font-marathi leading-relaxed mb-4">
+            हा संग्रह वारकरी अभ्यासक आणि भक्तांच्या सहकार्याने वृद्धिंगत होत आहे. आपण खालीलप्रमाणे योगदान देऊ शकता:
+          </p>
+          <ul className="space-y-2 text-xs font-marathi text-[var(--dp-ink)] list-disc pl-5">
+            <li>रचनांमधील अक्षरांची व पाठभेदांची दुरुस्ती सुचवणे</li>
+            <li>दुर्मीळ अप्रकाशित अभंग आणि गाथा संकलित करणे</li>
+            <li>संतांच्या जीवनचरित्रातील ऐतिहासिक नोंदी समृद्ध करणे</li>
+            <li>पारंपारिक वारकरी कीर्तन व भजनांचे ऑडिओ योगदान देणे</li>
+          </ul>
+        </section>
+
+        {/* CTA */}
+        <div className="text-center py-6">
+          <Link
+            href="/explore"
+            className="vitthalaya-btn-primary text-sm inline-flex items-center gap-2"
+          >
+            <span>साहित्य अन्वेषण सुरू करा</span>
+            <ArrowRight size={14} aria-hidden="true" />
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }

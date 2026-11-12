@@ -449,10 +449,12 @@ export async function bulkImportEdges(
     metadata?: Record<string, unknown>;
   }>
 ): Promise<void> {
-  await db.$transaction(
-    edges.map((edge) =>
-      db.entityGraphEdge.create({
-        data: {
+  const CHUNK_SIZE = 1000;
+  for (let i = 0; i < edges.length; i += CHUNK_SIZE) {
+    const chunk = edges.slice(i, i + CHUNK_SIZE);
+    try {
+      await db.entityGraphEdge.createMany({
+        data: chunk.map((edge) => ({
           sourceType: edge.sourceType,
           sourceId: edge.sourceId,
           targetType: edge.targetType,
@@ -461,10 +463,26 @@ export async function bulkImportEdges(
           weight: edge.weight ?? 1.0,
           confidence: edge.confidence ?? 1.0,
           metadata: edge.metadata ? JSON.stringify(edge.metadata) : null,
-        },
-      })
-    )
-  );
+        })),
+        skipDuplicates: true,
+      });
+    } catch {
+      for (const edge of chunk) {
+        await db.entityGraphEdge.create({
+          data: {
+            sourceType: edge.sourceType,
+            sourceId: edge.sourceId,
+            targetType: edge.targetType,
+            targetId: edge.targetId,
+            relationship: edge.relationship,
+            weight: edge.weight ?? 1.0,
+            confidence: edge.confidence ?? 1.0,
+            metadata: edge.metadata ? JSON.stringify(edge.metadata) : null,
+          },
+        });
+      }
+    }
+  }
 }
 
 /**

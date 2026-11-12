@@ -189,6 +189,89 @@ export const client = {
       return result;
     },
 
+    async findFirst(params: {
+      where?: {
+        id?: string;
+        slug?: string;
+        OR?: Array<{ id?: string; slug?: string }>;
+        reviewed?: boolean;
+      };
+      include?: {
+        saint?: { select: Record<string, boolean> };
+        deity?: { select: Record<string, boolean> };
+      };
+      select?: Record<string, boolean>;
+    }): Promise<Composition | null> {
+      let slug = params?.where?.slug;
+      let id = params?.where?.id;
+      if (params?.where?.OR) {
+        for (const cond of params.where.OR) {
+          if (cond.slug) slug = cond.slug;
+          if (cond.id) id = cond.id;
+        }
+      }
+
+      const row = sqliteDb
+        .query(
+          `SELECT c.*, s.name_marathi as saint_name_marathi, s.name_transliteration as saint_name_transliteration,
+                  s.slug as saint_slug, d.name_marathi as deity_name_marathi
+           FROM compositions c
+           LEFT JOIN saints s ON c.saint_id = s.id
+           LEFT JOIN deities d ON c.deity_id = d.id
+           WHERE (c.id = ? OR c.slug = ?)
+           LIMIT 1`
+        )
+        .get(id || slug || '', slug || id || '') as Record<string, unknown> | undefined;
+
+      if (!row) return null;
+
+      const result: Composition = {
+        id: row.id as string,
+        titleMarathi: row.title_marathi as string,
+        titleTranslit: row.title_transliteration as string,
+        slug: row.slug as string,
+        type: row.type as string,
+        fullText: row.full_text as string,
+        meaning: row.meaning as string | null,
+        saintId: row.saint_id as string | null,
+        deityId: row.deity_id as string | null,
+        region: row.region as string | null,
+        source: row.source_attribution as string | null,
+        audioLinks: row.audio_links ? JSON.parse(row.audio_links as string) : [],
+        isVerified: Boolean(row.is_verified),
+        createdAt: new Date(row.created_at as string),
+        updatedAt: new Date(row.updated_at as string),
+        saint: null,
+        deity: null,
+      };
+
+      if (params.include?.saint && row.saint_id) {
+        result.saint = {
+          nameMarathi: row.saint_name_marathi as string,
+          nameTranslit: row.saint_name_transliteration as string,
+          slug: row.saint_slug as string,
+        };
+      }
+
+      if (params.include?.deity && row.deity_id) {
+        result.deity = {
+          nameMarathi: row.deity_name_marathi as string,
+        };
+      }
+
+      if (params.select && !params.include) {
+        const selected: Partial<Composition> & Record<string, unknown> = {};
+        for (const key of Object.keys(params.select)) {
+          if (key in result) {
+            selected[key] = result[key as keyof Composition];
+          }
+        }
+        return selected as Composition;
+      }
+
+      return result;
+    },
+
     async findMany(params?: {
       skip?: number;
       take?: number;

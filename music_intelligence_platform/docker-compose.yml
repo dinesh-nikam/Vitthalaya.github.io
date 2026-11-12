@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    container_name: music_intelligence_api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=MusicIntelligencePlatform
+      - APP_ENV=production
+      - DEBUG=false
+      - DATABASE_URL=postgresql+asyncpg://music_user:music_pass@postgres:5432/music_db
+      - SYNC_DATABASE_URL=postgresql://music_user:music_pass@postgres:5432/music_db
+      - REDIS_URL=redis://redis:6379/0
+      - ENABLE_REDIS_QUEUE=true
+      - SCRAPLING_HEADLESS=true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - music_storage:/app/storage
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: music_postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=music_user
+      - POSTGRES_PASSWORD=music_pass
+      - POSTGRES_DB=music_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U music_user -d music_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: music_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:
+  music_storage:

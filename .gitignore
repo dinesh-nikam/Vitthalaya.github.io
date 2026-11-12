@@ -93,3 +93,10 @@ graphify-out/
 # --- OMO Continuation Session Data ---
 .omo/run-continuation/*.json
 
+
+# --- Python & Music Intelligence Local Artifacts ---
+music_intelligence.db
+music_intelligence_platform/.venv/
+music_intelligence_platform/**/__pycache__/
+music_intelligence_platform/.pytest_cache/
+music_intelligence_platform/.env

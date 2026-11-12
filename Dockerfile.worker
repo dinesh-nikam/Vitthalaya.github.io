@@ -1,0 +1,43 @@
+# Multi-stage production Dockerfile for Digital Pandharpur Background Worker
+FROM oven/bun:1.2-alpine AS base
+
+# Install system dependencies:
+# - ffmpeg: required for audio validation, VAD, vocal isolation
+# - curl: for container healthcheck probe
+# - ca-certificates: secure HTTPS connections to APIs
+RUN apk add --no-cache ffmpeg curl ca-certificates
+
+WORKDIR /app
+
+# Step 1: Install dependencies
+COPY package.json bun.lock ./
+RUN bun install --production
+
+# Step 2: Generate Prisma Client
+COPY prisma ./prisma
+COPY scripts/switch-provider.ts ./scripts/switch-provider.ts
+# Default to postgresql for container deployments
+ENV DATABASE_URL="postgresql://varkari:varkari_dev_password@postgres:5432/varkari?schema=public"
+RUN bun scripts/switch-provider.ts && bunx prisma generate
+
+# Step 3: Copy application source code
+COPY src ./src
+COPY tsconfig.json ./
+
+# Environment defaults
+ENV NODE_ENV=production
+ENV WORKER_PORT=9091
+ENV WORKER_INTERVAL_MS=5000
+
+# Expose healthcheck probe port
+EXPOSE 9091
+
+# Container health probe
+HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:9091/health || exit 1
+
+# Non-root user execution
+USER bun
+
+# Run the background worker daemon
+CMD ["bun", "run", "src/cli/worker-runner.ts", "--interval", "5000", "--port", "9091"]

@@ -7,6 +7,7 @@ const FOOTER_LINKS = {
     { href: '/saints', label: 'संत' },
     { href: '/wari', label: 'वारी' },
     { href: '/learn', label: 'शिका' },
+    { href: '/japa', label: 'नामजप माळ' },
     { href: '/search', label: 'शोध' },
   ],
   community: [

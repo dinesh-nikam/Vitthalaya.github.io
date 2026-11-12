@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { db } from '../../../src/db/client';
 import { getUnitPrice } from '@/src/lib/orders/pricing';
 import { AddToCartButton } from '@/components/add-to-cart-button';
+import { BookOpen, FileText, Tablet, ChevronRight, CheckCircle2 } from 'lucide-react';
+import '@/app/homepage.css';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,11 +22,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   });
 
   if (!book) {
-    return { title: 'पुस्तक सापडले नाही — Digital Pandharpur' };
+    return { title: 'पुस्तक सापडले नाही : डिजिटल पंढरपूर' };
   }
 
-  const title = `${book.titleMarathi} — Digital Pandharpur`;
-  const description = `${book.titleMarathi}${book.titleEnglish ? ` (${book.titleEnglish})` : ''} — ${book.totalCompositions ?? 0} compositions, ${book.totalPages ?? 0} pages. ${book.bookType === 'PREMIUM_HARDCOVER' ? 'Premium hardcover edition.' : book.bookType === 'COLLECTOR' ? 'Collector edition.' : ''}`;
+  const title = `${book.titleMarathi} : डिजिटल पंढरपूर`;
+  const description = `${book.titleMarathi}${book.titleEnglish ? ` (${book.titleEnglish})` : ''}, एकूण ${book.totalCompositions ?? 0} रचना आणि ${book.totalPages ?? 0} पाने.`;
 
   return {
     title,
@@ -44,22 +46,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 const FORMAT_LABELS: Record<string, string> = {
-  DIGITAL_PDF: 'PDF',
-  DIGITAL_EPUB: 'EPUB',
-  DIGITAL_KINDLE: 'Kindle',
-  PRINT_PAPERBACK: 'Paperback',
-  PRINT_HARDCOVER: 'Hardcover',
-  PRINT_COLLECTOR: 'Collector Edition',
+  DIGITAL_PDF: 'डिजिटल PDF',
+  DIGITAL_EPUB: 'ई-पब (EPUB)',
+  DIGITAL_KINDLE: 'किंडल आवृत्ती',
+  PRINT_PAPERBACK: 'पेपरबॅक पुस्तक',
+  PRINT_HARDCOVER: 'हार्डबाउंड ग्रंथ',
+  PRINT_COLLECTOR: 'कलेक्टर विशेष आवृत्ती',
 };
 
-const FORMAT_ICONS: Record<string, string> = {
-  DIGITAL_PDF: '📄',
-  DIGITAL_EPUB: '📱',
-  DIGITAL_KINDLE: '📖',
-  PRINT_PAPERBACK: '📘',
-  PRINT_HARDCOVER: '📚',
-  PRINT_COLLECTOR: '🏆',
-};
+function getFormatIcon(format: string) {
+  switch (format) {
+    case 'DIGITAL_PDF':
+      return <FileText size={15} className="text-[var(--dp-gold)]" aria-hidden="true" />;
+    case 'DIGITAL_EPUB':
+    case 'DIGITAL_KINDLE':
+      return <Tablet size={15} className="text-[var(--dp-gold)]" aria-hidden="true" />;
+    default:
+      return <BookOpen size={15} className="text-[var(--dp-gold)]" aria-hidden="true" />;
+  }
+}
 
 export default async function BookDetailPage({ params }: Props) {
   const rawSlug = await params;
@@ -87,101 +92,158 @@ export default async function BookDetailPage({ params }: Props) {
   }
 
   const typeLabels: Record<string, string> = {
-    POCKET: 'Pocket Size', STANDARD: 'Standard', PREMIUM_HARDCOVER: 'Premium Hardcover',
-    COLLECTOR: 'Collector Edition', TEMPLE: 'Temple Edition',
+    POCKET: 'पॉकेट आवृत्ती',
+    STANDARD: 'मानक आवृत्ती',
+    PREMIUM_HARDCOVER: 'प्रीमियम हार्डकव्हर',
+    COLLECTOR: 'कलेक्टर विशेष आवृत्ती',
+    TEMPLE: 'मंदिर आवृत्ती',
   };
 
   return (
-    <div className="min-h-screen bg-cream-50">
-      {/* Hero */}
-      <div className="bg-gradient-to-br from-maroon-800 to-maroon-900 text-white">
-        <div className="max-w-4xl mx-auto px-4 py-16">
-          <Link href="/books" className="text-saffron-300 hover:text-saffron-200 text-sm mb-4 inline-block">
-            ← पुस्तके
-          </Link>
-          <h1 className="text-4xl font-bold mt-2">{book.titleMarathi}</h1>
-          {book.titleEnglish && (
-            <p className="text-xl text-saffron-300 mt-1">{book.titleEnglish}</p>
-          )}
-          {book.totalCompositions && (
-            <p className="mt-4 text-sand-200">
-              {book.totalCompositions} रचना · {book.totalPages} पाने · {book.totalSections} विभाग
-            </p>
-          )}
-        </div>
-      </div>
+    <div className="vitthalaya-shell min-h-screen py-10">
+      <div className="vitthalaya-container max-w-5xl">
+        {/* Breadcrumb Navigation */}
+        <nav className="mb-6" aria-label="ब्रेडक्रंब">
+          <ol className="flex items-center gap-2 text-xs font-marathi text-[var(--dp-muted)]">
+            <li>
+              <Link href="/" className="hover:text-[var(--dp-gold)] transition-colors">
+                मुख्यपृष्ठ
+              </Link>
+            </li>
+            <li aria-hidden="true"><ChevronRight size={12} /></li>
+            <li>
+              <Link href="/books" className="hover:text-[var(--dp-gold)] transition-colors">
+                भक्ती ग्रंथ
+              </Link>
+            </li>
+            <li aria-hidden="true"><ChevronRight size={12} /></li>
+            <li className="text-[var(--dp-ink)] truncate max-w-xs">{book.titleMarathi}</li>
+          </ol>
+        </nav>
 
-      <div className="max-w-4xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* About */}
-          <section className="bg-white rounded-xl shadow-sm p-6">
-            <h2 className="text-xl font-bold text-maroon-800 mb-4">या पुस्तकाबद्दल</h2>
-            <div className="space-y-3 text-gray-700">
-              <div className="flex justify-between text-sm border-b border-gray-100 pb-2">
-                <span className="text-gray-500">प्रकार</span>
-                <span>{typeLabels[book.bookType] ?? book.bookType}</span>
-              </div>
-              <div className="flex justify-between text-sm border-b border-gray-100 pb-2">
-                <span className="text-gray-500">रचना संग्रह</span>
-                <span>{book.totalCompositions}</span>
-              </div>
-              <div className="flex justify-between text-sm border-b border-gray-100 pb-2">
-                <span className="text-gray-500">एकूण पाने</span>
-                <span>{book.totalPages}</span>
-              </div>
-              <div className="flex justify-between text-sm border-b border-gray-100 pb-2">
-                <span className="text-gray-500">विभाग</span>
-                <span>{book.totalSections}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-500">स्थिती</span>
-                <span className={book.status === 'PUBLISHED' ? 'text-green-600' : 'text-amber-600'}>
-                  {book.status}
-                </span>
-              </div>
-            </div>
-          </section>
+        {/* Hero Header */}
+        <header className="mb-10 vitthalaya-card rounded p-6 sm:p-8 border border-[var(--dp-rule)]">
+          <div className="max-w-3xl">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded bg-[var(--dp-ground-well)] text-[var(--dp-gold)] text-xs font-marathi border border-[var(--dp-rule)] mb-3">
+              <BookOpen size={12} aria-hidden="true" />
+              {typeLabels[book.bookType] ?? book.bookType}
+            </span>
+            <h1 className="vitthalaya-display text-2xl sm:text-3xl md:text-4xl font-bold mb-2">
+              {book.titleMarathi}
+            </h1>
+            {book.titleEnglish && (
+              <p className="text-sm font-marathi text-[var(--dp-muted)] mb-4">
+                {book.titleEnglish}
+              </p>
+            )}
 
-          {/* Compositions Preview */}
-          <section className="bg-white rounded-xl shadow-sm p-6">
-            <h2 className="text-xl font-bold text-maroon-800 mb-4">रचनांची यादी</h2>
-            <div className="space-y-2">
-              {book.compositions.slice(0, 50).map((bc) => (
-                <div key={bc.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs text-gray-400 w-6 text-right">{bc.sortOrder + 1}.</span>
-                    <span className="text-sm">{bc.composition.titleMarathi}</span>
-                  </div>
-                  <span className="text-xs text-gray-400">{bc.composition.type}</span>
-                </div>
-              ))}
-              {book.compositions.length > 50 && (
-                <p className="text-sm text-gray-400 text-center mt-2">
-                  ...आणखी {book.compositions.length - 50} रचना
-                </p>
+            <div className="flex flex-wrap gap-4 pt-3 border-t border-[var(--dp-rule)] text-xs font-marathi text-[var(--dp-muted)]">
+              {book.totalCompositions && (
+                <span>रचना संग्रह: <strong className="text-[var(--dp-ink)]">{book.totalCompositions}</strong></span>
+              )}
+              {book.totalPages && (
+                <span>पृष्ठ संख्या: <strong className="text-[var(--dp-ink)]">{book.totalPages}</strong></span>
+              )}
+              {book.totalSections && (
+                <span>विभाग: <strong className="text-[var(--dp-ink)]">{book.totalSections}</strong></span>
               )}
             </div>
-          </section>
-        </div>
+          </div>
+        </header>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-xl shadow-sm p-6">
-            <h3 className="font-bold text-maroon-800 mb-4">उपलब्ध आवृत्त्या</h3>
-            <div className="space-y-3">
-              {book.editions.map((ed) => {
-                const unitPrice = getUnitPrice(ed.price, ed.format);
-                return (
-                  <div key={ed.id} className="pb-3 border-b border-gray-50 last:border-0 last:pb-0">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span>{FORMAT_ICONS[ed.format] ?? '📄'}</span>
-                        <span className="text-sm font-medium">{FORMAT_LABELS[ed.format] ?? ed.format}</span>
-                      </div>
-                      <span className="text-xs text-gray-400">{ed.pageCount}p</span>
+        {/* Two-Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content Column */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Book Details */}
+            <section className="vitthalaya-card rounded p-6 border border-[var(--dp-rule)]" aria-labelledby="about-book-heading">
+              <h2 id="about-book-heading" className="vitthalaya-display text-lg font-bold mb-4 pb-2 border-b border-[var(--dp-rule)]">
+                ग्रंथाविषयी माहिती
+              </h2>
+              <div className="space-y-3 text-xs font-marathi">
+                <div className="flex justify-between py-1.5 border-b border-[var(--dp-rule)]">
+                  <span className="text-[var(--dp-muted)]">आवृत्ती प्रकार</span>
+                  <span className="font-semibold text-[var(--dp-ink)]">{typeLabels[book.bookType] ?? book.bookType}</span>
+                </div>
+                <div className="flex justify-between py-1.5 border-b border-[var(--dp-rule)]">
+                  <span className="text-[var(--dp-muted)]">एकूण भक्ती रचना</span>
+                  <span className="font-semibold text-[var(--dp-ink)]">{book.totalCompositions}</span>
+                </div>
+                <div className="flex justify-between py-1.5 border-b border-[var(--dp-rule)]">
+                  <span className="text-[var(--dp-muted)]">एकूण पाने</span>
+                  <span className="font-semibold text-[var(--dp-ink)]">{book.totalPages ?? '-'}</span>
+                </div>
+                <div className="flex justify-between py-1.5">
+                  <span className="text-[var(--dp-muted)]">प्रकाशन स्थिती</span>
+                  <span className="inline-flex items-center gap-1 font-semibold text-[var(--dp-gold)]">
+                    <CheckCircle2 size={13} aria-hidden="true" />
+                    प्रमाणित प्रकाशित प्रत
+                  </span>
+                </div>
+              </div>
+            </section>
+
+            {/* Compositions Preview List */}
+            <section className="vitthalaya-card rounded p-6 border border-[var(--dp-rule)]" aria-labelledby="composition-list-heading">
+              <div className="flex items-center justify-between mb-4 pb-2 border-b border-[var(--dp-rule)]">
+                <h2 id="composition-list-heading" className="vitthalaya-display text-lg font-bold">
+                  समाविष्ट अभंग व रचनांची सूची
+                </h2>
+                <span className="text-xs text-[var(--dp-muted)] font-marathi">
+                  ({book.compositions.length} पैकी)
+                </span>
+              </div>
+
+              <div className="space-y-2">
+                {book.compositions.slice(0, 50).map((bc) => (
+                  <div
+                    key={bc.id}
+                    className="flex items-center justify-between py-2 border-b border-[var(--dp-rule)] last:border-0 text-xs font-marathi"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="text-[var(--dp-gold)] w-6 shrink-0 font-semibold text-right">
+                        {bc.sortOrder + 1}.
+                      </span>
+                      <span className="text-[var(--dp-ink)] truncate">{bc.composition.titleMarathi}</span>
                     </div>
-                    {ed.format.startsWith('DIGITAL_') && (
+                    <span className="text-[10px] text-[var(--dp-muted)] bg-[var(--dp-ground-well)] px-2 py-0.5 rounded border border-[var(--dp-rule)] shrink-0 ml-2">
+                      {bc.composition.type}
+                    </span>
+                  </div>
+                ))}
+                {book.compositions.length > 50 && (
+                  <p className="text-xs text-[var(--dp-muted)] text-center pt-3 font-marathi">
+                    …आणखी {book.compositions.length - 50} रचना उपलब्ध
+                  </p>
+                )}
+              </div>
+            </section>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Editions & Purchase */}
+            <div className="vitthalaya-card rounded p-6 border border-[var(--dp-rule)]">
+              <h2 className="vitthalaya-display text-base font-bold mb-4 pb-2 border-b border-[var(--dp-rule)]">
+                उपलब्ध आवृत्त्या व खरेदी
+              </h2>
+              <div className="space-y-4">
+                {book.editions.map((ed) => {
+                  const unitPrice = getUnitPrice(ed.price, ed.format);
+                  return (
+                    <div key={ed.id} className="pb-4 border-b border-[var(--dp-rule)] last:border-0 last:pb-0 space-y-2">
+                      <div className="flex items-center justify-between text-xs font-marathi">
+                        <div className="flex items-center gap-2">
+                          {getFormatIcon(ed.format)}
+                          <span className="font-semibold text-[var(--dp-ink)]">
+                            {FORMAT_LABELS[ed.format] ?? ed.format}
+                          </span>
+                        </div>
+                        {ed.pageCount && (
+                          <span className="text-[var(--dp-muted)]">{ed.pageCount} पाने</span>
+                        )}
+                      </div>
+
                       <AddToCartButton
                         publicationId={book.id}
                         editionId={ed.id}
@@ -191,36 +253,40 @@ export default async function BookDetailPage({ params }: Props) {
                         unitPrice={unitPrice}
                         pageCount={ed.pageCount ?? undefined}
                       />
-                    )}
-                    {!ed.format.startsWith('DIGITAL_') && (
-                      <p className="text-xs text-gray-400 text-center py-2">लवकरच उपलब्ध</p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {book.creator && (
-            <div className="bg-white rounded-xl shadow-sm p-6">
-              <h3 className="font-bold text-maroon-800 mb-3">निर्माता</h3>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-saffron-100 rounded-full flex items-center justify-center">
-                  <span className="text-saffron-600 font-bold">
-                    {book.creator.name?.charAt(0) ?? '?'}
-                  </span>
-                </div>
-                <span className="text-sm">{book.creator.name ?? 'Unknown'}</span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-          )}
 
-          {book._count.orderItems > 0 && (
-            <div className="bg-white rounded-xl shadow-sm p-6 text-center">
-              <p className="text-2xl font-bold text-maroon-800">{book._count.orderItems}</p>
-              <p className="text-sm text-gray-500">विक्री झालेल्या प्रती</p>
-            </div>
-          )}
+            {/* Creator / Editor */}
+            {book.creator && (
+              <div className="vitthalaya-card rounded p-6 border border-[var(--dp-rule)]">
+                <h3 className="text-xs font-semibold text-[var(--dp-gold)] font-marathi mb-2">
+                  संकलन व संपादन
+                </h3>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 bg-[var(--dp-ground-well)] border border-[var(--dp-rule)] rounded-full flex items-center justify-center text-[var(--dp-gold)] font-bold text-sm">
+                    {book.creator.name?.charAt(0) ?? 'सं'}
+                  </div>
+                  <span className="text-xs font-marathi text-[var(--dp-ink)] font-semibold">
+                    {book.creator.name ?? 'वारकरी अभ्यासक मंडळ'}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {book._count.orderItems > 0 && (
+              <div className="vitthalaya-card rounded p-6 text-center border border-[var(--dp-rule)]">
+                <p className="vitthalaya-display text-2xl font-bold text-[var(--dp-gold)]">
+                  {book._count.orderItems}
+                </p>
+                <p className="text-xs text-[var(--dp-muted)] font-marathi mt-1">
+                  वितरित झालेल्या पवित्र प्रती
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

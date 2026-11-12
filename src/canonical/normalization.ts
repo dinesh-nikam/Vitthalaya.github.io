@@ -168,6 +168,7 @@ export function normalizeCompositionType(value: string | null | undefined): Comp
     .trim()
     .toUpperCase()
     .replace(/[^A-Z]/g, '');
+  if (key === 'GAULANI') return 'GAULAN';
   const match = COMPOSITION_TYPES.find((t) => t === key);
   if (match) return match;
   // Marathi aliases
@@ -180,6 +181,11 @@ export function normalizeCompositionType(value: string | null | undefined): Comp
     ओवी: 'OVI',
     पोवाडा: 'POWADA',
     गौळण: 'GAULAN',
+    गौळणी: 'GAULAN',
+    भारूड: 'OTHER',
+    कीर्तन: 'OTHER',
+    पद: 'OTHER',
+    नामस्मरण: 'OTHER',
   };
   return marathi[value.trim()] ?? 'OTHER';
 }

@@ -42,10 +42,12 @@ export interface RecordAuditLogInput {
  */
 export async function recordAuditLog(
   input: RecordAuditLogInput,
-  client: { auditLog: { create: (args: any) => Promise<unknown> } } = db
+  client?: any
 ): Promise<void> {
   try {
-    await client.auditLog.create({
+    const target = client?.auditLog ?? (db as any)?.auditLog;
+    if (target?.create) {
+      await target.create({
       data: {
         actorId: input.actorId,
         action: input.action,
@@ -56,6 +58,9 @@ export async function recordAuditLog(
         metadata: input.metadata !== undefined ? JSON.stringify(input.metadata) : null,
       },
     });
+    } else {
+      console.log(`[Audit] ${input.action} ${input.entityType}:${input.entityId} by actor:${input.actorId ?? 'system'}`);
+    }
   } catch (err) {
     console.error(
       `🔴 [Audit] Failed to record audit log for ${input.action} ${input.entityType}:${input.entityId}`,

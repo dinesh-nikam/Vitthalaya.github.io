@@ -2,7 +2,7 @@
  * Seed the DailyFeature rotation for the /daily page.
  *
  * Every entry references a real DB record:
- *   - ABHANG       → compositions that have a meaning and a linked saint
+ *   - ABHANG       → authentic compositions where body is pure poetic verse (fullText), with canonical titles
  *   - SAINT        → every saint in the saints table
  *   - THOUGHT      → real opening lines from the composition corpus
  *   - FESTIVAL     → every festival in the festivals table
@@ -14,6 +14,7 @@
  * Run: bun run seed:daily
  */
 import { PrismaClient } from '@prisma/client';
+import { extractCanonicalOpeningLine } from '../src/services/composition-reviewer.service';
 
 const prisma = new PrismaClient();
 
@@ -36,11 +37,11 @@ function toThought(fullText: string | null): string | null {
 async function main() {
   console.log('Seeding DailyFeature rotation...');
 
-  // ── ABHANG slot: quality compositions (meaning + linked saint) ──
+  // ── ABHANG slot: quality compositions (authentic verse + linked saint) ──
   const abhangs = await prisma.composition.findMany({
     where: {
       saintId: { not: null },
-      meaning: { not: null },
+      fullText: { not: '' },
       type: 'ABHANG',
     },
     select: {
@@ -48,6 +49,7 @@ async function main() {
       titleMarathi: true,
       titleTranslit: true,
       slug: true,
+      fullText: true,
       meaning: true,
       saintId: true,
     },
@@ -60,16 +62,16 @@ async function main() {
     .map((x) => x.a)
     .slice(0, 40);
 
-  console.log(`  ABHANG pool: ${shuffledAbhangs.length} (from ${abhangs.length} with meaning)`);
+  console.log(`  ABHANG pool: ${shuffledAbhangs.length} (from ${abhangs.length} available)`);
 
   // ── THOUGHT slot: real verse lines from the corpus ──
-  // (fullText fetched in bulk, filtered in JS — Prisma rejects `not: null`
-  // on this nullable column in this client version.)
-  const thoughtCompositions = (await prisma.composition.findMany({
-    where: { saintId: { not: null } },
-    select: { id: true, fullText: true, titleTranslit: true, saintId: true },
-    take: 3000,
-  })).filter((c) => c.fullText);
+  const thoughtCompositions = (
+    await prisma.composition.findMany({
+      where: { saintId: { not: null } },
+      select: { id: true, fullText: true, titleTranslit: true, saintId: true },
+      take: 3000,
+    })
+  ).filter((c) => c.fullText);
   const thoughts: Array<{
     id: string;
     title: string;
@@ -138,13 +140,14 @@ async function main() {
   let upserted = 0;
 
   for (const [i, a] of shuffledAbhangs.entries()) {
+    const canonicalTitle = extractCanonicalOpeningLine(a.fullText) || a.titleMarathi;
     await prisma.dailyFeature.upsert({
       where: { id: featureId('ABHANG', i) },
       update: {
         slot: 'ABHANG',
         rotationIndex: i,
-        titleMarathi: a.titleMarathi,
-        bodyMarathi: a.meaning,
+        titleMarathi: canonicalTitle,
+        bodyMarathi: a.fullText, // PURE SACRED VERSE POETRY
         compositionId: a.id,
         saintId: a.saintId,
         festivalId: null,
@@ -153,8 +156,8 @@ async function main() {
         id: featureId('ABHANG', i),
         slot: 'ABHANG',
         rotationIndex: i,
-        titleMarathi: a.titleMarathi,
-        bodyMarathi: a.meaning,
+        titleMarathi: canonicalTitle,
+        bodyMarathi: a.fullText, // PURE SACRED VERSE POETRY
         compositionId: a.id,
         saintId: a.saintId,
       },

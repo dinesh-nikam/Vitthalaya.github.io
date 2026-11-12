@@ -56,6 +56,53 @@ export async function isBookmarked(slug: string): Promise<boolean> {
   return !!interaction;
 }
 
+
+export async function addBookmark(item: { slug: string; title: string }): Promise<void> {
+  const session = await getServerSession(authOptions);
+  if (!(session?.user as any)?.id) return;
+
+  const composition = await db.composition.findUnique({
+    where: { slug: item.slug },
+  });
+  if (!composition) return;
+
+  const existing = await db.userInteraction.findFirst({
+    where: {
+      userId: (session?.user as any)?.id,
+      compositionId: composition.id,
+      interaction: 'bookmark',
+    },
+  });
+
+  if (!existing) {
+    await db.userInteraction.create({
+      data: {
+        userId: (session?.user as any)?.id,
+        compositionId: composition.id,
+        interaction: 'bookmark',
+      },
+    });
+  }
+}
+
+export async function removeBookmark(slug: string): Promise<void> {
+  const session = await getServerSession(authOptions);
+  if (!(session?.user as any)?.id) return;
+
+  const composition = await db.composition.findUnique({
+    where: { slug },
+  });
+  if (!composition) return;
+
+  await db.userInteraction.deleteMany({
+    where: {
+      userId: (session?.user as any)?.id,
+      compositionId: composition.id,
+      interaction: 'bookmark',
+    },
+  });
+}
+
 export async function toggleBookmark(slug: string, _title: string): Promise<boolean> {
   const session = await getServerSession(authOptions);
   if (!(session?.user as any)?.id) {

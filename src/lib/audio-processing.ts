@@ -118,13 +118,13 @@ export async function processAudioProcessingJobs(): Promise<number> {
         SET status = 'processing', attempts = attempts + 1, updated_at = NOW() AT TIME ZONE 'UTC'
         WHERE id = (
           SELECT id FROM "audio_processing_jobs"
-          WHERE status IN ('pending', 'failed') AND attempts < max_attempts
+          WHERE status IN ('pending', 'failed') AND attempts < "maxAttempts"
           ORDER BY created_at ASC
           FOR UPDATE SKIP LOCKED
           LIMIT 1
         )
         RETURNING id, kind, upload_id as "uploadId", video_id as "videoId", url,
-                  storage_path as "storagePath", status, attempts, max_attempts as "maxAttempts"
+                  storage_path as "storagePath", status, attempts, "maxAttempts"
       `) as any[];
 
       if (rows && rows.length > 0) {

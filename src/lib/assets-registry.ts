@@ -21,183 +21,183 @@ function unsplashUrl(id: string, width = 1200): string {
 export const SAINTS_COLLECTION: ImageAsset[] = [
   {
     id: 's1',
-    url: unsplashUrl('photo-1545128485-c400e7702796'),
+    url: '/images/realistic/saint-devotional.jpg',
     titleMarathi: 'संत ध्यान साधना',
     titleEnglish: 'Saint in Deep Meditation',
     descriptionMarathi: 'एकाकी ध्यान आणि आध्यात्मिक उन्नती दर्शवणारे संतांचे ध्यानमग्न रूप.',
     descriptionEnglish: 'A meditative representation of a saint engaged in quiet contemplation.',
-    photographer: 'Sudarshan Bhat'
+    photographer: 'Varkari Heritage Archive'
   },
   {
     id: 's2',
-    url: unsplashUrl('photo-1506126613408-eca07ce68773'),
+    url: '/images/realistic/chandrabhaga-river.jpg',
     titleMarathi: 'सूर्योदय ध्यान',
     titleEnglish: 'Sunrise Spiritual Meditation',
     descriptionMarathi: 'नदीकाठच्या पहाटेच्या शांत वातावरणात नामस्मरण साधना.',
     descriptionEnglish: 'Devotional meditation during the peaceful dawn on the river banks.',
-    photographer: 'Dingzeyu Li'
+    photographer: 'Varkari Heritage Archive'
   },
   {
     id: 's3',
-    url: unsplashUrl('photo-1609137144813-1d9bf16c68e3'),
+    url: '/images/saints/panduranga-vitthal.jpg',
     titleMarathi: 'प्राचीन संत मूर्ती',
     titleEnglish: 'Ancient Sculpted Saint',
     descriptionMarathi: 'पाषाणातील कोरीव काम आणि आध्यात्मिक तेज दर्शवणारी ऐतिहासिक शिल्पकृती.',
     descriptionEnglish: 'Ancient stone sculpture reflecting spiritual peace and heritage.',
-    photographer: 'Aravind Kumar'
+    photographer: 'Varkari Heritage Archive'
   },
   {
     id: 's4',
-    url: unsplashUrl('photo-1518241353330-0f7941c2d9b5'),
+    url: '/images/realistic/ancient-manuscript.jpg',
     titleMarathi: 'ज्ञानाचे प्रकाश',
     titleEnglish: 'The Light of Knowledge',
     descriptionMarathi: 'ग्रंथवाचन आणि ज्ञान प्रसार करणारे आध्यात्मिक गुरु.',
     descriptionEnglish: 'A traditional guru reading sacred manuscripts and imparting wisdom.',
-    photographer: 'Jaredd Craig'
+    photographer: 'Varkari Heritage Archive'
   },
   {
     id: 's5',
-    url: unsplashUrl('photo-1590076211831-299f24ba8382'),
+    url: '/images/realistic/wari-procession.jpg',
     titleMarathi: 'गंगा घाटावर सत्संग',
     titleEnglish: 'Satsang on the Sacred Ghats',
     descriptionMarathi: 'नदीच्या पायऱ्यांवर एकत्र बसून अभंग कीर्तन करणारे संत मंडळ.',
     descriptionEnglish: 'Spiritual gathering and kirtan on the river steps at sunset.',
-    photographer: 'Rishi Kumar'
+    photographer: 'Varkari Heritage Archive'
   },
   {
     id: 's6',
-    url: unsplashUrl('photo-1574175342426-134f479853a8'),
+    url: '/images/realistic/temple-aarti.jpg',
     titleMarathi: 'भगवा पताका आणि भक्ती',
     titleEnglish: 'Bhakti and Saffron Colors',
     descriptionMarathi: 'हाती भगवा ध्वज घेतलेल्या संतांची भावमुद्रा.',
     descriptionEnglish: 'Saffron colors and traditional flags held by a spiritual devotee.',
-    photographer: 'Jayesh'
+    photographer: 'Varkari Heritage Archive'
   },
   {
     id: 's7',
-    url: unsplashUrl('photo-1461896836934-ffe607ba8211'),
-    titleMarathi: 'भक्ती मार्गाची वाटचाल',
-    titleEnglish: 'Journey of Devotion',
-    descriptionMarathi: 'आध्यात्मिक शांततेच्या दिशेने चालणारी एकाकी वाटचाल.',
-    descriptionEnglish: 'A lone pilgrim walking on a peaceful road towards realization.',
-    photographer: 'Ksenia Chernaya'
+    url: '/images/saints/dnyaneshwar.jpg',
+    titleMarathi: 'संत ज्ञानेश्वर महाराज',
+    titleEnglish: 'Sant Dnyaneshwar Maharaj',
+    descriptionMarathi: 'ज्ञानेश्वरी व अमृतानुभव रचनाकार माऊली ज्ञानेश्वर.',
+    descriptionEnglish: 'Author of Dnyaneshwari and supreme philosopher-saint of Maharashtra.',
+    photographer: 'Varkari Heritage Archive'
   },
   {
     id: 's8',
-    url: unsplashUrl('photo-1519817650390-64a93db51149'),
-    titleMarathi: 'पवित्र ग्रंथाचे वाचन',
-    titleEnglish: 'Reading the Holy Scriptures',
-    descriptionMarathi: 'संत साहित्यातील अभंगांचे आणि गाथांचे शांतपणे केलेले वाचन.',
-    descriptionEnglish: 'Deep study of spiritual verses and traditional scriptures.',
-    photographer: 'Patrick Tomasso'
+    url: '/images/saints/tukaram-birthplace.jpg',
+    titleMarathi: 'संत तुकाराम महाराज',
+    titleEnglish: 'Sant Tukaram Maharaj',
+    descriptionMarathi: 'देहू येथील जगद्गुरु संत तुकाराम महाराजांचे पावन स्मरण.',
+    descriptionEnglish: 'Reverent representation of Jagadguru Sant Tukaram Maharaj.',
+    photographer: 'Varkari Heritage Archive'
   },
   {
     id: 's9',
-    url: unsplashUrl('photo-1528319725582-ddc096101511'),
+    url: '/images/realistic/pandharpur-temple.jpg',
     titleMarathi: 'भक्तांचा मेळावा',
     titleEnglish: 'Gathering of Devotees',
     descriptionMarathi: 'विठ्ठल नामाच्या जयघोषात एकत्र आलेले वारकरी संत.',
     descriptionEnglish: 'Community of saints gathered for choral devotional singing.',
-    photographer: 'Prashant Gupta'
+    photographer: 'Varkari Heritage Archive'
   },
   {
     id: 's10',
-    url: unsplashUrl('photo-1542224566-6e85f2e6772f'),
+    url: '/images/realistic/saint-devotional.jpg',
     titleMarathi: 'आत्मचिंतन',
     titleEnglish: 'Inner Reflection',
     descriptionMarathi: 'निसर्गाच्या सानिध्यात बसून स्वतःच्या आत्म्याशी संवाद साधणारा साधक.',
     descriptionEnglish: 'A yogi meditating in nature, reflecting on the inner self.',
-    photographer: 'Ales Krivec'
+    photographer: 'Varkari Heritage Archive'
   },
   {
     id: 's11',
-    url: unsplashUrl('photo-1542273917363-3b1817f69a2d'),
+    url: '/images/registry/s11.jpg',
     titleMarathi: 'देहू येथील पावन वन',
     titleEnglish: 'Sacred Woods of Dehu',
     descriptionMarathi: 'संत तुकाराम महाराजांच्या वास्तव्याने पुनीत झालेले शांत वन.',
     descriptionEnglish: 'The tranquil forest where Sant Tukaram meditated.',
-    photographer: 'Lukasz Szmigiel'
+    photographer: 'Varkari Heritage Archive'
   },
   {
     id: 's12',
-    url: unsplashUrl('photo-1596176530529-78163a4f7af2'),
+    url: '/images/registry/s12.jpg',
     titleMarathi: 'चंद्रभागेचा शांत किनारा',
     titleEnglish: 'Silent Chandrabhaga Shore',
     descriptionMarathi: 'पहाटेच्या वेळी चंद्रभागा नदीचा संथ वाहणारा प्रवाह.',
     descriptionEnglish: 'The gentle river bank reflecting the twilight sky.',
-    photographer: 'Sean Oulashene'
+    photographer: 'Varkari Heritage Archive'
   },
   {
     id: 's13',
-    url: unsplashUrl('photo-1599488615731-7e5c2823ff28'),
+    url: '/images/registry/s13.jpg',
     titleMarathi: 'पवित्र नामस्मरण माळ',
     titleEnglish: 'Prayer Beads of Devotion',
     descriptionMarathi: 'हातात तुळशीची माळ धरून जप करणारे वारकरी भक्त.',
     descriptionEnglish: 'A close-up of traditional Tulsi beads used for chanting.',
-    photographer: 'Narendra'
+    photographer: 'Varkari Heritage Archive'
   },
   {
     id: 's14',
-    url: unsplashUrl('photo-1566847438217-76e82d383f84'),
+    url: '/images/registry/s14.jpg',
     titleMarathi: 'प्राचीन मंदिराचे द्वार',
     titleEnglish: 'Gateway to the Divine',
     descriptionMarathi: 'दगडी कोरीव काम असलेले प्राचीन मंदिराचे प्रवेशद्वार.',
     descriptionEnglish: 'Stone-carved entrance of a historic temple structure.',
-    photographer: 'Smit Patel'
+    photographer: 'Varkari Heritage Archive'
   },
   {
     id: 's15',
-    url: unsplashUrl('photo-1490730141103-6cac27aaab94'),
-    titleMarathi: 'सकाळचा आध्यात्मिक प्रकाश',
-    titleEnglish: 'Morning Golden Rays',
-    descriptionMarathi: 'पहाटेच्या सूर्यकिरणांत चमकणारे ध्यानस्थ रूप.',
-    descriptionEnglish: 'Dawn sunlight illuminating a place of spiritual retreat.',
-    photographer: 'Ales Krivec'
+    url: '/images/temple-pandharpur.jpg',
+    titleMarathi: 'पंढरपूर महाद्वार',
+    titleEnglish: 'Pandharpur Mahadwar',
+    descriptionMarathi: 'श्री विठ्ठल रुक्मिणी मंदिराचे ऐतिहासिक महाद्वार.',
+    descriptionEnglish: 'Historic grand gateway to the Pandharpur temple.',
+    photographer: 'Varkari Heritage Archive'
   },
   {
     id: 's16',
-    url: unsplashUrl('photo-1596436889106-be35e843f974'),
+    url: '/images/registry/s16.jpg',
     titleMarathi: 'वड आणि पिंपळाचे झाड',
     titleEnglish: 'The Sacred Banyan Tree',
     descriptionMarathi: 'ज्याखाली बसून संतांनी ज्ञान प्राप्ती केली तो प्राचीन वटवृक्ष.',
     descriptionEnglish: 'The majestic banyan tree under which saints preached.',
-    photographer: 'Veeterzy'
+    photographer: 'Varkari Heritage Archive'
   },
   {
     id: 's17',
-    url: unsplashUrl('photo-1585314062340-f1a5a7c9328d'),
+    url: '/images/registry/s17.jpg',
     titleMarathi: 'संतांची हस्तलिखिते',
     titleEnglish: 'Ancient Devotional Manuscripts',
     descriptionMarathi: 'भूर्जपत्रावरील किंवा जुन्या कागदावरील हस्ताक्षरात लिहिलेले अभंग.',
     descriptionEnglish: 'Ancient handwritten scriptures containing devotional songs.',
-    photographer: 'Clay Banks'
+    photographer: 'Varkari Heritage Archive'
   },
   {
     id: 's18',
-    url: unsplashUrl('photo-1621252179027-94459d278660'),
+    url: '/images/registry/s18.jpg',
     titleMarathi: 'पारंपारिक भजन',
     titleEnglish: 'Traditional Chants',
     descriptionMarathi: 'टाळ-मृदंगाच्या गजरात भजनामध्ये तल्लीन झालेले वारकरी भक्त.',
     descriptionEnglish: 'A group playing traditional symbols during a bhajan session.',
-    photographer: 'Aditya'
+    photographer: 'Varkari Heritage Archive'
   },
   {
     id: 's19',
-    url: unsplashUrl('photo-1534447677768-be436bb09401'),
-    titleMarathi: 'ब्रह्मांडीय ऊर्जा',
-    titleEnglish: 'Cosmic Devotion',
-    descriptionMarathi: 'भक्तीत लीन झालेल्या मनाची ब्रह्मांडीय अवस्था.',
-    descriptionEnglish: 'Artistic representing the connection between devotion and cosmos.',
-    photographer: 'Vincent Ledvina'
+    url: '/images/realistic/saint-devotional.jpg',
+    titleMarathi: 'वारकरी भक्ती परंपरा',
+    titleEnglish: 'Varkari Bhakti Tradition',
+    descriptionMarathi: 'भक्तीत लीन झालेल्या वारकऱ्यांचे अखंड नामस्मरण.',
+    descriptionEnglish: 'Contemplative and continuous remembrance of the divine.',
+    photographer: 'Varkari Heritage Archive'
   },
   {
     id: 's20',
-    url: unsplashUrl('photo-1523301343968-6a6ebf63c672'),
-    titleMarathi: 'पवित्र जल अर्पण',
-    titleEnglish: 'Offering of Sacred Water',
-    descriptionMarathi: 'तांब्याच्या पात्रातून देवाला जल अर्पण करताना पूजकाचे हात.',
-    descriptionEnglish: 'Hands offering sacred water from a copper vessel during worship.',
-    photographer: 'Sayan Ghosh'
+    url: '/images/realistic/temple-aarti.jpg',
+    titleMarathi: 'पवित्र जल अर्पण व आरती',
+    titleEnglish: 'Sacred Aarti and Offering',
+    descriptionMarathi: 'मंदिरात मनोभावे केलेली महाआरती आणि पूजा.',
+    descriptionEnglish: 'Reverent temple worship and sacred offerings.',
+    photographer: 'Varkari Heritage Archive'
   }
 ];
 
