@@ -1,0 +1,266 @@
+# Music Composition & Lyrics Intelligence Platform - Source Registry
+# Authoritative source definitions, category ratings, domain policies, and ethical access constraints.
+
+version: "1.0"
+sources:
+  - id: musicbrainz
+    name: "MusicBrainz Open Music Database"
+    base_url: "https://musicbrainz.org"
+    source_type: "open_database"
+    authority_score: 0.98
+    rate_limit_per_second: 1.0
+    requires_js: false
+    robots_txt_url: "https://musicbrainz.org/robots.txt"
+    permitted_content:
+      - basic_metadata
+      - songwriting_credits
+      - recording_credits
+      - release_dates
+      - isrc
+      - discography
+    adaptive_selectors:
+      title: "h1 a span::text, h1 .recording-title::text"
+      artist: ".subheader a[href^='/artist/']::text"
+      album: "table.medium-table a[href^='/release/']::text"
+      duration: "span.duration::text"
+      isrc: "ul.isrc-list li::text"
+      writers: "table.details tr:contains('written by') td a::text"
+      composers: "table.details tr:contains('composed by') td a::text"
+      producers: "table.details tr:contains('producer') td a::text"
+
+  - id: discogs
+    name: "Discogs Comprehensive Discography"
+    base_url: "https://www.discogs.com"
+    source_type: "discography_database"
+    authority_score: 0.95
+    rate_limit_per_second: 0.5
+    requires_js: true
+    robots_txt_url: "https://www.discogs.com/robots.txt"
+    permitted_content:
+      - basic_metadata
+      - recording_credits
+      - production_credits
+      - label_catalog
+      - instruments
+    adaptive_selectors:
+      title: "h1[class*='title']::text, .profile h1::text"
+      artist: "h1[class*='title'] a::text"
+      label: "table.content_table tr:contains('Label:') td a::text"
+      producer: "table.content_table tr:contains('Producer') td::text"
+      engineers: "table.content_table tr:contains('Engineer') td::text"
+
+  - id: allmusic
+    name: "AllMusic Metadata & Editorial Archive"
+    base_url: "https://www.allmusic.com"
+    source_type: "music_editorial"
+    authority_score: 0.92
+    rate_limit_per_second: 0.5
+    requires_js: true
+    robots_txt_url: "https://www.allmusic.com/robots.txt"
+    permitted_content:
+      - basic_metadata
+      - musical_composition
+      - themes
+      - genres
+      - artist_influences
+    adaptive_selectors:
+      title: "h1.song-title::text, .headline-title::text"
+      composer: "div.composers a::text"
+      genres: "div.genre a::text"
+      styles: "div.styles a::text"
+      themes: "div.themes a::text"
+
+  - id: songfacts
+    name: "Songfacts Composition & Songwriting History"
+    base_url: "https://www.songfacts.com"
+    source_type: "songwriting_journalism"
+    authority_score: 0.88
+    rate_limit_per_second: 1.0
+    requires_js: false
+    robots_txt_url: "https://www.songfacts.com/robots.txt"
+    permitted_content:
+      - songwriting_credits
+      - song_trivia
+      - lyrical_themes
+      - producer
+    adaptive_selectors:
+      title: "h1.title::text"
+      artist: "h2.artist a::text"
+      album: "div.album-title::text"
+      writers: "ul.song-credits li:contains('Writer') a::text"
+      producer: "ul.song-credits li:contains('Producer') a::text"
+      key_facts: "div.songfact-text::text"
+
+  - id: genius
+    name: "Genius Authorized Lyrics & Credits"
+    base_url: "https://genius.com"
+    source_type: "licensed_lyrics_provider"
+    authority_score: 0.90
+    rate_limit_per_second: 1.0
+    requires_js: true
+    robots_txt_url: "https://genius.com/robots.txt"
+    permitted_content:
+      - authorized_lyrics
+      - verse_divisions
+      - songwriting_credits
+      - producer_credits
+    adaptive_selectors:
+      title: "h1[class*='SongHeader__Title']::text, h1::text"
+      artist: "a[class*='HeaderArtistAndTracklist']::text"
+      lyrics_container: "div[class*='Lyrics__Container'], div[data-lyrics-container='true']"
+      credits: "div[class*='SongCredits__Container']"
+      producers: "span[class*='CreditSubtitle']:contains('Produced By') + span a::text"
+      writers: "span[class*='CreditSubtitle']:contains('Written By') + span a::text"
+
+  - id: musixmatch
+    name: "Musixmatch Verified Metadata"
+    base_url: "https://www.musixmatch.com"
+    source_type: "licensed_lyrics_provider"
+    authority_score: 0.89
+    rate_limit_per_second: 1.0
+    requires_js: false
+    robots_txt_url: "https://www.musixmatch.com/robots.txt"
+    permitted_content:
+      - licensed_lyrics
+      - songwriters
+      - structural_tags
+    adaptive_selectors:
+      title: "h1.track-title::text"
+      artist: "h2.artist-name a::text"
+      lyrics: "p.mxm-lyrics__content span::text"
+
+  - id: imslp
+    name: "IMSLP / Petrucci Music Library (Public Domain Scores)"
+    base_url: "https://imslp.org"
+    source_type: "public_domain_archive"
+    authority_score: 0.99
+    rate_limit_per_second: 1.0
+    requires_js: false
+    robots_txt_url: "https://imslp.org/robots.txt"
+    permitted_content:
+      - full_public_domain_lyrics
+      - musical_key
+      - time_signature
+      - tempo_markings
+      - instrumentation
+      - composer
+      - arrangers
+    adaptive_selectors:
+      title: "h1#firstHeading::text"
+      composer: "div#firstHeading a::text"
+      key: "table.wp_info tr:contains('Key') td::text"
+      movements: "table.wp_info tr:contains('Movements') td::text"
+      instrumentation: "table.wp_info tr:contains('Instrumentation') td::text"
+
+  - id: choralwiki
+    name: "Choral Public Domain Library (CPDL)"
+    base_url: "https://www.cpdl.org"
+    source_type: "public_domain_archive"
+    authority_score: 0.97
+    rate_limit_per_second: 1.0
+    requires_js: false
+    robots_txt_url: "https://www.cpdl.org/robots.txt"
+    permitted_content:
+      - full_public_domain_lyrics
+      - translation
+      - composer
+      - lyricist
+      - sacred_secular_category
+      - language
+    adaptive_selectors:
+      title: "h1#firstHeading::text"
+      composer: "table.wikitable tr:contains('Composer') td a::text"
+      lyricist: "table.wikitable tr:contains('Lyricist') td::text"
+      voicing: "table.wikitable tr:contains('Voicing') td::text"
+      lyrics: "div.lyrics_box, table.wikitable tr:contains('Text') td"
+
+  - id: chordify
+    name: "Chordify Harmony & Chords Database"
+    base_url: "https://chordify.net"
+    source_type: "harmonic_analysis"
+    authority_score: 0.85
+    rate_limit_per_second: 0.8
+    requires_js: true
+    robots_txt_url: "https://chordify.net/robots.txt"
+    permitted_content:
+      - musical_composition
+      - harmonic_analysis
+      - musical_key
+      - bpm
+      - chord_progression
+      - time_signature
+    adaptive_selectors:
+      key: "span[data-key]::text, .song-key-badge::text"
+      bpm: "span[data-bpm]::text, .song-bpm-badge::text"
+      chords: "div.chord-block .chord-label::text"
+
+  - id: internet_archive
+    name: "Internet Archive - Live Music & Audio Archive"
+    base_url: "https://archive.org"
+    source_type: "public_domain_archive"
+    authority_score: 0.96
+    rate_limit_per_second: 1.5
+    requires_js: false
+    robots_txt_url: "https://archive.org/robots.txt"
+    permitted_content:
+      - live_recordings
+      - acoustic_attributes
+      - venue_details
+      - historical_metadata
+    adaptive_selectors:
+      title: "h1.item-title::text"
+      creator: "span.by a::text"
+      date: "span[itemprop='datePublished']::text"
+      venue: "div.metadata-field:contains('Venue') span::text"
+
+  - id: wikisource_marathi
+    name: "Marathi Wikisource (सार्वजनिक वाङ्मय अभिलेखागार)"
+    base_url: "https://mr.wikisource.org"
+    source_type: "public_domain_archive"
+    authority_score: 0.99
+    rate_limit_per_second: 1.0
+    requires_js: false
+    robots_txt_url: "https://mr.wikisource.org/robots.txt"
+    permitted_content:
+      - basic_metadata
+      - full_public_domain_lyrics
+      - songwriting_credits
+      - musical_composition
+      - themes
+    adaptive_selectors:
+      title: "h1#firstHeading::text"
+      artist: "div.mw-parser-output p a::text"
+      lyrics: "div.poem, div.mw-parser-output"
+
+  - id: santsahitya
+    name: "Sant Sahitya Digital Archive (संत साहित्य महामंडळ)"
+    base_url: "https://santsahitya.in"
+    source_type: "spiritual_archive"
+    authority_score: 0.97
+    rate_limit_per_second: 1.0
+    requires_js: false
+    robots_txt_url: "https://santsahitya.in/robots.txt"
+    permitted_content:
+      - basic_metadata
+      - full_public_domain_lyrics
+      - songwriting_credits
+      - themes
+    adaptive_selectors:
+      title: "h1.entry-title::text, h1::text"
+      artist: "span.author-name::text"
+      lyrics: "div.entry-content, div.abhang-content"
+
+  - id: varkari_catalog
+    name: "Varkari Internal Spiritual Catalog Archive"
+    base_url: "local://varkari.db"
+    source_type: "open_database"
+    authority_score: 0.99
+    rate_limit_per_second: 100.0
+    requires_js: false
+    permitted_content:
+      - basic_metadata
+      - full_public_domain_lyrics
+      - songwriting_credits
+      - musical_composition
+      - themes
+    adaptive_selectors: {}

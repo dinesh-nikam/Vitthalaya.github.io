@@ -77,11 +77,14 @@ export function DeepakViewer() {
     // Custom shape: double cone squashed
     const flameGeo = new THREE.ConeGeometry(0.3, 1.0, 16);
     flameGeo.translate(0, 0.5, 0); // Shift pivot to base
-    const flameMat = new THREE.MeshBasicMaterial({
-      color: 0xffaa00,
+    const flameMat = new THREE.MeshStandardMaterial({
+      color: 0xff7700,
+      emissive: new THREE.Color(0xff5500),
+      emissiveIntensity: 2.0,
       transparent: true,
-      opacity: 0.9,
-      blending: THREE.AdditiveBlending
+      opacity: 0.92,
+      roughness: 1.0,
+      metalness: 0.0,
     });
     const flame = new THREE.Mesh(flameGeo, flameMat);
     flame.position.set(0, 0.75, 0.9);
@@ -170,8 +173,10 @@ export function DeepakViewer() {
         // Organic wind wave tilt on the flame
         flame.rotation.z = Math.sin(elapsedTime * 8) * 0.05;
 
-        // Light flicker intensity
-        flameLight.intensity = 2.0 + Math.sin(elapsedTime * 35) * 0.35 + Math.random() * 0.15;
+        // Light flicker intensity — multi-frequency sinusoidal for organic candle feel
+        flameLight.intensity = 2.5 + Math.sin(elapsedTime * 7.3) * 0.6 + Math.sin(elapsedTime * 13.1) * 0.3;
+        flameLight.color.setHSL(0.08, 1, 0.52 + Math.sin(elapsedTime * 5.7) * 0.04);
+        flameLight.position.x = Math.sin(elapsedTime * 4.1) * 0.1;
 
         // Update particle embers positions
         const positionsArray = embers.geometry.attributes.position.array as Float32Array;

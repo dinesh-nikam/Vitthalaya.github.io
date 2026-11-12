@@ -18,6 +18,8 @@ import { LanguageSwitcher } from './language-switcher';
 
 const PILLAR_LINKS = [
   { href: '/daily', label: 'आजचे भक्ती' },
+  { href: '/nityanem', label: 'नित्यनेम' },
+  { href: '/japa', label: 'नामजप' },
   { href: '/explore', label: 'एक्सप्लोर' },
   { href: '/library', label: 'लायब्ररी' },
   { href: '/record', label: 'रेकॉर्ड' },

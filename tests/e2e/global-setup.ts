@@ -28,7 +28,7 @@ const WARM_ROUTES = [
 async function warm(ctx: Awaited<ReturnType<typeof request.newContext>>, route: string): Promise<number> {
   const started = Date.now();
   // 405/401/307 are fine — the point is that the route compiled.
-  const res = await ctx.get(route, { timeout: 120_000 }).catch((e) => {
+  const res = await ctx.get(route, { timeout: 240_000 }).catch((e) => {
     console.error(`[prewarm] ${route} failed to compile: ${e.message}`);
     throw e;
   });
@@ -47,7 +47,7 @@ export default async function globalSetup(): Promise<void> {
     // The composition page is dynamic (/abhang/[slug]) and isn't compiled
     // until first visited. Derive a real slug from the warmed search API and
     // compile that page too, so the test's first composition visit is warm.
-    const searchRes = await ctx.get('/api/search?q=पांडुरंग', { timeout: 120_000 });
+    const searchRes = await ctx.get('/api/search?q=पांडुरंग', { timeout: 240_000 });
     const body = (await searchRes.json().catch(() => null)) as { results?: { slug?: string }[] } | null;
     const slug = body?.results?.find((r) => r.slug)?.slug;
     if (slug) {

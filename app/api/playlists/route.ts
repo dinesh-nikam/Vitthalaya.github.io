@@ -10,6 +10,7 @@
 
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { z } from 'zod';
 import { authOptions } from '@/src/lib/auth';
 import { db } from '@/src/db/client';
 import { createPlaylist } from '@/src/lib/playlists';
@@ -17,6 +18,7 @@ import {
   parsePagination,
   buildPagination,
   ApiErrors,
+  errorResponse,
 } from '@/src/lib/api-response';
 
 export async function GET(request: Request): Promise<NextResponse> {
@@ -48,41 +50,73 @@ export async function GET(request: Request): Promise<NextResponse> {
   ]);
 
   return NextResponse.json({
+    data: playlists,
     playlists,
     pagination: buildPagination(page, limit, total),
+    meta: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
   });
 }
+
+const createPlaylistSchema = z.object({
+  name: z
+    .string({ required_error: 'Playlist name is required.' })
+    .trim()
+    .min(1, 'Playlist name is required.')
+    .max(120, 'Playlist name is too long.'),
+  description: z.string().trim().max(500, 'Description is too long.').nullish(),
+  isPublic: z.boolean().optional(),
+});
 
 export async function POST(request: Request): Promise<NextResponse> {
   const session = await getServerSession(authOptions);
   const userId = (session?.user as any)?.id;
-  if (!userId) return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
+  if (!userId) return ApiErrors.UNAUTHORIZED();
 
-  let body: { name?: string; description?: string | null; isPublic?: boolean };
+  let rawBody: unknown;
   try {
-    body = (await request.json()) as {
-      name?: string;
-      description?: string | null;
-      isPublic?: boolean;
-    };
+    rawBody = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });
+    return errorResponse('Invalid request body.', 400, { code: 'INVALID_JSON' });
   }
 
-  if (typeof body.name !== 'string' || !body.name.trim()) {
-    return NextResponse.json({ error: 'Playlist name is required.' }, { status: 400 });
+  const parsed = createPlaylistSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    const primaryMessage = parsed.error.issues[0]?.message || 'Validation failed';
+    return errorResponse(primaryMessage, 400, {
+      code: 'VALIDATION_ERROR',
+      details: Object.fromEntries(
+        parsed.error.issues.map((issue) => [issue.path.join('.') || 'body', issue.message])
+      ),
+    });
   }
 
   try {
     const playlist = await createPlaylist({
       userId,
-      name: body.name,
-      description: typeof body.description === 'string' ? body.description : null,
-      isPublic: Boolean(body.isPublic),
+      name: parsed.data.name,
+      description: parsed.data.description ?? null,
+      isPublic: Boolean(parsed.data.isPublic),
     });
-    return NextResponse.json({ playlist }, { status: 201 });
+
+    return NextResponse.json(
+      {
+        data: playlist,
+        playlist,
+      },
+      {
+        status: 201,
+        headers: {
+          Location: `/api/playlists/${playlist.id}`,
+        },
+      }
+    );
   } catch (err) {
     console.error('Create playlist error:', err);
-    return NextResponse.json({ error: 'Failed to create playlist.' }, { status: 500 });
+    return errorResponse('Failed to create playlist.', 500, { code: 'INTERNAL_ERROR' });
   }
 }

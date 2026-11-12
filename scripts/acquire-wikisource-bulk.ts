@@ -36,6 +36,7 @@
 
 import { db } from '../src/db/client';
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
+import path from 'node:path';
 import { isMarathiText } from '../src/canonical/normalization';
 import { AcquisitionPipeline } from '../src/crawl4ai/pipeline';
 import { ContentExtractor } from '../src/crawl4ai/content-extractor';
@@ -155,12 +156,14 @@ export interface PageRevision {
   timestamp: string;
 }
 
-const STATE_FILE = new URL('../.freebuff/wikisource-bulk-state.json', import.meta.url);
+function getStateFilePath(): string {
+  return path.join(process.cwd(), '.freebuff', 'wikisource-bulk-state.json');
+}
 
 /** Load the persisted per-page revision state (missing/corrupt → empty). */
 export async function loadBulkState(): Promise<BulkCrawlState> {
   try {
-    const raw = await readFile(STATE_FILE, 'utf8');
+    const raw = await readFile(getStateFilePath(), 'utf8');
     const parsed = JSON.parse(raw);
     return parsed && typeof parsed === 'object' ? parsed : {};
   } catch {
@@ -170,11 +173,12 @@ export async function loadBulkState(): Promise<BulkCrawlState> {
 
 /** Persist per-page revision state atomically (tmp file + rename). */
 export async function saveBulkState(state: BulkCrawlState): Promise<void> {
-  const dir = new URL('.', STATE_FILE);
+  const filePath = getStateFilePath();
+  const dir = path.dirname(filePath);
   await mkdir(dir, { recursive: true });
-  const tmp = new URL('wikisource-bulk-state.json.tmp', dir);
+  const tmp = path.join(dir, 'wikisource-bulk-state.json.tmp');
   await writeFile(tmp, JSON.stringify(state, null, 2));
-  await rename(tmp, STATE_FILE);
+  await rename(tmp, filePath);
 }
 
 /**

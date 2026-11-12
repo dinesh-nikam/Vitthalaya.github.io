@@ -34,7 +34,8 @@
     "seed:scaling": "bun run scripts/generate-scaling-data.ts",
     "graph:build": "bun run scripts/build-graph.ts",
     "eval:seed": "bun run scripts/seed-eval.ts",
-    "doc:lint": "bun run scripts/doc-lint-openapi.ts"
+    "doc:lint": "bun run scripts/doc-lint-openapi.ts",
+    "review:compositions": "bun run scripts/review-compositions.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",

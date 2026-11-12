@@ -2,17 +2,46 @@
  * Public API v1 — Single Saint with Compositions
  *
  * GET /api/v1/saints/:slug — Saint detail + recent compositions.
+ * Requires API key via X-API-Key header.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import { db } from '@/src/db/client';
+import { authenticateRequest, addRateLimitHeaders } from '@/src/lib/api-auth';
+import {
+  errorResponse,
+  CORS_HEADERS,
+  CACHE_HEADERS,
+  ApiErrors,
+} from '@/src/lib/api-response';
+
+const paramsSchema = z.object({
+  slug: z.string().trim().min(1, 'Slug is required'),
+});
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ slug: string }> },
 ) {
-  const rawSlug = await params;
-  const slug = decodeURIComponent(rawSlug.slug);
+  // 1. Authenticate API key and enforce rate limits
+  const auth = authenticateRequest(request);
+  if ('error' in auth) {
+    return auth.error;
+  }
+
+  // 2. Validate route parameters
+  const rawParams = await params;
+  const parsed = paramsSchema.safeParse(rawParams);
+  if (!parsed.success) {
+    return ApiErrors.VALIDATION_ERROR(
+      Object.fromEntries(
+        parsed.error.issues.map((i) => [i.path.join('.') || 'slug', i.message])
+      )
+    );
+  }
+
+  const slug = decodeURIComponent(parsed.data.slug);
 
   try {
     const saint = await db.saint.findUnique({
@@ -45,22 +74,32 @@ export async function GET(
     });
 
     if (!saint) {
-      return NextResponse.json({ error: 'Saint not found' }, { status: 404 });
+      return ApiErrors.NOT_FOUND('Saint not found');
     }
 
-    return NextResponse.json({
-      data: {
-        ...saint,
-        compositionCount: saint._count.compositions,
+    const response = NextResponse.json(
+      {
+        data: {
+          ...saint,
+          compositionCount: saint._count.compositions,
+        },
       },
-    }, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Cache-Control': 'public, max-age=600',
-      },
-    });
+      {
+        status: 200,
+        headers: {
+          ...CORS_HEADERS,
+          'Cache-Control': CACHE_HEADERS.long,
+        },
+      }
+    );
+
+    return addRateLimitHeaders(
+      response,
+      auth.keyInfo.rateLimit,
+      new Date(Date.now() + 60000)
+    );
   } catch (err) {
     console.error('[API/v1/saints/:slug] Error:', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return errorResponse('Internal server error', 500, { code: 'INTERNAL_ERROR' });
   }
 }

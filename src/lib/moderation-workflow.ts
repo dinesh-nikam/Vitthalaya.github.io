@@ -3,6 +3,7 @@ import { resolveFreeConfig } from '../ai-enrichment/free-provider';
 import { v4 as uuidv4 } from 'uuid';
 import { buildEdgesForComposition } from '../knowledge-graph';
 import { recordAuditLog } from './audit';
+import { normalizeCompositionType } from '../canonical/normalization';
 
 /**
  * Source types that create a brand-new draft Composition once approved.
@@ -312,25 +313,10 @@ async function promoteAndPublish(item: any, approvedById?: string | null): Promi
         submitterId = manuscript?.volunteerId ?? null;
       }
 
-      // Map English type to Marathi if we have a classification
-      const TYPE_MAP: Record<string, string> = {
-        abhang: 'अभंग',
-        aarti: 'आरती',
-        bhajan: 'भजन',
-        stotra: 'स्तोत्र',
-        haripath: 'हरीपाठ',
-        gaulani: 'गौळणी',
-        bharud: 'भारूड',
-        kirtan: 'कीर्तन',
-        pad: 'पद',
-        ovi: 'ओवी',
-        namasmaran: 'नामस्मरण',
-        powada: 'पोवाडा',
-      };
-
-      const compositionType = detectedType && TYPE_MAP[detectedType.toLowerCase()]
-        ? TYPE_MAP[detectedType.toLowerCase()]
-        : 'अभंग';
+      // Normalize to canonical Prisma CompositionType enum
+      const compositionType = detectedType
+        ? normalizeCompositionType(detectedType)
+        : 'ABHANG';
 
       const compData: Record<string, unknown> = {
         titleMarathi: item.draftTitle,
@@ -375,9 +361,9 @@ async function promoteAndPublish(item: any, approvedById?: string | null): Promi
         if (deity) compData.deityId = deity.id;
       }
 
-      // Create composition — attribute creation to the original submitter
+      // Create composition
       const comp = await tx.composition.create({
-        data: { ...compData, createdById: submitterId, lastEditedById: submitterId } as any,
+        data: compData as any,
       });
       compositionId = comp.id;
       isNewComposition = true;
@@ -406,7 +392,6 @@ async function promoteAndPublish(item: any, approvedById?: string | null): Promi
           where: { id: suggestion.compositionId },
           data: {
             reviewed: true,
-            lastEditedById: suggestion.userId,
             [suggestion.fieldPath]: suggestion.newValue,
           },
         });

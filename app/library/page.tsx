@@ -1,10 +1,25 @@
 'use client';
 
-import { VitthalayaShell } from '@/components/vitthalaya-shell';
+import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
-import { BookOpen, ArrowRight } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import { BookOpen, ArrowRight, ChevronRight, Music, Library, Sparkles, Box } from 'lucide-react';
+import '@/app/homepage.css';
+
+// Dynamic import for Three.js 3D Book Viewer (client-only)
+const BookViewer3D = dynamic(
+  () => import('@/components/3d/book-viewer').then((mod) => mod.BookViewer3D),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-80 rounded bg-[var(--dp-ground-well)] border border-[var(--dp-rule)] flex flex-col items-center justify-center text-[var(--dp-muted)] font-marathi">
+        <Box className="w-8 h-8 text-[var(--dp-gold)] mb-2 motion-safe:animate-pulse motion-reduce:animate-none" aria-hidden="true" />
+        <span className="text-xs">३डी ग्रंथ दर्शन लोड होत आहे…</span>
+      </div>
+    ),
+  }
+);
 
 interface Stats {
   compositions: number;
@@ -24,10 +39,10 @@ interface RecentComposition {
 }
 
 const TYPE_CARDS: { type: string; label: string; en: string; img: string; slug: string }[] = [
-  { type: 'abhang', label: 'अभंग', en: 'Abhang', img: '/images/categories/abhang.jpg', slug: '/search?type=abhang' },
-  { type: 'aarti', label: 'आरत्या', en: 'Aarti', img: '/images/categories/aarti.jpg', slug: '/search?type=aarti' },
-  { type: 'stotra', label: 'स्तोत्रे', en: 'Stotra', img: '/images/categories/stotra.jpg', slug: '/search?type=stotra' },
-  { type: 'bhajan', label: 'भजन', en: 'Bhajan', img: '/images/categories/bhajan.jpg', slug: '/search?type=bhajan' },
+  { type: 'abhang', label: 'अभंग', en: 'अभंग संग्रह', img: '/images/categories/abhang.jpg', slug: '/search?type=abhang' },
+  { type: 'aarti', label: 'आरत्या', en: 'आरती संग्रह', img: '/images/categories/aarti.jpg', slug: '/search?type=aarti' },
+  { type: 'stotra', label: 'स्तोत्रे', en: 'स्तोत्र संग्रह', img: '/images/categories/stotra.jpg', slug: '/search?type=stotra' },
+  { type: 'bhajan', label: 'भजन', en: 'भजन संग्रह', img: '/images/categories/bhajan.jpg', slug: '/search?type=bhajan' },
 ];
 
 function fmtMr(n: number): string {
@@ -47,11 +62,11 @@ function fmtDate(iso: string): string {
 }
 
 export default function LibraryPage() {
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [recent, setRecent] = useState<RecentComposition[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = React.useState<Stats | null>(null);
+  const [recent, setRecent] = React.useState<RecentComposition[]>([]);
+  const [loading, setLoading] = React.useState(true);
 
-  useEffect(() => {
+  React.useEffect(() => {
     async function fetchData() {
       try {
         const [statsRes, recentRes] = await Promise.all([
@@ -73,65 +88,144 @@ export default function LibraryPage() {
   }, []);
 
   return (
-    <>
-      <title>साहित्य संग्रह — अभंग, आरत्या, स्तोत्रे | डिजिटल पंढरपूर</title>
-      <meta name="description" content="अभंग, आरत्या, स्तोत्रे, भजन आणि संत साहित्य — प्रकारानुसार ब्राउझ करा." />
-      <VitthalayaShell
-        title="Sacred Literature Collection"
-        description="Explore devotional literature categorized by type."
-        primaryHref="/search"
-        primaryLabel="Search Library"
-        eyebrow="Devotional Library"
-        stats={[
-          { label: 'Content Types', value: stats ? fmtMr(stats.categories) : '…' },
-          { label: 'Total Compositions', value: stats ? fmtMr(stats.compositions) : '…' },
-        ]}
-      >
-        {/* Page-specific content */}
-        <div className="mt-12 space-y-8">
-          {/* Personal audio library quick links */}
-          <section aria-labelledby="library-personal">
-            <h2 id="library-personal" className="text-saffron-300 text-xl font-medium mb-4 flex items-center gap-2">
-              माझी ऑडिओ लायब्ररी
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Link
-                href="/library/recordings"
-                className="group rounded-2xl border border-saffron/10 p-5 bg-card hover:border-saffron/30 hover:shadow-lg transition-all"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-bold font-marathi text-lg text-foreground group-hover:text-saffron transition-colors">
-                      माझ्या रेकॉर्डिंग्ज
-                    </h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      प्ले, नाव बदला, बुकमार्क, हटवा — वर्धित ऑडिओसह
-                    </p>
-                  </div>
-                  <ArrowRight className="w-5 h-5 text-saffron group-hover:translate-x-1 transition-transform" />
-                </div>
+    <div className="vitthalaya-shell min-h-screen py-10">
+      <div className="vitthalaya-container max-w-5xl">
+        {/* Breadcrumb */}
+        <nav className="mb-6" aria-label="ब्रेडक्रंब">
+          <ol className="flex items-center gap-2 text-xs font-marathi text-[var(--dp-muted)]">
+            <li>
+              <Link href="/" className="hover:text-[var(--dp-gold)] transition-colors">
+                मुख्यपृष्ठ
               </Link>
-              <Link
-                href="/playlists"
-                className="group rounded-2xl border border-saffron/10 p-5 bg-card hover:border-saffron/30 hover:shadow-lg transition-all"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-bold font-marathi text-lg text-foreground group-hover:text-saffron transition-colors">
-                      माझ्या प्लेलिस्ट
-                    </h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      रचना व रेकॉर्डिंग्जच्या संग्रह तयार करा
-                    </p>
-                  </div>
-                  <ArrowRight className="w-5 h-5 text-saffron group-hover:translate-x-1 transition-transform" />
-                </div>
-              </Link>
-            </div>
-          </section>
+            </li>
+            <li aria-hidden="true"><ChevronRight size={12} /></li>
+            <li className="text-[var(--dp-ink)]">भक्ती ग्रंथालय</li>
+          </ol>
+        </nav>
 
-          <h2 className="text-saffron-300 text-xl font-medium mb-4">
-            साहित्य श्रेणींचे अन्वेषण करा
+        {/* Page Header with High-Contrast Typography */}
+        <header className="mb-12 text-center max-w-3xl mx-auto">
+          <p className="text-xs text-[var(--dp-gold)] font-marathi mb-2">
+            पवित्र साहित्य भांडार
+          </p>
+
+          <h1 className="vitthalaya-display text-3xl sm:text-4xl md:text-5xl font-bold mb-3">
+            वारकरी भक्ती ग्रंथालय
+          </h1>
+
+          <p className="vitthalaya-prose text-sm sm:text-base text-[var(--dp-ink-dim)] leading-relaxed mb-6">
+            अभंग, आरत्या, स्तोत्रे, आणि संत साहित्याचा वर्गीकृत पवित्र संग्रह.
+          </p>
+
+          {/* Quick Stats Pill */}
+          <div className="flex flex-wrap justify-center gap-6 text-xs font-marathi text-[var(--dp-muted)] py-3 px-6 rounded bg-[var(--dp-ground-well)] border border-[var(--dp-rule)] max-w-md mx-auto mb-6">
+            <span>साहित्य प्रकार: <strong className="text-[var(--dp-ink)]">{stats ? fmtMr(stats.categories) : '४'}</strong></span>
+            <span>एकूण रचना: <strong className="text-[var(--dp-ink)]">{stats ? fmtMr(stats.compositions) : '२६,०००+'}</strong></span>
+          </div>
+
+          <div>
+            <Link
+              href="/search"
+              className="vitthalaya-btn-primary text-sm"
+            >
+              संपूर्ण ग्रंथालयात शोधा
+              <ArrowRight size={14} aria-hidden="true" />
+            </Link>
+          </div>
+        </header>
+
+        {/* ── Three.js 3D Interactive Manuscript Section ── */}
+        <section className="mb-12 vitthalaya-card rounded p-6 sm:p-8" aria-labelledby="three-d-viewer-title">
+          <div className="grid md:grid-cols-12 gap-8 items-center">
+            <div className="md:col-span-5 space-y-4">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded bg-[var(--dp-ground-well)] border border-[var(--dp-rule)] text-[var(--dp-gold)] text-xs font-marathi">
+                <Sparkles size={12} aria-hidden="true" />
+                ३डी परस्परसंवादी ग्रंथ दर्शन
+              </span>
+              <h2 id="three-d-viewer-title" className="vitthalaya-display text-2xl font-bold">
+                तुकाराम महाराज गाथा व ज्ञानेश्वरी
+              </h2>
+              <p className="vitthalaya-prose text-xs leading-relaxed">
+                हस्तलिखित प्रत त्रिआयामी (3D) स्वरूपात पहा. माउस किंवा बोटाने ड्रॅग करून ग्रंथ फिरवा आणि पृष्ठांचे दर्शन घ्या.
+              </p>
+              <div className="pt-2 flex flex-wrap gap-3">
+                <Link
+                  href="/books"
+                  className="vitthalaya-btn-secondary text-xs"
+                >
+                  <BookOpen size={13} aria-hidden="true" />
+                  ग्रंथ सूची पहा
+                </Link>
+              </div>
+            </div>
+
+            <div className="md:col-span-7 h-72 sm:h-80 rounded overflow-hidden bg-[var(--dp-ground-well)] border border-[var(--dp-rule)] relative">
+              <BookViewer3D
+                titleMarathi="तुकाराम गाथा"
+                titleEnglish="Sant Tukaram Gatha"
+                coverColor="#6B1E1E"
+                accentColor="#C9A227"
+                pageCount={100}
+              />
+              <span className="absolute bottom-2 right-3 text-[10px] text-[var(--dp-muted)] font-marathi pointer-events-none">
+                ३डी ग्रंथ फिरवण्यासाठी ड्रॅग करा
+              </span>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Personal Audio Library & Playlists Quick Access ── */}
+        <section className="mb-12" aria-labelledby="personal-library-heading">
+          <h2 id="personal-library-heading" className="vitthalaya-display text-xl font-bold mb-4">
+            माझी ऑडिओ लायब्ररी
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Link
+              href="/library/recordings"
+              className="vitthalaya-card rounded p-5 flex items-center justify-between group hover:border-[var(--dp-gold)] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--dp-focus)] active:translate-y-px"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded bg-[var(--dp-ground-well)] border border-[var(--dp-rule)] flex items-center justify-center text-[var(--dp-gold)] shrink-0">
+                  <Music size={18} aria-hidden="true" />
+                </div>
+                <div>
+                  <h3 className="vitthalaya-display text-base font-bold text-[var(--dp-ink)] group-hover:text-[var(--dp-gold)] transition-colors">
+                    माझ्या रेकॉर्डिंग्ज
+                  </h3>
+                  <p className="text-xs text-[var(--dp-muted)] font-marathi mt-0.5">
+                    प्ले, बुकमार्क व आवडती ऑडिओ सूची
+                  </p>
+                </div>
+              </div>
+              <ArrowRight size={16} className="text-[var(--dp-muted)] group-hover:text-[var(--dp-gold)] transition-colors" />
+            </Link>
+
+            <Link
+              href="/playlists"
+              className="vitthalaya-card rounded p-5 flex items-center justify-between group hover:border-[var(--dp-gold)] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--dp-focus)] active:translate-y-px"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded bg-[var(--dp-ground-well)] border border-[var(--dp-rule)] flex items-center justify-center text-[var(--dp-gold)] shrink-0">
+                  <Library size={18} aria-hidden="true" />
+                </div>
+                <div>
+                  <h3 className="vitthalaya-display text-base font-bold text-[var(--dp-ink)] group-hover:text-[var(--dp-gold)] transition-colors">
+                    माझ्या प्लेलिस्ट
+                  </h3>
+                  <p className="text-xs text-[var(--dp-muted)] font-marathi mt-0.5">
+                    रचना व भजनांचे वैयक्तिक संग्रह
+                  </p>
+                </div>
+              </div>
+              <ArrowRight size={16} className="text-[var(--dp-muted)] group-hover:text-[var(--dp-gold)] transition-colors" />
+            </Link>
+          </div>
+        </section>
+
+        {/* ── Literary Categories ── */}
+        <section className="mb-12" aria-labelledby="categories-heading">
+          <h2 id="categories-heading" className="vitthalaya-display text-xl font-bold mb-4">
+            साहित्य प्रकार
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -141,86 +235,87 @@ export default function LibraryPage() {
                 <Link
                   key={card.type}
                   href={card.slug}
-                  className="group relative overflow-hidden rounded-2xl aspect-[4/3] flex flex-col justify-end p-5 border border-saffron/10 transition-all duration-300 hover:border-saffron/30 hover:shadow-2xl hover:-translate-y-1"
+                  className="vitthalaya-card rounded overflow-hidden group block hover:border-[var(--dp-gold)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--dp-focus)] active:translate-y-px"
                 >
-                  <div className="absolute inset-0 z-0">
+                  <div className="relative aspect-[16/10] bg-[var(--dp-ground-well)]">
                     <Image
                       src={card.img}
                       alt={card.label}
                       fill
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent group-hover:via-saffron-950/20 group-hover:from-saffron-950/80 transition-colors duration-300" />
                   </div>
-
-                  <div className="relative z-10 space-y-1 text-left">
-                    <span className="text-saffron text-[10px] font-bold uppercase tracking-wider">{card.en}</span>
-                    <h3 className="text-white text-xl font-bold font-marathi">{card.label}</h3>
-                    <p className="text-white/60 text-xs font-mono">
-                      {count != null ? `${fmtMr(count)} रचना` : '… रचना'}
+                  <div className="p-4">
+                    <h3 className="vitthalaya-display text-lg font-bold text-[var(--dp-ink)] group-hover:text-[var(--dp-gold)] transition-colors">
+                      {card.label}
+                    </h3>
+                    <p className="text-xs text-[var(--dp-muted)] font-marathi mt-1">
+                      {count != null ? `${fmtMr(count)} रचना उपलब्ध` : 'रचना संग्रह'}
                     </p>
                   </div>
                 </Link>
               );
             })}
           </div>
+        </section>
 
-          {/* Real recently added compositions */}
-          {!loading && recent.length > 0 && (
-            <section aria-labelledby="library-recent">
-              <h2 id="library-recent" className="text-saffron-300 text-xl font-medium mb-4 flex items-center gap-2">
-                <BookOpen className="w-5 h-5" />
-                नवीन जोडलेल्या रचना
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {recent.slice(0, 6).map((comp) => (
-                  <Link
-                    key={comp.id}
-                    href={`/abhang/${comp.slug}`}
-                    className="group bg-card rounded-xl p-4 border border-saffron/10 hover:border-saffron/30 hover:shadow-md transition-all"
-                  >
-                    <h3 className="font-marathi font-medium text-foreground group-hover:text-saffron transition-colors line-clamp-2">
-                      {comp.titleMarathi}
-                    </h3>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {comp.saintName || 'अज्ञात संत'} • {comp.type} • {fmtDate(comp.createdAt)}
+        {/* ── Recently Added Compositions ── */}
+        {!loading && recent.length > 0 && (
+          <section className="mb-12" aria-labelledby="library-recent">
+            <h2 id="library-recent" className="vitthalaya-display text-xl font-bold mb-4">
+              नवीन जोडलेल्या रचना
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {recent.slice(0, 6).map((comp) => (
+                <Link
+                  key={comp.id}
+                  href={`/abhang/${comp.slug}`}
+                  className="vitthalaya-card rounded p-4 group block hover:border-[var(--dp-gold)] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--dp-focus)] active:translate-y-px"
+                >
+                  <h3 className="vitthalaya-display text-base font-bold text-[var(--dp-ink)] group-hover:text-[var(--dp-gold)] transition-colors line-clamp-2">
+                    {comp.titleMarathi}
+                  </h3>
+                  <p className="text-xs text-[var(--dp-muted)] font-marathi mt-1">
+                    {comp.saintName || 'अज्ञात संत'}, {comp.type}, {fmtDate(comp.createdAt)}
+                  </p>
+                  {comp.preview && (
+                    <p className="text-xs text-[var(--dp-ink-dim)] mt-2 line-clamp-3 leading-relaxed font-marathi">
+                      {comp.preview}
                     </p>
-                    {comp.preview && (
-                      <p className="text-xs text-muted-foreground/80 mt-2 line-clamp-3 leading-relaxed">
-                        {comp.preview}
-                      </p>
-                    )}
-                    <span className="inline-flex items-center gap-1 text-xs text-saffron mt-3 font-semibold">
-                      वाचा <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            </section>
-          )}
+                  )}
+                  <span className="inline-flex items-center gap-1 text-xs text-[var(--dp-gold)] mt-3 font-semibold font-marathi">
+                    अभंग वाचा <ArrowRight size={12} aria-hidden="true" />
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-12 gap-8 items-center bg-card rounded-2xl p-8 border border-saffron/10 text-left">
-            <div className="md:col-span-7 space-y-4">
-              <h3 className="text-xl font-marathiHeading font-bold text-saffron">वारकरी ग्रंथालय</h3>
-              <p className="text-saffron-100 text-base sm:text-lg leading-relaxed font-marathi">
-                ज्ञानेश्वरांच्या ज्ञानेश्वरीपासून, तुकारामांच्या गाथेपर्यंत आणि शेकडो वर्षांच्या हस्तलिखितांपर्यंतचा हा अमूल्य सांस्कृतिक आणि आध्यात्मिक वारसा आहे.
-                प्रत्येक रचना काळजीपूर्वक जतन केली गेली आहे जेणेकरून ज्ञान अखंड वाहत राहील.
+        {/* ── Heritage Archive Feature ── */}
+        <section className="vitthalaya-card rounded p-6 sm:p-8" aria-labelledby="archive-heading">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+            <div className="md:col-span-7 space-y-3">
+              <h2 id="archive-heading" className="vitthalaya-display text-2xl font-bold">
+                अमूल्य हस्तलिखित वारसा
+              </h2>
+              <p className="vitthalaya-prose text-xs sm:text-sm leading-relaxed">
+                ज्ञानेश्वरांच्या ज्ञानेश्वरीपासून, तुकारामांच्या गाथेपर्यंत आणि शेकडो वर्षांच्या ताडपत्री हस्तलिखितांपर्यंतचा हा समृद्ध सांस्कृतिक वारसा आहे. प्रत्येक रचना अचूकतेने डिजिटाईज केली गेली आहे.
               </p>
             </div>
-            <div className="md:col-span-5 relative aspect-[4/3] rounded-xl overflow-hidden border border-saffron/20 shadow-md">
+            <div className="md:col-span-5 relative aspect-[16/10] rounded overflow-hidden border border-[var(--dp-rule)]">
               <Image
                 src="/images/realistic/ancient-manuscript.jpg"
-                alt="Ancient Manuscript"
+                alt="प्राचीन हस्तलिखित"
                 fill
                 sizes="(max-width: 768px) 100vw, 33vw"
                 className="object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
             </div>
           </div>
-        </div>
-      </VitthalayaShell>
-    </>
+        </section>
+      </div>
+    </div>
   );
 }

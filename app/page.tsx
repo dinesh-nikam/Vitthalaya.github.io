@@ -2,7 +2,15 @@ import { db } from '@/src/db/client';
 import { VitthalayaPilgrimage } from '@/components/vitthalaya-pilgrimage';
 
 export default async function HomePage() {
-  const [saints, dbCategories, totalCompositions, totalBooks, byTypeRows] = await Promise.all([
+  const [
+    saints,
+    dbCategories,
+    totalCompositions,
+    totalBooks,
+    byTypeRows,
+    featuredComposition,
+    recentAudios,
+  ] = await Promise.all([
     db.saint.findMany({
       orderBy: { nameMarathi: 'asc' },
       take: 8,
@@ -27,6 +35,38 @@ export default async function HomePage() {
     db.composition.count(),
     db.bookPublication.count(),
     db.composition.groupBy({ by: ['type'], _count: { _all: true } }),
+    db.composition.findFirst({
+      where: {
+        fullText: { not: '' },
+      },
+      select: {
+        id: true,
+        titleMarathi: true,
+        titleTranslit: true,
+        slug: true,
+        fullText: true,
+        type: true,
+        saint: {
+          select: {
+            id: true,
+            nameMarathi: true,
+            slug: true,
+          },
+        },
+      },
+    }),
+    db.audio.findMany({
+      take: 3,
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true,
+        titleMarathi: true,
+        titleTranslit: true,
+        duration: true,
+        audioUrl: true,
+        performer: true,
+      },
+    }),
   ]);
 
   // Category cards show REAL catalog size: where a category slug maps to a
@@ -45,6 +85,8 @@ export default async function HomePage() {
       categories={categories}
       totalBooks={totalBooks}
       totalCompositions={totalCompositions}
+      featuredComposition={featuredComposition}
+      recentAudios={recentAudios}
     />
   );
 }

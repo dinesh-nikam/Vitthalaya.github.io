@@ -16,10 +16,10 @@ export { enqueueAudioProcessingJob, processAudioProcessingJobs } from './audio-p
  * Processes pending search sync outbox jobs.
  * Connects transactional DB updates with search search backends.
  */
-export async function processSearchSyncJobs(): Promise<number> {
+export async function processSearchSyncJobs(limit = 25): Promise<number> {
   let processedCount = 0;
 
-  while (true) {
+  while (processedCount < limit) {
     let job: any = null;
 
     try {

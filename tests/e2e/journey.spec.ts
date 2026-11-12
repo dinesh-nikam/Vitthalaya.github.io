@@ -150,13 +150,16 @@ test('critical journey: guest search → record → admin approve → searchable
   await test.step('worker processes the recording honestly', async () => {
     runWorkerOnce();
     // Poll the status endpoint until the recording reaches a terminal state.
-    const status = await expect
+    let status: { processingStatus?: string; extractedText?: string | null } | null = null;
+    await expect
       .poll(
         async () => {
           const r = await page.request.get(`/api/acquire/upload/${recordingUploadId}`);
           if (!r.ok()) return null;
           const d = (await r.json()) as { processingStatus?: string; extractedText?: string | null };
-          return ['completed', 'transcription_failed', 'failed'].includes(d.processingStatus ?? '')
+          const isTerminal = ['completed', 'transcription_failed', 'failed'].includes(d.processingStatus ?? '');
+          if (isTerminal) status = d;
+          return isTerminal
             ? d
             : null;
         },

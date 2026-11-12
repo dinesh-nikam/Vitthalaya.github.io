@@ -4,15 +4,18 @@ import { db } from '@/src/db/client';
 import { saintSchema, canonicalMetadata } from '@/src/lib/seo';
 import { ConchSoundButton } from '@/components/conch-sound-button';
 import { TempleViewerClient } from '@/components/temple-viewer-client';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Calendar, MapPin, ChevronRight, BookOpen } from 'lucide-react';
 import Image from 'next/image';
+import { getSaintPortrait } from '@/src/lib/saint-images';
+import { getSaintSeal } from '@/src/lib/saint-metadata';
+import '@/app/homepage.css';
 
 function toDevanagariDigits(num: number): string {
   const devanagariDigits = ['०', '१', '२', '३', '४', '५', '६', '७', '८', '९'];
   const formatted = num.toString().padStart(2, '0');
   return formatted
     .split('')
-    .map(digit => {
+    .map((digit) => {
       const idx = parseInt(digit, 10);
       return isNaN(idx) ? digit : devanagariDigits[idx];
     })
@@ -80,14 +83,13 @@ export default async function SaintPage({
     },
   });
 
-  // Format data to fit page UI
   const saint = {
     id: dbSaint.id,
     name_marathi: dbSaint.nameMarathi,
     name_transliteration: dbSaint.nameTranslit,
-    period: dbSaint.period || 'अज्ञात कालखंड',
-    region: dbSaint.region || 'अज्ञात प्रांत',
-    biography: dbSaint.biography || 'या संतांचे जीवन चरित्र लवकरच जोडले जाईल.',
+    period: dbSaint.period || 'भक्ती कालखंड',
+    region: dbSaint.region || 'महाराष्ट्र',
+    biography: dbSaint.biography || `${dbSaint.nameMarathi} हे वारकरी संप्रदायातील थोर संत असून त्यांनी आपल्या अमृततुल्य अभंग आणि भक्ती विचारांमार्फत अध्यात्म व संस्कृती समृद्ध केली.`,
     related_saints: dbSaint.relatedTo.map((rel) => ({
       name: rel.related.nameMarathi,
       slug: rel.related.slug,
@@ -96,27 +98,26 @@ export default async function SaintPage({
     imageUrl: dbSaint.imageUrl,
   };
 
-  // Structured timeline based on saint identity
-  const getTimelineForSaint = (slug: string) => {
-    switch (slug) {
+  const getTimelineForSaint = (saintSlug: string) => {
+    switch (saintSlug) {
       case 'tukaram-maharaj':
         return [
           { year: '१६०८', event: 'देहू गावात जन्म आणि बालपण.' },
           { year: '१६३०', event: 'दुष्काळात आई-वडील व पत्नीचे निधन, सांसारिक विरक्ती.' },
           { year: '१६३२', event: 'भंडारा डोंगरावर ध्यानधारणा आणि कवित्व स्फूर्ती.' },
-          { year: '१६४९', event: 'विठ्ठल नामाच्या जयघोषात सदेह वैकुंठ प्रयाण.' }
+          { year: '१६४९', event: 'विठ्ठल नामाच्या जयघोषात सदेह वैकुंठ प्रयाण.' },
         ];
       case 'dnyaneshwar-maharaj':
         return [
           { year: '१२७५', event: 'पैठण जवळील आपेगाव येथे जन्म.' },
           { year: '१२९०', event: 'नेवासा येथे ज्ञानेश्वरी (भावार्थ दीपिका) ग्रंथाची निर्मिती.' },
           { year: '१२९२', event: 'अमृतानुभव आणि चांगदेव पासष्टी ग्रंथांची निर्मिती.' },
-          { year: '१२९६', event: 'आळंदी येथे अवघ्या २१ व्या वर्षी जिवंत समाधी.' }
+          { year: '१२९६', event: 'आळंदी येथे अवघ्या २१ व्या वर्षी संजीवन समाधी.' },
         ];
       default:
         return [
           { year: 'ऐतिहासिक काळ', event: 'वारकरी संप्रदायात मोलाचे योगदान.' },
-          { year: 'भक्ती पर्व', event: 'मराठी अभंग रचनेचे संकीर्तन.' }
+          { year: 'भक्ती पर्व', event: 'मराठी अभंग रचनेचे संकीर्तन.' },
         ];
     }
   };
@@ -124,8 +125,8 @@ export default async function SaintPage({
   const timeline = getTimelineForSaint(slug);
 
   return (
-    <article className="min-h-screen bg-gradient-to-b from-cream via-background to-cream dark:from-[#121212] dark:via-[#1c1c1c] dark:to-[#121212] pb-24">
-      {/* JSON-LD Structured Data - Person + BreadcrumbList */}
+    <div className="vitthalaya-shell min-h-screen pb-20">
+      {/* JSON-LD Structured Data */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -146,7 +147,7 @@ export default async function SaintPage({
               },
               [
                 { name: 'मुख्यपृष्ठ', path: '/' },
-                { name: 'संत', path: '/sant' },
+                { name: 'संत मंडळ', path: '/sant' },
                 { name: saint.name_marathi, path: '/sant/' + slug },
               ],
             ),
@@ -154,73 +155,138 @@ export default async function SaintPage({
         }}
       />
 
-      {/* Hero Documentary Header Cover */}
-      <header className="relative py-20 bg-gradient-to-b from-saffron/10 to-transparent border-b border-saffron/5 overflow-hidden">
-        <div className="container mx-auto px-4 max-w-5xl text-center space-y-6 relative z-10">
-          
+      {/* Cinematic Saint Hero — blurred portrait texture + gold overlay */}
+      <header
+        className="relative overflow-hidden border-b border-[var(--dp-rule)]"
+        style={{
+          paddingTop: 'var(--dp-hero-padding-top)',
+          paddingBottom: 'var(--dp-act-padding)',
+        }}
+      >
+        {/* Background: blurred saint portrait at low opacity as atmospheric texture */}
+        {(() => {
+          const portraitUrl = getSaintPortrait(slug);
+          return portraitUrl ? (
+            <div
+              className="absolute inset-0 pointer-events-none"
+              aria-hidden="true"
+              style={{
+                backgroundImage: `url('${portraitUrl}')`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center top',
+                filter: 'blur(28px) saturate(0.5)',
+                opacity: 0.12,
+                transform: 'scale(1.1)',
+              }}
+            />
+          ) : null;
+        })()}
+
+        {/* Deep gradient overlay — basalt → transparent → ground */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          aria-hidden="true"
+          style={{
+            background:
+              'linear-gradient(to bottom, var(--dp-basalt-deep) 0%, rgba(6,5,3,0.5) 50%, var(--dp-ground) 100%)',
+          }}
+        />
+
+        {/* Radial gold halo */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          aria-hidden="true"
+          style={{
+            background:
+              'radial-gradient(ellipse 55% 35% at 50% 10%, rgba(246,188,85,0.08) 0%, transparent 65%)',
+          }}
+        />
+
+        <div className="vitthalaya-container max-w-5xl text-center relative z-10">
           {/* Breadcrumbs */}
-          <nav className="flex justify-center mb-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground" aria-label="ब्रेडक्रंब">
+          <nav className="flex justify-center mb-8 text-xs font-marathi text-[var(--dp-muted)]" aria-label="ब्रेडक्रंब">
             <ol className="flex items-center gap-2">
               <li>
-                <Link href="/" className="hover:text-saffron">मुख्यपृष्ठ</Link>
+                <Link href="/" className="hover:text-[var(--dp-gold-celestial)] transition-colors">
+                  मुख्यपृष्ठ
+                </Link>
               </li>
-              <li aria-hidden="true">›</li>
+              <li aria-hidden="true"><ChevronRight size={12} /></li>
               <li>
-                <Link href="/sant" className="hover:text-saffron">संत मंडळ</Link>
+                <Link href="/sant" className="hover:text-[var(--dp-gold-celestial)] transition-colors">
+                  संत मंडळ
+                </Link>
               </li>
-              <li aria-hidden="true">›</li>
-              <li className="text-foreground">{saint.name_marathi}</li>
+              <li aria-hidden="true"><ChevronRight size={12} /></li>
+              <li className="text-[var(--dp-ink)]">{saint.name_marathi}</li>
             </ol>
           </nav>
 
-          {saint.imageUrl && (
-            <div className="relative w-32 h-32 sm:w-40 sm:h-40 mx-auto rounded-full overflow-hidden border-4 border-saffron/30 shadow-xl">
-              <Image
-                src={saint.imageUrl}
-                alt={`${saint.name_marathi} — ${saint.name_transliteration}`}
-                fill
-                sizes="160px"
-                className="object-cover"
-                priority
-              />
-            </div>
-          )}
+          {/* Saint portrait or glyph seal */}
+          {(() => {
+            const seal = getSaintSeal(slug, saint.name_marathi);
+            return seal.authenticPortrait ? (
+              <div className="relative w-32 h-32 sm:w-36 sm:h-36 mx-auto mb-8 rounded-full overflow-hidden border-2 border-[var(--dp-gold)] bg-[var(--dp-ground)] shadow-[0_0_40px_rgba(201,162,39,0.3)]">
+                <Image
+                  src={seal.authenticPortrait}
+                  alt={saint.name_marathi}
+                  fill
+                  sizes="144px"
+                  className="object-cover"
+                  priority
+                />
+              </div>
+            ) : (
+              <div className={`relative w-32 h-32 sm:w-36 sm:h-36 mx-auto mb-8 rounded-full overflow-hidden border-2 border-[var(--dp-gold)] bg-gradient-to-br ${seal.accentBg} flex flex-col items-center justify-center shadow-[0_0_40px_rgba(201,162,39,0.3)]`}>
+                <span className="text-4xl sm:text-5xl font-bold text-[#fff8ec] font-marathiHeading leading-none">
+                  {seal.glyph}
+                </span>
+                <span className="text-[10px] text-[#c9a227] font-marathi mt-1 font-medium">
+                  « {seal.mudra} »
+                </span>
+              </div>
+            );
+          })()}
 
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-marathiHeading text-maroon dark:text-saffron font-bold leading-tight">
+          <p className="text-xs text-[var(--dp-gold-celestial)] font-marathi mb-3 tracking-widest uppercase">
+            वारकरी संत परंपरा
+          </p>
+
+          <h1 className="dp-chapter-title text-[var(--dp-ink)] mb-3 max-w-3xl mx-auto">
             {saint.name_marathi}
           </h1>
-          
-          <p className="text-lg text-muted-foreground uppercase tracking-wide font-sans">
+
+          <p className="text-sm text-[var(--dp-muted)] font-mono mb-6 tracking-wide">
             {saint.name_transliteration}
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
-            <span className="px-4 py-1.5 rounded-full bg-saffron/10 border border-saffron/20 text-saffron font-semibold">
-              📅 {saint.period}
+          {/* Period & Region pill badges */}
+          <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-marathi mb-8">
+            <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[var(--dp-ground)]/80 border border-[var(--dp-gold)]/40 text-[var(--dp-ink-dim)] backdrop-blur-sm">
+              <Calendar size={13} className="text-[var(--dp-gold-celestial)]" aria-hidden="true" />
+              {saint.period}
             </span>
-            <span className="px-4 py-1.5 rounded-full bg-gold/10 border border-gold/20 text-gold-700 dark:text-gold-400 font-semibold">
-              📍 कर्मभूमी: {saint.region}
+            <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[var(--dp-ground)]/80 border border-[var(--dp-gold)]/40 text-[var(--dp-ink-dim)] backdrop-blur-sm">
+              <MapPin size={13} className="text-[var(--dp-gold-celestial)]" aria-hidden="true" />
+              कर्मभूमी: {saint.region}
             </span>
           </div>
 
-          {/* Interactive Conch blow audio button */}
-          <div className="pt-2">
+          <div>
             <ConchSoundButton />
           </div>
-
         </div>
       </header>
 
-      {/* Two-Column split screen */}
-      <div className="container mx-auto px-4 max-w-5xl mt-12 grid md:grid-cols-12 gap-12">
-        
-        {/* Left Side: Biography and Timeline (7/12) */}
-        <section className="md:col-span-7 space-y-12" aria-labelledby="biography">
-          <div className="space-y-4">
-            <h2 id="biography" className="font-marathiHeading text-2xl text-maroon dark:text-saffron font-bold border-b border-saffron/10 pb-3">
+      {/* Main Section */}
+      <div className="vitthalaya-container max-w-5xl mt-12 grid md:grid-cols-12 gap-8">
+        {/* Left Column: Biography & Timeline */}
+        <section className="md:col-span-7 space-y-8" aria-labelledby="biography">
+          <div className="vitthalaya-card rounded p-6 sm:p-8">
+            <h2 id="biography" className="vitthalaya-display text-2xl font-bold mb-4 pb-3 border-b border-[var(--dp-rule)]">
               जीवन गाथा व चरित्र
             </h2>
-            <div className="text-justify font-marathi text-foreground/90 leading-relaxed text-md space-y-6 first-letter:text-4xl first-letter:font-bold first-letter:text-saffron first-letter:mr-2 first-letter:float-left">
+            <div className="vitthalaya-prose text-sm leading-relaxed space-y-4">
               <p className="whitespace-pre-line">
                 {saint.biography}
               </p>
@@ -228,52 +294,62 @@ export default async function SaintPage({
           </div>
 
           {/* Timeline */}
-          <div className="space-y-6">
-            <h3 className="font-marathiHeading text-xl text-maroon dark:text-saffron font-bold">
+          <div className="vitthalaya-card rounded p-6 sm:p-8">
+            <h3 className="vitthalaya-display text-xl font-bold mb-4 pb-3 border-b border-[var(--dp-rule)]">
               महत्वाचे जीवन टप्पे
             </h3>
-            <div className="border-l-2 border-saffron/30 ml-4 space-y-8 pl-6 relative">
+            <div className="border-l border-[var(--dp-rule-strong)] ml-2 space-y-6 pl-4 relative">
               {timeline.map((item, idx) => (
                 <div key={idx} className="relative">
-                  {/* Bullet point */}
-                  <div className="absolute -left-[31px] top-1.5 w-3 h-3 rounded-full bg-saffron border border-white dark:border-card" />
-                  <span className="text-xs font-bold text-saffron font-sans">{item.year}</span>
-                  <p className="text-sm font-marathi text-foreground/80 mt-1">{item.event}</p>
+                  <div className="absolute -left-[21px] top-1.5 w-2 h-2 rounded-full bg-[var(--dp-gold)]" />
+                  <span className="text-xs font-semibold text-[var(--dp-gold)] font-marathi">{item.year}</span>
+                  <p className="text-xs text-[var(--dp-ink-dim)] font-marathi mt-0.5 leading-relaxed">{item.event}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Right Side: 3D Temple and Meta Info (5/12) */}
-        <aside className="md:col-span-5 space-y-8" aria-label="संबंधित देवस्थान">
-          <div className="bg-card rounded-2xl border border-saffron/15 p-6 shadow-md space-y-4 text-center">
-            <h3 className="font-marathiHeading text-lg text-maroon dark:text-saffron font-bold">
+        {/* Right Column: 3D Temple / Deity Context */}
+        <aside className="md:col-span-5 space-y-6" aria-label="संबंधित देवस्थान">
+          <div className="vitthalaya-card rounded p-6 text-center">
+            <h3 className="vitthalaya-display text-lg font-bold mb-1">
               आराध्य दैवत व देवस्थान
             </h3>
-            <p className="text-xs text-muted-foreground font-marathi">
-              माऊलींचे श्रद्धास्थान असलेले श्री विठ्ठल मंदिर पंढरपूर.
+            <p className="text-xs text-[var(--dp-muted)] font-marathi mb-4">
+              माऊलींचे श्रद्धास्थान असलेले श्री विठ्ठल मंदिर, पंढरपूर.
             </p>
-            <div className="w-full aspect-square bg-saffron/5 rounded-xl overflow-hidden flex items-center justify-center border border-saffron/10">
+            <div className="w-full aspect-square bg-[var(--dp-ground-well)] rounded overflow-hidden flex items-center justify-center border border-[var(--dp-rule)]">
               <TempleViewerClient />
             </div>
-            <p className="text-[10px] text-muted-foreground">
-              ३डी देवस्थान फिरवण्यासाठी वर ड्रॅग करा
+            <p className="text-xs text-[var(--dp-muted)] font-marathi mt-3">
+              देवस्थान फिरवण्यासाठी वर ड्रॅग करा
             </p>
           </div>
         </aside>
-
       </div>
 
-      {/* Compositions List Section */}
-      <section className="container mx-auto px-4 max-w-5xl mt-16 space-y-6" aria-labelledby="works">
-        <h2 id="works" className="font-marathiHeading text-2xl text-maroon dark:text-saffron font-bold border-b border-saffron/10 pb-3">
-          प्रकाशित भक्ती साहित्य (एकूण {totalCompositions})
-        </h2>
-        
+      {/* Compositions Section */}
+      <section className="vitthalaya-container max-w-5xl mt-12 space-y-6" aria-labelledby="works">
+        <div className="flex items-center justify-between border-b border-[var(--dp-rule)] pb-3">
+          <h2 id="works" className="vitthalaya-display text-2xl font-bold">
+            प्रकाशित भक्ती साहित्य (एकूण {totalCompositions})
+          </h2>
+        </div>
+
         {totalCompositions === 0 ? (
-          <div className="bg-card rounded-xl p-8 border border-saffron/10 text-center">
-            <p className="text-muted-foreground text-sm font-marathi">या संतांचे भक्ती साहित्य लवकरच अपलोड केले जाईल.</p>
+          <div className="vitthalaya-card rounded p-8 text-center space-y-3">
+            <p className="text-[var(--dp-muted)] text-sm font-marathi">
+              या संतांच्या नामनिर्देशित अभंगांचे डिजिटायझेशन व संहिता संकलन सुरू आहे.
+            </p>
+            <div>
+              <Link
+                href="/search"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-saffron/10 hover:bg-saffron/20 text-saffron rounded text-xs font-semibold transition-colors"
+              >
+                समग्र वारकरी साहित्य शोधा
+              </Link>
+            </div>
           </div>
         ) : (
           <>
@@ -288,31 +364,33 @@ export default async function SaintPage({
               ))}
             </div>
 
-            {/* Pagination Controls */}
+            {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between border-t border-saffron/10 pt-6 mt-8">
+              <div className="flex items-center justify-between border-t border-[var(--dp-rule)] pt-6 mt-8">
                 <Link
                   href={page > 1 ? `?page=${page - 1}` : '#'}
-                  className={`flex items-center gap-1 px-4 py-2 rounded-lg border border-saffron/20 text-sm font-semibold transition-all ${
-                    page > 1 
-                      ? 'hover:bg-saffron/10 text-foreground' 
-                      : 'opacity-40 pointer-events-none text-muted-foreground'
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded border border-[var(--dp-rule)] text-xs font-semibold font-marathi transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--dp-focus)] active:translate-y-px ${
+                    page > 1
+                      ? 'hover:border-[var(--dp-gold)] text-[var(--dp-ink)]'
+                      : 'opacity-40 pointer-events-none text-[var(--dp-muted)]'
                   }`}
                 >
-                  <ArrowLeft className="w-4 h-4" /> मागील (Prev)
+                  <ArrowLeft size={14} aria-hidden="true" />
+                  मागील पान
                 </Link>
-                <span className="text-sm font-marathi font-semibold text-foreground/80">
+                <span className="text-xs font-marathi font-medium text-[var(--dp-muted)]">
                   पान {toDevanagariDigits(page)} / {toDevanagariDigits(totalPages)}
                 </span>
                 <Link
                   href={page < totalPages ? `?page=${page + 1}` : '#'}
-                  className={`flex items-center gap-1 px-4 py-2 rounded-lg border border-saffron/20 text-sm font-semibold transition-all ${
-                    page < totalPages 
-                      ? 'hover:bg-saffron/10 text-foreground' 
-                      : 'opacity-40 pointer-events-none text-muted-foreground'
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded border border-[var(--dp-rule)] text-xs font-semibold font-marathi transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--dp-focus)] active:translate-y-px ${
+                    page < totalPages
+                      ? 'hover:border-[var(--dp-gold)] text-[var(--dp-ink)]'
+                      : 'opacity-40 pointer-events-none text-[var(--dp-muted)]'
                   }`}
                 >
-                  पुढील (Next) <ArrowRight className="w-4 h-4" />
+                  पुढील पान
+                  <ArrowRight size={14} aria-hidden="true" />
                 </Link>
               </div>
             )}
@@ -322,8 +400,8 @@ export default async function SaintPage({
 
       {/* Related Contemporary Saints */}
       {saint.related_saints.length > 0 && (
-        <section className="container mx-auto px-4 max-w-5xl mt-16 space-y-6" aria-labelledby="related-saints">
-          <h2 id="related-saints" className="font-marathiHeading text-2xl text-maroon dark:text-saffron font-bold border-b border-saffron/10 pb-3">
+        <section className="vitthalaya-container max-w-5xl mt-12 space-y-4" aria-labelledby="related-saints">
+          <h2 id="related-saints" className="vitthalaya-display text-xl font-bold border-b border-[var(--dp-rule)] pb-3">
             समकालीन संत
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -331,15 +409,17 @@ export default async function SaintPage({
               <Link
                 key={related.slug}
                 href={`/sant/${related.slug}`}
-                className="block rounded-xl bg-card p-4 text-center border border-saffron/10 hover:border-saffron/40 hover:shadow transition-all"
+                className="vitthalaya-card rounded p-4 text-center hover:border-[var(--dp-gold)] transition-colors block focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--dp-focus)] active:translate-y-px"
               >
-                <p className="font-marathi font-semibold text-sm text-maroon dark:text-saffron truncate">{related.name}</p>
+                <p className="font-marathi font-semibold text-sm text-[var(--dp-ink)] truncate">
+                  {related.name}
+                </p>
               </Link>
             ))}
           </div>
         </section>
       )}
-    </article>
+    </div>
   );
 }
 
@@ -350,7 +430,7 @@ export async function generateMetadata({
 }) {
   const rawSlug = await params;
   const slug = decodeURIComponent(rawSlug.slug);
-  
+
   const saint = await db.saint.findUnique({
     where: { slug },
     select: { nameMarathi: true, nameTranslit: true, period: true, region: true },
@@ -363,11 +443,11 @@ export async function generateMetadata({
   }
 
   return {
-    title: `${saint.nameMarathi} - जीवन चरित्र व अभंग संग्रह | डिजिटल पंढरपूर`,
-    description: `${saint.nameTranslit} - ${saint.period || ''} मधील ${saint.region || ''} येथील वारकरी संत. त्यांचे संपूर्ण अभंग साहित्य वाचा.`,
+    title: `${saint.nameMarathi} : जीवन चरित्र व अभंग संग्रह | डिजिटल पंढरपूर`,
+    description: `${saint.nameTranslit} : ${saint.period || ''} मधील ${saint.region || ''} येथील वारकरी संत. त्यांचे संपूर्ण अभंग साहित्य वाचा.`,
     ...canonicalMetadata({ canonical: '/sant/' + slug }),
     openGraph: {
-      title: `${saint.nameMarathi} - जीवन चरित्र`,
+      title: `${saint.nameMarathi} : जीवन चरित्र`,
       description: `${saint.nameTranslit} वारकरी संत चरित्र व अभंग`,
       type: 'profile',
       locale: 'mr_IN',
@@ -387,16 +467,22 @@ function CompositionCard({
   return (
     <Link
       href={`/abhang/${slug}`}
-      className="flex items-center justify-between rounded-xl border border-saffron/10 bg-card p-4 hover:border-saffron/30 hover:shadow-md transition-all select-none"
+      className="vitthalaya-card rounded p-4 flex items-center justify-between hover:border-[var(--dp-gold)] transition-colors block focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--dp-focus)] active:translate-y-px"
     >
-      <div className="flex-1 min-w-0 pr-2">
-        <p className="font-marathi font-semibold text-foreground truncate">{title}</p>
-        <p className="text-[10px] text-muted-foreground font-sans mt-0.5 uppercase tracking-wider">{type}</p>
+      <div className="flex-1 min-w-0 pr-3">
+        <p className="font-marathi font-semibold text-sm text-[var(--dp-ink)] truncate">
+          {title}
+        </p>
+        <p className="text-xs text-[var(--dp-muted)] font-marathi mt-0.5">
+          {type}
+        </p>
       </div>
-      <span className="text-xs font-semibold text-saffron bg-saffron/10 border border-saffron/10 px-3 py-1 rounded-full flex-shrink-0">
-        वाचा 📖
+      <span className="inline-flex items-center gap-1 text-xs font-semibold font-marathi text-[var(--dp-gold)]">
+        <BookOpen size={13} aria-hidden="true" />
+        वाचा
       </span>
     </Link>
   );
 }
+
 export const dynamic = 'force-dynamic';

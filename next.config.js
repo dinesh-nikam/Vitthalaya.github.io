@@ -22,10 +22,13 @@ const nextConfig = {
     ],
   },
   // Enable SSR for SEO
-  output: 'standalone',
-  webpack: (config) => {
+  output: process.env.NEXT_STANDALONE === 'true' ? 'standalone' : undefined,
+  webpack: (config, { dev }) => {
     // Handle bun:sqlite for server-side code
     config.externals = [...(config.externals || []), 'bun:sqlite'];
+    if (dev) {
+      config.cache = false;
+    }
     return config;
   },
 };

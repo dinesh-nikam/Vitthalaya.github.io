@@ -128,6 +128,33 @@ services:
     volumes:
       - meili_data:/meili_data
 
+  # Background Worker Daemon (Search Sync, AI Enrichment, Audio Processing)
+  worker:
+    build:
+      context: ..
+      dockerfile: Dockerfile.worker
+    container_name: dp-worker
+    restart: unless-stopped
+    ports:
+      - "9091:9091" # Worker health probe
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://varkari:varkari_dev_password@postgres:5432/varkari?schema=public
+      - MEILISEARCH_URL=http://meilisearch:7700
+      - OPENSEARCH_URL=http://opensearch:9200
+      - WORKER_PORT=9091
+      - WORKER_INTERVAL_MS=5000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+
 volumes:
   postgres_data:
   redis_data:

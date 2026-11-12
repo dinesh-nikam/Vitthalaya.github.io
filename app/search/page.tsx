@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import SearchPageClient from './search-page-client';
+import SearchLoading from './loading';
 import { getTopCanonicalQueries } from '@/src/lib/canonical-queries';
 import { db } from '@/src/db/client';
 
@@ -20,7 +21,7 @@ export default async function SearchPage({
   const canonicalQueries = params.q ? [] : await getTopCanonicalQueries(24);
 
   return (
-    <Suspense fallback={<div className="container mx-auto px-4 py-8"><p className="text-muted-foreground">लोड होत आहे...</p></div>}>
+    <Suspense fallback={<SearchLoading />}>
       <SearchPageClient
         initialQuery={params.q || ''}
         initialType={params.type || ''}
@@ -48,22 +49,19 @@ export async function generateMetadata({
   searchParams: Promise<{ q?: string }>;
 }) {
   const params = await searchParams;
-  const hasQuery = !!params.q;
+  const q = params.q?.trim();
 
-  if (hasQuery) {
+  if (q) {
     return {
+      title: `"${q}" — शोध | Digital Pandharpur`,
+      description: `Search results for "${q}" across abhangs, saints, deities, and festivals.`,
       robots: { index: false, follow: true },
-      title: `शोध निकाल - "${params.q}" - डिजिटल पंढरपूर`,
     };
   }
 
   return {
-    title: 'शोध - डिजिटल पंढरपूर',
-    description: 'मराठी भक्ती साहित्य शोधा — अभंग, भजन, आरत्या, स्तोत्रे आणि संत साहित्य',
-    openGraph: {
-      title: 'शोध - डिजिटल पंढरपूर',
-      description: 'लाखो अभंग, भजन, आरत्या शोधा',
-      locale: 'mr_IN',
-    },
+    title: 'शोध — Digital Pandharpur',
+    description: 'Search thousands of abhangs, poems, saints, deities, and pilgrimage themes.',
+    robots: { index: true, follow: true },
   };
 }

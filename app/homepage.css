@@ -1,1827 +1,466 @@
-/* ============================================================
-   DIGITAL PANDHARPUR — Homepage Chapter Styles
-   Museum-grade cultural experience
-   ============================================================ */
+/* Hallmark · theme: atmospheric-devotional · depth: full · target: app/page.tsx */
+/* Critique: Replaced generic AI-slop glassmorphism, floating blurred orbs, bouncing emojis, and uppercase tracked eyebrows with an authentic sacred Devanagari manuscript layout, Tiro Devanagari typography, genuine abhang excerpts, and real catalog figures. */
 
-/* ── Design Tokens ── */
+/* Hallmark · theme: atmospheric-devotional · depth: full · target: app/page.tsx */
+/* High-Contrast Sacred Devanagari Manuscript & Temple Sanctum Theme System */
+
 :root {
-  /* Temple palette */
-  --dp-black: #050402;
-  --dp-ink: #100b08;
-  --dp-gold: #f6bc55;
-  --dp-gold-dim: rgba(246, 188, 85, 0.6);
+  /* Day / Light Mode (Parchment & Sacred Manuscript) */
+  --dp-ground: #fff8ec;
+  --dp-ground-well: #f5ece0;
+  --dp-ground-surface: #ffffff;
+  --dp-ground-card: #fbf6ee;
+  --dp-ink: #2d1810;
+  --dp-ink-dim: #5c4033;
+  --dp-muted: #7a6652;
+  --dp-rule: rgba(180, 130, 40, 0.22);
+  --dp-rule-strong: rgba(180, 130, 40, 0.45);
+  --dp-saffron: #d95d00;
+  --dp-saffron-soft: rgba(217, 93, 0, 0.1);
+  --dp-gold: #9c6e0c;
+  --dp-gold-soft: rgba(156, 110, 12, 0.12);
+  --dp-focus: #d95d00;
+  --dp-btn-text: #ffffff;
+  --dp-max-width: 1200px;
+}
+
+/* Night / Dark Mode (Atmospheric Temple Sanctum) */
+.dark,
+:root.dark,
+html.dark {
+  --dp-ground: #0a0806;
+  --dp-ground-well: #130f0a;
+  --dp-ground-surface: #1c1611;
+  --dp-ground-card: #18130e;
+  --dp-ink: #fff8ec;
+  --dp-ink-dim: #c5b6a3;
+  --dp-muted: #8c7d6b;
+  --dp-rule: rgba(201, 162, 39, 0.2);
+  --dp-rule-strong: rgba(201, 162, 39, 0.4);
   --dp-saffron: #ff7a1a;
-  --dp-saffron-dim: rgba(255, 122, 26, 0.3);
-  --dp-ivory: #fff6df;
-  --dp-ivory-dim: rgba(255, 246, 223, 0.7);
-  --dp-maroon: #6B1E1E;
-  --dp-river: #1b6e8c;
-  --dp-cream: #FFF8EC;
-  --dp-parchment: #f5e6c8;
-  --dp-stone: #8a7b6b;
-  --dp-earth: #3e2a1a;
-
-  /* Chapter spacing */
-  --dp-chapter-pad: clamp(4rem, 10vw, 8rem);
-  --dp-content-max: 1200px;
-  --dp-text-max: 680px;
-
-  /* Easing */
-  --dp-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --dp-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dp-saffron-soft: rgba(255, 122, 26, 0.12);
+  --dp-gold: #c9a227;
+  --dp-gold-soft: rgba(201, 162, 39, 0.12);
+  --dp-focus: #ff7a1a;
+  --dp-btn-text: #0a0806;
 }
 
-/* ── Chapter Shell ── */
-.dp-chapter {
-  position: relative;
-  min-height: 100svh;
-  padding: var(--dp-chapter-pad) clamp(1.25rem, 6vw, 6rem);
-  overflow: hidden;
+/* ── Cinematic Extension Tokens ─────────────────────────── */
+/* Applied site-wide; designed to layer on top of day/night palettes */
+:root {
+  --dp-gold-celestial: #f6bc55;
+  --dp-gold-glow: rgba(246, 188, 85, 0.35);
+  --dp-saffron-flame: #ff6f1e;
+  --dp-jejuri-turmeric: #f7c844;
+  --dp-basalt-deep: #060503;
+  --dp-chandrabhaga: #1e3a4a;
+  --dp-ash-veil: rgba(10, 8, 6, 0.72);
+  --dp-ember-soft: rgba(255, 122, 26, 0.08);
+
+  /* Cinematic spacing */
+  --dp-act-padding: clamp(5rem, 10vw, 9rem);
+  --dp-hero-padding-top: clamp(6rem, 12vw, 11rem);
+
+  /* Motion timing */
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-reveal: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-snap: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --dur-instant: 80ms;
+  --dur-fast: 200ms;
+  --dur-medium: 400ms;
+  --dur-slow: 700ms;
+  --dur-cinematic: 1100ms;
+
+  /* Typography — cinematic scale */
+  --dp-type-epic: clamp(3.2rem, 8.5vw, 8.4rem);
+  --dp-type-chapter: clamp(2.2rem, 5vw, 5.6rem);
 }
 
-.dp-chapter-inner {
-  max-width: var(--dp-content-max);
-  margin: 0 auto;
+/* ── Cinematic Keyframes ─────────────────────────────────── */
+
+@keyframes dp-ember-rise {
+  0%   { transform: translateY(0) translateX(0) scale(1);        opacity: 0.9; }
+  50%  { transform: translateY(-40px) translateX(8px) scale(1.1); opacity: 0.6; }
+  100% { transform: translateY(-90px) translateX(-4px) scale(0.4); opacity: 0; }
 }
 
-/* ── Chapter Kicker ── */
-.dp-kicker {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  color: var(--dp-gold);
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  margin-bottom: 1rem;
+@keyframes dp-taal-pulse {
+  0%   { box-shadow: 0 0 0 0 var(--dp-gold-glow); }
+  70%  { box-shadow: 0 0 0 28px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
 }
 
-.dp-kicker::before {
-  content: '';
-  width: 2rem;
-  height: 1px;
-  background: var(--dp-gold);
-  opacity: 0.5;
+@keyframes dp-veil-dissolve {
+  from { opacity: 1; }
+  to   { opacity: 0; pointer-events: none; }
 }
 
-/* ── Chapter Title ── */
-.dp-title {
-  font-family: var(--font-inter), sans-serif;
-  font-size: clamp(2.4rem, 5.5vw, 5.5rem);
-  line-height: 0.95;
-  letter-spacing: -0.02em;
-  text-wrap: balance;
-  color: var(--dp-ivory);
-  margin: 0 0 1rem;
+@keyframes dp-flame-flicker {
+  0%,100% { transform: scaleX(1) scaleY(1)    rotate(-1deg); opacity: 0.95; }
+  20%      { transform: scaleX(0.96) scaleY(1.04) rotate(1deg);  opacity: 1;    }
+  40%      { transform: scaleX(1.03) scaleY(0.97) rotate(-2deg); opacity: 0.88; }
+  60%      { transform: scaleX(0.98) scaleY(1.02) rotate(0.5deg);opacity: 0.97; }
+  80%      { transform: scaleX(1.01) scaleY(0.98) rotate(-1deg); opacity: 0.9;  }
 }
 
-.dp-title--light {
-  color: var(--dp-earth);
+@keyframes dp-ringan-orbit {
+  from { transform: rotate(0deg) translateX(60px) rotate(0deg); }
+  to   { transform: rotate(360deg) translateX(60px) rotate(-360deg); }
 }
 
-/* ── Chapter Subtitle ── */
-.dp-subtitle {
-  max-width: var(--dp-text-max);
-  color: var(--dp-ivory-dim);
-  font-family: var(--font-inter), sans-serif;
-  font-size: clamp(1rem, 1.3vw, 1.2rem);
-  line-height: 1.7;
-  margin: 0;
+@keyframes dp-sound-wave {
+  0%,100% { transform: scaleY(0.3); }
+  50%      { transform: scaleY(1); }
 }
 
-.dp-subtitle--light {
-  color: rgba(62, 42, 26, 0.72);
+@keyframes dp-act-reveal {
+  from { opacity: 0; transform: translateY(40px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ============================================================
-   CHAPTER 1 — HERO: Cinematic Arrival
-   ============================================================ */
-.dp-hero {
-  position: relative;
-  min-height: 100svh;
+@keyframes dp-ping-soft {
+  0%   { transform: scale(1);   opacity: 0.7; }
+  70%  { transform: scale(2.0); opacity: 0;   }
+  100% { transform: scale(2.0); opacity: 0;   }
+}
+
+/* ── Cinematic Utility Classes ───────────────────────────── */
+
+.vitthalaya-dial-btn {
+  white-space: nowrap;
+}
+
+/* Gateway overlay */
+.dp-gateway-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--dp-basalt-deep);
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  padding-bottom: clamp(4rem, 8vh, 6rem);
-  isolation: isolate;
+  align-items: center;
+  justify-content: center;
+  overflow-x: clip;
+}
+.dp-gateway-veil.dp-awakening {
+  animation: dp-veil-dissolve 1.1s var(--ease-reveal) 0.3s forwards;
+}
+
+/* Epic & chapter headings */
+.dp-epic-title {
+  font-family: var(--font-devanagari-heading), serif;
+  font-size: var(--dp-type-epic);
+  line-height: 0.95;
+  letter-spacing: -0.025em;
+  overflow-wrap: break-word;
+  min-width: 0;
+}
+.dp-chapter-title {
+  font-family: var(--font-devanagari-heading), serif;
+  font-size: var(--dp-type-chapter);
+  line-height: 1.0;
+  letter-spacing: -0.02em;
+  overflow-wrap: break-word;
+  min-width: 0;
+}
+
+/* Gold glow text */
+.dp-gold-text {
+  color: var(--dp-gold-celestial);
+  text-shadow: 0 0 24px var(--dp-gold-glow), 0 0 60px rgba(246, 188, 85, 0.12);
+}
+
+/* Cinematic section reveal */
+.dp-act-hidden {
+  opacity: 0;
+  transform: translateY(40px);
+}
+.dp-act-visible {
+  animation: dp-act-reveal var(--dur-cinematic) var(--ease-spring) forwards;
+}
+
+/* Saint card — cinematic rim light */
+.dp-saint-card {
+  position: relative;
   overflow: hidden;
+  background: var(--dp-ground-surface);
+  border: 1px solid var(--dp-rule);
+  border-radius: 0.5rem;
+  transition:
+    border-color var(--dur-medium) var(--ease-spring),
+    transform var(--dur-medium) var(--ease-spring),
+    box-shadow var(--dur-medium) var(--ease-spring);
 }
-
-/* Sunrise gradient background with realistic temple photo */
-.dp-hero-bg {
+.dp-saint-card:hover {
+  border-color: var(--dp-gold-celestial);
+  transform: translateY(-6px);
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.5),
+    0 0 0 1px var(--dp-gold-glow),
+    inset 0 0 40px rgba(246, 188, 85, 0.04);
+}
+.dp-saint-card::after {
+  content: '';
   position: absolute;
   inset: 0;
-  z-index: -3;
-  background:
-    radial-gradient(ellipse 120% 60% at 50% 100%, rgba(255, 122, 26, 0.35), transparent 70%),
-    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(68, 103, 153, 0.4), transparent 60%),
-    linear-gradient(180deg, rgba(10, 8, 6, 0.85) 0%, rgba(26, 14, 6, 0.65) 35%, rgba(42, 20, 8, 0.7) 65%, rgba(10, 8, 6, 0.9) 100%),
-    url('/images/realistic/pandharpur-temple.jpg');
-  background-size: cover;
-  background-position: center 30%;
-}
-
-/* Mist layers */
-.dp-hero-mist {
-  position: absolute;
-  inset: 0;
-  z-index: -2;
-  overflow: hidden;
-}
-
-.dp-hero-mist span {
-  position: absolute;
-  width: 100%;
-  height: 120px;
-  background: linear-gradient(90deg, transparent, rgba(255, 246, 223, 0.06), transparent);
-  filter: blur(40px);
-  animation: mistDrift 25s ease-in-out infinite;
-}
-
-.dp-hero-mist span:nth-child(1) {
-  bottom: 20%;
-  animation-delay: 0s;
-}
-
-.dp-hero-mist span:nth-child(2) {
-  bottom: 35%;
-  animation-delay: -8s;
-  animation-duration: 30s;
-}
-
-.dp-hero-mist span:nth-child(3) {
-  bottom: 50%;
-  animation-delay: -16s;
-  animation-duration: 35s;
-}
-
-@keyframes mistDrift {
-
-  0%,
-  100% {
-    transform: translateX(-10%) scaleX(1.2);
-    opacity: 0.4;
-  }
-
-  50% {
-    transform: translateX(10%) scaleX(1.4);
-    opacity: 0.7;
-  }
-}
-
-/* Floating diyas in hero */
-.dp-hero-diyas {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(ellipse at 50% 0%, rgba(246, 188, 85, 0.12) 0%, transparent 65%);
+  opacity: 0;
+  transition: opacity var(--dur-medium) var(--ease-reveal);
   pointer-events: none;
 }
+.dp-saint-card:hover::after { opacity: 1; }
 
-.dp-diya {
-  position: absolute;
-  width: 24px;
-  height: 24px;
+/* Wari animated progress bar */
+.dp-wari-progress {
+  height: 100%;
+  background: linear-gradient(90deg, var(--dp-saffron-flame), var(--dp-gold-celestial));
+  border-radius: 2px;
+  transform-origin: left;
+  transition: width var(--dur-slow) var(--ease-spring);
+}
+
+/* Ringan orbit dot */
+.dp-ringan-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  background: radial-gradient(circle at 50% 35%, #fff3ba 0 20%, #ff9d2d 40%, rgba(255, 122, 26, 0.05) 70%);
-  filter: drop-shadow(0 0 12px rgba(255, 177, 63, 0.8));
-  animation: diyaFloat 12s ease-in-out infinite;
+  background: var(--dp-gold-celestial);
+  animation: dp-ringan-orbit 2.4s linear infinite;
+  box-shadow: 0 0 8px var(--dp-gold-glow);
 }
 
-@keyframes diyaFloat {
+/* Sound wave bars */
+.dp-wave-bar {
+  display: inline-block;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--dp-gold-celestial);
+  animation: dp-sound-wave 0.9s ease-in-out infinite;
+  transform-origin: bottom;
+}
+.dp-wave-bar:nth-child(2) { animation-delay: 0.10s; }
+.dp-wave-bar:nth-child(3) { animation-delay: 0.20s; }
+.dp-wave-bar:nth-child(4) { animation-delay: 0.30s; }
+.dp-wave-bar:nth-child(5) { animation-delay: 0.15s; }
 
-  0%,
-  100% {
-    transform: translateY(0) scale(1);
-    opacity: 0.7;
-  }
-
-  50% {
-    transform: translateY(-20px) scale(1.1);
-    opacity: 1;
-  }
+/* Soft ping for Taal outer ring */
+.dp-taal-ping {
+  animation: dp-ping-soft 2.4s ease-out infinite;
 }
 
-/* Temple silhouette at bottom */
-.dp-hero-temple {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 35svh;
-  z-index: -1;
-  opacity: 0.5;
-  clip-path: polygon(0 100%, 0 72%, 12% 72%, 14% 55%, 18% 55%, 20% 38%,
-      22% 38%, 24% 28%, 26% 38%, 28% 38%, 32% 55%, 36% 55%,
-      38% 72%, 42% 72%, 44% 60%, 48% 60%, 50% 45%, 52% 60%,
-      56% 60%, 58% 72%, 62% 72%, 64% 60%, 68% 60%, 70% 42%,
-      72% 42%, 74% 30%, 76% 42%, 78% 42%, 80% 60%, 84% 60%,
-      86% 72%, 90% 72%, 92% 58%, 95% 58%, 97% 48%, 100% 48%,
-      100% 100%);
-  background: linear-gradient(180deg, #0a0604, #050302);
-  filter: drop-shadow(0 -10px 30px rgba(255, 122, 26, 0.15));
+/* Flame flicker on SVG / CSS element */
+.dp-flame-flicker {
+  animation: dp-flame-flicker 1.8s ease-in-out infinite;
+  transform-origin: 50% 100%;
 }
 
-/* Hero content */
-.dp-hero-content {
-  position: relative;
-  z-index: 2;
-  max-width: 800px;
-  padding: 0 clamp(1.25rem, 6vw, 6rem);
+/* ── Reduced-motion safety net ───────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .dp-act-hidden       { opacity: 1; transform: none; }
+  .dp-act-visible      { animation: none; opacity: 1; transform: none; }
+  .dp-gateway-veil.dp-awakening { animation: none; opacity: 0; pointer-events: none; }
+  .dp-ringan-dot       { animation: none; }
+  .dp-wave-bar         { animation: none; transform: scaleY(0.6); }
+  .dp-taal-ping        { animation: none; }
+  .dp-flame-flicker    { animation: none; }
+  .dp-saint-card:hover { transform: none; }
 }
 
-.dp-hero-mark {
+/* Base shell */
+.vitthalaya-shell {
+  min-height: 100vh;
+  background-color: var(--dp-ground);
+  color: var(--dp-ink);
+  overflow-x: clip;
+}
+
+.vitthalaya-container {
+  max-width: var(--dp-max-width);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: clamp(1rem, 4vw, 2rem);
+  padding-right: clamp(1rem, 4vw, 2rem);
+}
+
+/* Typographic Display */
+.vitthalaya-display {
+  font-family: var(--font-devanagari-heading), serif;
+  overflow-wrap: break-word;
+  min-width: 0;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--dp-ink);
+}
+
+.vitthalaya-prose {
+  font-family: var(--font-devanagari), system-ui, sans-serif;
+  color: var(--dp-ink-dim);
+  line-height: 1.7;
+}
+
+/* Sections */
+.vitthalaya-section {
+  padding-top: clamp(3.5rem, 6vw, 6rem);
+  padding-bottom: clamp(3.5rem, 6vw, 6rem);
+  border-top: 1px solid var(--dp-rule);
+}
+
+.vitthalaya-section-well {
+  background-color: var(--dp-ground-well);
+  color: var(--dp-ink);
+}
+
+/* Cards & Wells */
+.vitthalaya-card {
+  background-color: var(--dp-ground-surface);
+  color: var(--dp-ink);
+  border: 1px solid var(--dp-rule);
+  transition-property: border-color, background-color;
+  transition-duration: 200ms;
+}
+
+.vitthalaya-card:hover {
+  border-color: var(--dp-rule-strong);
+  background-color: var(--dp-ground-card);
+}
+
+/* Interactive elements */
+.vitthalaya-btn-primary {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  color: var(--dp-gold);
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  margin-bottom: 1.5rem;
+  background-color: var(--dp-saffron);
+  color: var(--dp-btn-text);
+  font-family: var(--font-devanagari), system-ui, sans-serif;
+  font-weight: 600;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.375rem;
+  transition-property: background-color, opacity;
+  transition-duration: 150ms;
 }
 
-.dp-hero-title {
-  font-family: var(--font-inter), sans-serif;
-  font-size: clamp(3rem, 7.5vw, 7.5rem);
-  line-height: 0.9;
-  letter-spacing: -0.03em;
-  color: var(--dp-ivory);
-  margin: 0 0 1.5rem;
-  text-wrap: balance;
-  max-width: 14ch;
+.vitthalaya-btn-primary:hover {
+  opacity: 0.92;
 }
 
-.dp-hero-desc {
-  max-width: 560px;
-  color: var(--dp-ivory-dim);
-  font-family: var(--font-inter), sans-serif;
-  font-size: clamp(1rem, 1.2vw, 1.15rem);
-  line-height: 1.7;
-  margin: 0 0 2rem;
+.vitthalaya-btn-primary:active {
+  transform: translateY(1px);
 }
 
-/* Search */
-.dp-hero-search {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
+.vitthalaya-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.vitthalaya-btn-primary:focus-visible {
+  outline: 2px solid var(--dp-focus);
+  outline-offset: 2px;
+}
+
+.vitthalaya-btn-secondary {
+  display: inline-flex;
   align-items: center;
-  gap: 0.75rem;
-  width: min(580px, 100%);
-  min-height: 56px;
-  padding: 0.35rem 0.35rem 0.35rem 1rem;
-  border: 1px solid rgba(246, 188, 85, 0.28);
-  border-radius: 999px;
-  background: rgba(5, 4, 2, 0.55);
-  backdrop-filter: blur(16px);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  justify-content: center;
+  gap: 0.5rem;
+  background-color: transparent;
+  color: var(--dp-ink);
+  border: 1px solid var(--dp-rule);
+  font-family: var(--font-devanagari), system-ui, sans-serif;
+  font-weight: 500;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.375rem;
+  transition-property: border-color, background-color, transform, opacity;
+  transition-duration: 150ms;
 }
 
-.dp-hero-search input {
-  min-width: 0;
+.vitthalaya-btn-secondary:hover {
+  border-color: var(--dp-gold);
+  background-color: var(--dp-gold-soft);
+}
+
+.vitthalaya-btn-secondary:active {
+  transform: translateY(1px);
+}
+
+.vitthalaya-btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.vitthalaya-btn-secondary:focus-visible {
+  outline: 2px solid var(--dp-focus);
+  outline-offset: 2px;
+}
+
+/* Search bar */
+.vitthalaya-search-bar {
+  display: flex;
+  align-items: center;
+  background-color: var(--dp-ground-well);
+  border: 1px solid var(--dp-rule);
+  border-radius: 0.5rem;
+  transition-property: border-color, box-shadow;
+  transition-duration: 200ms;
+}
+
+.vitthalaya-search-bar:focus-within {
+  border-color: var(--dp-gold);
+  box-shadow: 0 0 0 2px var(--dp-gold-soft);
+}
+
+.vitthalaya-search-input {
+  width: 100%;
   background: transparent;
-  color: var(--dp-ivory);
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.95rem;
+  border: none;
+  color: var(--dp-ink);
+  font-family: var(--font-devanagari), system-ui, sans-serif;
+  padding: 0.875rem 1rem;
+}
+
+.vitthalaya-search-input:focus {
   outline: none;
 }
 
-.dp-hero-search input::placeholder {
-  color: rgba(255, 246, 223, 0.4);
+.vitthalaya-search-input::placeholder {
+  color: var(--dp-muted);
 }
 
-.dp-hero-search button {
-  display: inline-flex;
-  min-height: 44px;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  padding: 0 1.3rem;
-  border-radius: 999px;
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #1c0d04;
-  background: linear-gradient(135deg, #fff1b7, #ff8b22);
-  cursor: pointer;
-  transition: transform 0.3s var(--dp-ease-out), box-shadow 0.3s;
-}
-
-.dp-hero-search button:hover {
-  transform: scale(1.03);
-  box-shadow: 0 4px 20px rgba(255, 122, 26, 0.4);
-}
-
-/* Hero quick links */
-.dp-hero-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.65rem;
-  margin-top: 1.25rem;
-}
-
-.dp-hero-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  min-height: 40px;
-  padding: 0 1rem;
-  border-radius: 999px;
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: rgba(255, 246, 223, 0.85);
-  border: 1px solid rgba(255, 246, 223, 0.14);
-  background: rgba(255, 246, 223, 0.05);
-  text-decoration: none;
-  transition: all 0.3s var(--dp-ease-out);
-}
-
-.dp-hero-link:hover {
-  background: rgba(255, 246, 223, 0.1);
-  border-color: rgba(246, 188, 85, 0.4);
-  color: var(--dp-gold);
-}
-
-/* Scroll cue */
-.dp-scroll-cue {
-  position: absolute;
-  left: 50%;
-  bottom: 1.5rem;
-  transform: translateX(-50%);
-  color: rgba(255, 246, 223, 0.5);
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  animation: cueDrift 2s ease-in-out infinite;
-}
-
-.dp-scroll-cue::after {
-  content: '';
-  display: block;
-  width: 1px;
-  height: 2rem;
-  margin: 0.5rem auto 0;
-  background: linear-gradient(180deg, rgba(246, 188, 85, 0.5), transparent);
-}
-
-@keyframes cueDrift {
-
-  0%,
-  100% {
-    transform: translateX(-50%) translateY(0);
-  }
-
-  50% {
-    transform: translateX(-50%) translateY(6px);
-  }
-}
-
-/* Star field */
-.dp-stars {
-  position: absolute;
-  inset: 0 0 40%;
-  z-index: -2;
-  pointer-events: none;
-}
-
-.dp-star {
-  position: absolute;
-  width: 2px;
-  height: 2px;
-  border-radius: 50%;
-  background: #fff7cf;
-  box-shadow: 0 0 8px #fff0a8;
-  animation: starTwinkle 4s ease-in-out infinite;
-}
-
-@keyframes starTwinkle {
-
-  0%,
-  100% {
-    opacity: 0.8;
-    transform: scale(1);
-  }
-
-  50% {
-    opacity: 0.2;
-    transform: scale(0.5);
-  }
-}
-
-/* River reflection at hero bottom */
-.dp-hero-river {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 18svh;
-  z-index: -1;
-  background: linear-gradient(180deg, transparent, rgba(27, 110, 140, 0.2));
-  overflow: hidden;
-}
-
-.dp-hero-river span {
-  position: absolute;
-  width: 36px;
-  height: 14px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 50% 35%, #fff3ba 0 18%, #ff9d2d 40%, transparent 70%);
-  filter: drop-shadow(0 0 10px rgba(255, 177, 63, 0.7));
-  animation: diyaFloat 10s ease-in-out infinite;
-}
-
-/* ============================================================
-   CHAPTER 2 — WELCOME: Split Composition
-   ============================================================ */
-.dp-welcome {
-  background:
-    radial-gradient(ellipse 80% 50% at 70% 30%, rgba(255, 122, 26, 0.08), transparent 60%),
-    linear-gradient(180deg, #080604, #0e0a06);
-}
-
-.dp-welcome-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: clamp(2rem, 5vw, 5rem);
-  align-items: center;
-  min-height: 70svh;
-}
-
-.dp-welcome-text {
-  padding-right: clamp(1rem, 3vw, 3rem);
-}
-
-.dp-welcome-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1px;
-  margin-top: 3rem;
-  border: 1px solid rgba(246, 188, 85, 0.15);
-  background: rgba(246, 188, 85, 0.15);
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.dp-stat {
-  padding: clamp(1rem, 3vw, 2rem);
-  background: rgba(5, 4, 2, 0.7);
-  text-align: center;
-}
-
-.dp-stat-value {
-  display: block;
-  color: var(--dp-gold);
-  font-family: var(--font-inter), sans-serif;
-  font-size: clamp(1.8rem, 4vw, 3.5rem);
-  font-weight: 700;
-  line-height: 1;
-  margin-bottom: 0.3rem;
-}
-
-.dp-stat-label {
-  color: rgba(255, 246, 223, 0.5);
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-/* Welcome image side */
-.dp-welcome-image {
-  position: relative;
-  aspect-ratio: 4 / 5;
-  border-radius: 12px;
-  overflow: hidden;
-  background:
-    linear-gradient(135deg, rgba(255, 122, 26, 0.15), rgba(107, 30, 30, 0.2)),
-    radial-gradient(circle at 50% 40%, rgba(246, 188, 85, 0.2), transparent 60%);
-}
-
-.dp-welcome-image img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.dp-welcome-image-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, transparent 50%, rgba(5, 4, 2, 0.6));
-  display: flex;
-  align-items: flex-end;
-  padding: 1.5rem;
-}
-
-.dp-welcome-image-caption {
-  color: var(--dp-ivory);
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.8rem;
-  font-style: italic;
-  opacity: 0.8;
-}
-
-/* ============================================================
-   CHAPTER 3 — BHAKTI TIMELINE: Museum Stone Tablets
-   ============================================================ */
-.dp-bhakti {
-  background:
-    radial-gradient(ellipse 60% 40% at 30% 20%, rgba(246, 188, 85, 0.06), transparent 50%),
-    linear-gradient(180deg, #0e0a06, #0a0704);
-  color: var(--dp-ivory);
-}
-
-.dp-timeline {
-  position: relative;
-  margin-top: 4rem;
-  padding-left: 3rem;
-}
-
-/* Vertical timeline line */
-.dp-timeline::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: linear-gradient(180deg, var(--dp-gold), var(--dp-saffron), var(--dp-maroon));
-  opacity: 0.5;
-}
-
-.dp-timeline-item {
-  position: relative;
-  padding: 0 0 4rem 2.5rem;
-}
-
-/* Timeline dot */
-.dp-timeline-item::before {
-  content: '';
-  position: absolute;
-  left: -3.55rem;
-  top: 0.5rem;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--dp-gold);
-  box-shadow: 0 0 16px rgba(246, 188, 85, 0.5);
-  border: 2px solid var(--dp-ink);
-}
-
-.dp-timeline-century {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--dp-gold);
-  margin-bottom: 0.5rem;
-}
-
-.dp-timeline-card {
+/* Manuscripts & Verse excerpt */
+.vitthalaya-manuscript {
+  background-color: var(--dp-ground-card);
+  border: 1px solid var(--dp-rule-strong);
   position: relative;
   padding: clamp(1.5rem, 3vw, 2.5rem);
-  border: 1px solid rgba(246, 188, 85, 0.12);
-  border-radius: 12px;
-  background:
-    linear-gradient(135deg, rgba(245, 230, 200, 0.04), rgba(138, 123, 107, 0.06)),
-    rgba(16, 11, 8, 0.8);
-  backdrop-filter: blur(8px);
-  transition: border-color 0.4s var(--dp-ease-out), box-shadow 0.4s var(--dp-ease-out);
 }
 
-.dp-timeline-card:hover {
-  border-color: rgba(246, 188, 85, 0.3);
-  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
-}
-
-.dp-timeline-saint {
-  font-family: var(--font-devanagari-heading), serif;
-  font-size: clamp(1.3rem, 2.5vw, 2rem);
-  line-height: 1.2;
-  color: var(--dp-ivory);
-  margin: 0 0 0.5rem;
-}
-
-.dp-timeline-desc {
-  color: var(--dp-ivory-dim);
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.95rem;
-  line-height: 1.7;
-  margin: 0;
-}
-
-.dp-timeline-tag {
-  display: inline-block;
-  margin-top: 1rem;
-  padding: 0.25rem 0.75rem;
-  border-radius: 999px;
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--dp-gold);
-  border: 1px solid rgba(246, 188, 85, 0.2);
-  background: rgba(246, 188, 85, 0.06);
-}
-
-/* ============================================================
-   CHAPTER 4 — SAINTS: Portrait Gallery
-   ============================================================ */
-.dp-saints {
-  background:
-    radial-gradient(circle at 50% 30%, rgba(246, 188, 85, 0.12), transparent 40%),
-    linear-gradient(180deg, #0a0704, #080604);
-}
-
-.dp-saints-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: clamp(1rem, 2vw, 1.5rem);
-  margin-top: 3rem;
-}
-
-.dp-saint-card {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  border-radius: 12px;
-  overflow: hidden;
-  text-decoration: none;
-  color: var(--dp-ivory);
-  transition: transform 0.5s var(--dp-ease-out), box-shadow 0.5s var(--dp-ease-out);
-  cursor: pointer;
-}
-
-.dp-saint-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 30px rgba(246, 188, 85, 0.15);
-}
-
-/* Portrait area */
-.dp-saint-portrait {
-  position: relative;
-  aspect-ratio: 3 / 4;
-  overflow: hidden;
-  background:
-    radial-gradient(circle at 50% 30%, rgba(246, 188, 85, 0.2), transparent 60%),
-    linear-gradient(180deg, rgba(255, 122, 26, 0.12), rgba(5, 4, 2, 0.9));
-}
-
-.dp-saint-portrait img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.6s var(--dp-ease-out);
-}
-
-.dp-saint-card:hover .dp-saint-portrait img {
-  transform: scale(1.05);
-}
-
-/* Halo effect */
-.dp-saint-halo {
-  position: absolute;
-  top: 15%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 60%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(246, 188, 85, 0.2) 0%, transparent 70%);
-  pointer-events: none;
-  transition: opacity 0.4s;
-}
-
-.dp-saint-card:hover .dp-saint-halo {
-  opacity: 1.3;
-}
-
-/* Info overlay */
-.dp-saint-info {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 2rem 1.2rem 1.2rem;
-  background: linear-gradient(180deg, transparent, rgba(5, 4, 2, 0.85));
-}
-
-.dp-saint-period {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--dp-gold);
-  margin-bottom: 0.3rem;
-}
-
-.dp-saint-name {
-  font-family: var(--font-devanagari-heading), serif;
-  font-size: clamp(1.2rem, 2vw, 1.6rem);
-  line-height: 1.15;
-  color: var(--dp-ivory);
-  margin: 0 0 0.15rem;
-}
-
-.dp-saint-translit {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.78rem;
-  color: rgba(255, 246, 223, 0.55);
-  margin: 0;
-}
-
-/* Hover biography preview */
-.dp-saint-bio {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 1.5rem;
-  background: rgba(5, 4, 2, 0.88);
-  backdrop-filter: blur(4px);
-  opacity: 0;
-  transition: opacity 0.4s var(--dp-ease-out);
-}
-
-.dp-saint-card:hover .dp-saint-bio {
-  opacity: 1;
-}
-
-.dp-saint-bio p {
-  color: var(--dp-ivory-dim);
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.85rem;
-  line-height: 1.6;
-  margin: 0 0 1rem;
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.dp-saint-bio-meta {
-  display: flex;
-  gap: 1rem;
-}
-
-.dp-saint-bio-stat {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.7rem;
-  color: var(--dp-gold);
-}
-
-/* ============================================================
-   CHAPTER 5 — WARI: Pilgrimage Experience
-   ============================================================ */
-.dp-wari {
-  background:
-    linear-gradient(180deg, rgba(10, 7, 4, 0.98), rgba(30, 15, 6, 0.9)),
-    repeating-linear-gradient(90deg, rgba(255, 122, 26, 0.06) 0 1px, transparent 1px 8vw);
-  min-height: 160svh;
-}
-
-.dp-wari-sticky {
-  position: sticky;
-  top: 4rem;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 2rem;
-  z-index: 1;
-}
-
-.dp-wari-header {
-  padding-bottom: 2rem;
-}
-
-/* Distance meter */
-.dp-wari-meter {
-  min-width: 160px;
-  padding: 1rem;
-  border: 1px solid rgba(246, 188, 85, 0.2);
-  background: rgba(5, 4, 2, 0.6);
-  border-radius: 8px;
-  text-align: center;
-}
-
-.dp-wari-stop {
-  display: block;
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--dp-ivory);
-  margin-bottom: 0.3rem;
-}
-
-.dp-wari-distance {
-  display: block;
-  font-family: var(--font-inter), sans-serif;
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--dp-gold);
-  line-height: 1;
-}
-
-.dp-wari-unit {
-  font-size: 0.7rem;
-  color: rgba(255, 246, 223, 0.5);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-/* Wari road visualization */
-.dp-wari-road {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  margin-top: 4rem;
-  position: relative;
-}
-
-.dp-wari-road::before {
+.vitthalaya-manuscript::before {
   content: '';
   position: absolute;
-  top: 8px;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--dp-saffron), var(--dp-gold));
-  opacity: 0.3;
-}
-
-.dp-wari-stop-dot {
-  position: relative;
-  padding-top: 2rem;
-  text-align: center;
-}
-
-.dp-wari-stop-dot::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: rgba(255, 246, 223, 0.2);
-  border: 2px solid rgba(255, 246, 223, 0.3);
-  transition: all 0.4s var(--dp-ease-out);
-}
-
-.dp-wari-stop-dot.active::before {
-  background: var(--dp-saffron);
-  border-color: var(--dp-saffron);
-  box-shadow: 0 0 20px rgba(255, 122, 26, 0.7);
-}
-
-.dp-wari-stop-name {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.75rem;
-  color: rgba(255, 246, 223, 0.55);
-  margin-top: 0.5rem;
-}
-
-.dp-wari-stop-dot.active .dp-wari-stop-name {
-  color: var(--dp-gold);
-  font-weight: 600;
-}
-
-/* Pilgrim particles */
-.dp-pilgrim-field {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
+  top: 6px;
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
+  border: 1px solid var(--dp-rule);
   pointer-events: none;
 }
 
-.dp-pilgrim {
-  position: absolute;
-  width: 6px;
-  height: 14px;
-  border-radius: 3px 3px 1px 1px;
-  background: rgba(255, 122, 26, 0.35);
-  filter: blur(0.3px);
-  animation: pilgrimWalk 8s linear infinite;
-}
-
-@keyframes pilgrimWalk {
-  from {
-    transform: translate(-5vw, 3vh);
-    opacity: 0;
-  }
-
-  15%,
-  85% {
-    opacity: 0.6;
-  }
-
-  to {
-    transform: translate(15vw, -15vh);
-    opacity: 0;
-  }
-}
-
-/* ============================================================
-   CHAPTER 6 — GALAXY: Knowledge Constellation
-   ============================================================ */
-.dp-galaxy {
-  display: grid;
-  place-items: center;
-  background:
-    radial-gradient(circle at 50% 50%, rgba(246, 188, 85, 0.08), transparent 30rem),
-    #030304;
-  text-align: center;
-}
-
-.dp-galaxy-map {
-  position: relative;
-  width: min(900px, 100%);
-  aspect-ratio: 16 / 9;
-  margin-top: 3rem;
-  border: 1px solid rgba(246, 188, 85, 0.1);
-  border-radius: 16px;
-  background:
-    radial-gradient(circle at 50% 50%, rgba(255, 246, 223, 0.06), transparent 8rem),
-    linear-gradient(135deg, rgba(255, 122, 26, 0.04), rgba(27, 110, 140, 0.06));
-  overflow: hidden;
-}
-
-/* Orbital rings */
-.dp-galaxy-ring {
-  position: absolute;
-  border: 1px solid rgba(246, 188, 85, 0.08);
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-.dp-galaxy-node {
-  position: absolute;
-  display: grid;
-  place-items: center;
-  width: 80px;
-  height: 80px;
-  translate: -50% -50%;
-  border-radius: 50%;
-  color: #1c0d04;
-  background: radial-gradient(circle at 35% 30%, #fff8cf, #f6bc55 50%, #ff7a1a);
-  box-shadow: 0 0 30px rgba(246, 188, 85, 0.4);
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-decoration: none;
-  transition: transform 0.4s var(--dp-ease-spring), box-shadow 0.4s;
-  animation: nodeBreathe 5s ease-in-out infinite;
-}
-
-.dp-galaxy-node:hover {
-  transform: translate(-50%, -50%) scale(1.15);
-  box-shadow: 0 0 50px rgba(246, 188, 85, 0.6);
-}
-
-@keyframes nodeBreathe {
-
-  0%,
-  100% {
-    box-shadow: 0 0 30px rgba(246, 188, 85, 0.4);
-  }
-
-  50% {
-    box-shadow: 0 0 45px rgba(246, 188, 85, 0.6);
-  }
-}
-
-/* Connection lines between nodes */
-.dp-galaxy-line {
-  position: absolute;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(246, 188, 85, 0.2), transparent);
-  transform-origin: left center;
-  pointer-events: none;
-}
-
-/* ============================================================
-   CHAPTER 7 — CATEGORIES: Editorial Cards
-   ============================================================ */
-.dp-categories {
-  background:
-    radial-gradient(ellipse 70% 40% at 50% 20%, rgba(255, 122, 26, 0.05), transparent 50%),
-    linear-gradient(180deg, #080604, #0a0704);
-}
-
-.dp-categories-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: clamp(0.75rem, 1.5vw, 1.25rem);
-  margin-top: 3rem;
-}
-
-.dp-category-card {
-  position: relative;
-  aspect-ratio: 3 / 4;
-  border-radius: 10px;
-  overflow: hidden;
-  text-decoration: none;
-  color: var(--dp-ivory);
-  transition: transform 0.5s var(--dp-ease-out), box-shadow 0.5s;
-}
-
-.dp-category-card:hover {
-  transform: translateY(-6px) scale(1.02);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
-}
-
-.dp-category-bg {
-  position: absolute;
-  inset: 0;
-  background-size: cover;
-  background-position: center;
-  transition: transform 0.6s var(--dp-ease-out);
-}
-
-.dp-category-card:hover .dp-category-bg {
-  transform: scale(1.08);
-}
-
-.dp-category-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, transparent 30%, rgba(5, 4, 2, 0.75) 100%);
-}
-
-.dp-category-content {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 1.2rem;
-}
-
-.dp-category-count {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--dp-gold);
-  margin-bottom: 0.3rem;
-}
-
-.dp-category-name {
+.vitthalaya-verse-text {
   font-family: var(--font-devanagari-heading), serif;
-  font-size: clamp(1.3rem, 2.2vw, 1.8rem);
-  line-height: 1.15;
-  color: var(--dp-ivory);
-  margin: 0;
+  font-size: clamp(1.125rem, 2vw, 1.375rem);
+  line-height: 2;
+  color: var(--dp-ink);
+  white-space: pre-line;
 }
 
-/* ============================================================
-   CHAPTER 8 — BOOKS: Museum Shelf
-   ============================================================ */
-.dp-books {
-  background: #070503;
-}
-
-.dp-books-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: clamp(1rem, 2vw, 1.5rem);
-  margin-top: 3rem;
-}
-
-.dp-book {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  border-radius: 8px;
-  overflow: hidden;
-  text-decoration: none;
-  color: var(--dp-ivory);
-  background: linear-gradient(135deg, rgba(245, 230, 200, 0.06), rgba(138, 123, 107, 0.04));
-  border: 1px solid rgba(246, 188, 85, 0.08);
-  transition: transform 0.4s var(--dp-ease-out), box-shadow 0.4s;
-}
-
-.dp-book:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
-}
-
-.dp-book-cover {
-  aspect-ratio: 2 / 3;
-  overflow: hidden;
-  background: linear-gradient(135deg, rgba(107, 30, 30, 0.2), rgba(246, 188, 85, 0.1));
-}
-
-.dp-book-cover img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.dp-book-info {
-  padding: 1rem;
-}
-
-.dp-book-title {
-  font-family: var(--font-devanagari-heading), serif;
-  font-size: 1rem;
-  line-height: 1.3;
-  color: var(--dp-ivory);
-  margin: 0 0 0.25rem;
-}
-
-.dp-book-meta {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.72rem;
-  color: rgba(255, 246, 223, 0.5);
-}
-
-/* ============================================================
-   CHAPTER 9 — COMMUNITY
-   ============================================================ */
-.dp-community {
-  background:
-    radial-gradient(ellipse 60% 40% at 40% 30%, rgba(27, 110, 140, 0.06), transparent 50%),
-    linear-gradient(180deg, #0a0704, #080604);
-}
-
-.dp-community-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: clamp(1rem, 2vw, 1.5rem);
-  margin-top: 3rem;
-}
-
-.dp-community-card {
-  padding: clamp(1.5rem, 3vw, 2rem);
-  border: 1px solid rgba(246, 188, 85, 0.1);
-  border-radius: 12px;
-  background: rgba(16, 11, 8, 0.6);
-  transition: border-color 0.3s var(--dp-ease-out), box-shadow 0.3s;
-}
-
-.dp-community-card:hover {
-  border-color: rgba(246, 188, 85, 0.25);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
-}
-
-.dp-community-icon {
-  display: grid;
-  place-items: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 10px;
-  background: rgba(246, 188, 85, 0.08);
-  color: var(--dp-gold);
-  margin-bottom: 1rem;
-}
-
-.dp-community-title {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--dp-ivory);
-  margin: 0 0 0.5rem;
-}
-
-.dp-community-desc {
-  color: var(--dp-ivory-dim);
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.88rem;
-  line-height: 1.6;
-  margin: 0;
-}
-
-/* ============================================================
-   CHAPTER 10 — PRESERVATION
-   ============================================================ */
-.dp-preservation {
-  background:
-    radial-gradient(ellipse 50% 40% at 60% 40%, rgba(107, 30, 30, 0.06), transparent 50%),
-    linear-gradient(180deg, #080604, #0a0704);
-}
-
-.dp-preservation-flow {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 0;
-  margin-top: 3rem;
-  position: relative;
-}
-
-.dp-preservation-flow::before {
-  content: '';
-  position: absolute;
-  top: 2rem;
-  left: 10%;
-  right: 10%;
-  height: 2px;
-  background: linear-gradient(90deg, var(--dp-saffron), var(--dp-gold), var(--dp-river));
-  opacity: 0.3;
-}
-
-.dp-preservation-step {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 0 0.5rem;
-  position: relative;
-}
-
-.dp-preservation-num {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: rgba(246, 188, 85, 0.1);
-  border: 2px solid rgba(246, 188, 85, 0.3);
-  color: var(--dp-gold);
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.8rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-  z-index: 1;
-}
-
-.dp-preservation-label {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--dp-ivory);
-  margin-bottom: 0.3rem;
-}
-
-.dp-preservation-desc {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.78rem;
-  color: var(--dp-ivory-dim);
-  line-height: 1.5;
-}
-
-/* ============================================================
-   CHAPTER 11 — CTA
-   ============================================================ */
-.dp-cta {
-  background:
-    radial-gradient(ellipse 80% 60% at 50% 50%, rgba(255, 122, 26, 0.12), transparent 60%),
-    linear-gradient(180deg, #0a0704, #120a04);
-  text-align: center;
-}
-
-.dp-cta-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: clamp(1rem, 2vw, 1.5rem);
-  margin-top: 3rem;
-  max-width: 900px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.dp-cta-card {
-  padding: clamp(1.5rem, 3vw, 2rem);
-  border: 1px solid rgba(246, 188, 85, 0.12);
-  border-radius: 12px;
-  background: rgba(16, 11, 8, 0.5);
-  text-decoration: none;
-  color: var(--dp-ivory);
-  transition: all 0.4s var(--dp-ease-out);
-}
-
-.dp-cta-card:hover {
-  border-color: rgba(246, 188, 85, 0.35);
-  background: rgba(246, 188, 85, 0.05);
-  transform: translateY(-4px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
-}
-
-.dp-cta-icon {
-  display: grid;
-  place-items: center;
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  background: linear-gradient(135deg, rgba(255, 122, 26, 0.15), rgba(246, 188, 85, 0.1));
-  color: var(--dp-gold);
-  margin: 0 auto 1rem;
-}
-
-.dp-cta-title {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--dp-ivory);
-  margin: 0 0 0.5rem;
-}
-
-.dp-cta-desc {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.85rem;
-  line-height: 1.6;
-  color: var(--dp-ivory-dim);
-  margin: 0;
-}
-
-/* ============================================================
-   FOOTER — Temple Skyline
-   ============================================================ */
-.dp-footer {
-  position: relative;
-  background: #030201;
-  color: var(--dp-ivory);
-  padding-top: 6rem;
-  overflow: hidden;
-}
-
-.dp-footer-skyline {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 80px;
-  clip-path: polygon(0 100%, 0 80%, 5% 80%, 7% 60%, 10% 60%, 12% 45%, 14% 60%, 17% 60%,
-      20% 80%, 25% 80%, 27% 55%, 30% 55%, 32% 35%, 34% 55%, 37% 55%,
-      40% 80%, 45% 80%, 47% 65%, 50% 65%, 52% 50%, 54% 65%, 57% 65%,
-      60% 80%, 65% 80%, 67% 58%, 70% 58%, 72% 40%, 74% 58%, 77% 58%,
-      80% 80%, 85% 80%, 87% 62%, 90% 62%, 92% 48%, 94% 62%, 97% 62%,
-      100% 80%, 100% 100%);
-  background: linear-gradient(180deg, rgba(246, 188, 85, 0.08), rgba(5, 4, 2, 0.3));
-}
-
-.dp-footer-inner {
-  max-width: var(--dp-content-max);
-  margin: 0 auto;
-  padding: 0 clamp(1.25rem, 6vw, 6rem);
-}
-
-.dp-footer-grid {
-  display: grid;
-  grid-template-columns: 1.5fr repeat(3, 1fr);
-  gap: clamp(2rem, 4vw, 4rem);
-  padding-bottom: 3rem;
-  border-bottom: 1px solid rgba(246, 188, 85, 0.08);
-}
-
-.dp-footer-brand {
-  max-width: 280px;
-}
-
-.dp-footer-brand-name {
-  font-family: var(--font-devanagari-heading), serif;
-  font-size: 1.3rem;
-  color: var(--dp-gold);
-  margin: 0 0 0.75rem;
-}
-
-.dp-footer-brand-desc {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.85rem;
-  line-height: 1.6;
-  color: rgba(255, 246, 223, 0.5);
-  margin: 0;
-}
-
-.dp-footer-heading {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--dp-gold);
-  margin: 0 0 1rem;
-}
-
-.dp-footer-links {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.dp-footer-links li {
-  margin-bottom: 0.5rem;
-}
-
-.dp-footer-links a {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.85rem;
-  color: rgba(255, 246, 223, 0.55);
-  text-decoration: none;
-  transition: color 0.2s;
-}
-
-.dp-footer-links a:hover {
-  color: var(--dp-gold);
-}
-
-.dp-footer-bottom {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem 0;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.dp-footer-copy {
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.75rem;
-  color: rgba(255, 246, 223, 0.35);
-  margin: 0;
-}
-
-.dp-footer-social {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.dp-footer-social a {
-  display: grid;
-  place-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  color: rgba(255, 246, 223, 0.45);
-  background: rgba(255, 246, 223, 0.04);
-  text-decoration: none;
-  transition: all 0.2s;
-}
-
-.dp-footer-social a:hover {
-  color: var(--dp-gold);
-  background: rgba(246, 188, 85, 0.1);
-}
-
-/* ============================================================
-   SCROLL REVEAL
-   ============================================================ */
-.dp-reveal {
-  opacity: 0;
-  transform: translateY(30px);
-  transition: opacity 0.7s var(--dp-ease-out), transform 0.7s var(--dp-ease-out);
-}
-
-.dp-reveal.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.dp-reveal-left {
-  opacity: 0;
-  transform: translateX(-30px);
-  transition: opacity 0.7s var(--dp-ease-out), transform 0.7s var(--dp-ease-out);
-}
-
-.dp-reveal-left.visible {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-.dp-reveal-right {
-  opacity: 0;
-  transform: translateX(30px);
-  transition: opacity 0.7s var(--dp-ease-out), transform 0.7s var(--dp-ease-out);
-}
-
-.dp-reveal-right.visible {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-.dp-reveal-scale {
-  opacity: 0;
-  transform: scale(0.92);
-  transition: opacity 0.7s var(--dp-ease-out), transform 0.7s var(--dp-ease-out);
-}
-
-.dp-reveal-scale.visible {
-  opacity: 1;
-  transform: scale(1);
-}
-
-/* Stagger children */
-.dp-stagger>* {
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.5s var(--dp-ease-out), transform 0.5s var(--dp-ease-out);
-}
-
-.dp-stagger.visible>*:nth-child(1) {
-  transition-delay: 0ms;
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.dp-stagger.visible>*:nth-child(2) {
-  transition-delay: 80ms;
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.dp-stagger.visible>*:nth-child(3) {
-  transition-delay: 160ms;
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.dp-stagger.visible>*:nth-child(4) {
-  transition-delay: 240ms;
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.dp-stagger.visible>*:nth-child(5) {
-  transition-delay: 320ms;
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.dp-stagger.visible>*:nth-child(6) {
-  transition-delay: 400ms;
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.dp-stagger.visible>*:nth-child(7) {
-  transition-delay: 480ms;
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.dp-stagger.visible>*:nth-child(8) {
-  transition-delay: 560ms;
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* ============================================================
-   RESPONSIVE
-   ============================================================ */
-@media (max-width: 1024px) {
-  .dp-saints-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .dp-categories-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .dp-preservation-flow {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 2rem;
-  }
-
-  .dp-preservation-flow::before {
-    display: none;
-  }
-}
-
-@media (max-width: 768px) {
-  .dp-chapter {
-    min-height: auto;
-    padding: clamp(3rem, 8vw, 5rem) 1.25rem;
-  }
-
-  .dp-welcome-grid {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
-
-  .dp-welcome-image {
-    aspect-ratio: 16 / 9;
-  }
-
-  .dp-saints-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .dp-wari-sticky {
-    grid-template-columns: 1fr;
-  }
-
-  .dp-wari-road {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
-  }
-
-  .dp-galaxy-map {
-    aspect-ratio: 3 / 4;
-  }
-
-  .dp-galaxy-node {
-    width: 64px;
-    height: 64px;
-    font-size: 0.65rem;
-  }
-
-  .dp-categories-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .dp-community-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .dp-cta-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .dp-preservation-flow {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-
-  .dp-footer-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-  }
-
-  .dp-footer-brand {
-    grid-column: 1 / -1;
-  }
-}
-
-@media (max-width: 480px) {
-  .dp-saints-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .dp-categories-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .dp-books-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .dp-wari-road {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .dp-footer-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ============================================================
-   REDUCED MOTION
-   ============================================================ */
+/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-
-  .dp-hero-mist span,
-  .dp-diya,
-  .dp-star,
-  .dp-hero-river span,
-  .dp-pilgrim,
-  .dp-galaxy-node,
-  .dp-scroll-cue {
-    animation: none !important;
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
-
-  .dp-reveal,
-  .dp-reveal-left,
-  .dp-reveal-right,
-  .dp-reveal-scale {
-    opacity: 1;
-    transform: none;
-    transition: none;
-  }
-
-  .dp-stagger>* {
-    opacity: 1;
-    transform: none;
-    transition: none;
-  }
-}
-
-/* ============================================================
-   CUSTOM TIMELINE, PRESERVATION SPLIT & CHAPTER BACKGROUNDS
-   ============================================================ */
-
-/* Chapter 3 Timeline Custom Grid */
-.dp-timeline-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.5rem;
-  align-items: center;
-}
-
-@media (min-width: 768px) {
-  .dp-timeline-grid {
-    grid-template-columns: 180px 1fr;
-    align-items: stretch;
-  }
-}
-
-.dp-timeline-img-container {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  max-height: 180px;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid rgba(246, 188, 85, 0.2);
-  position: relative;
-}
-
-@media (min-width: 768px) {
-  .dp-timeline-img-container {
-    max-height: none;
-    height: 100%;
-  }
-}
-
-.dp-timeline-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.6s var(--dp-ease-out);
-}
-
-.dp-timeline-card:hover .dp-timeline-img {
-  transform: scale(1.06);
-}
-
-.dp-timeline-content {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-/* Chapter 5: Wari immersive background */
-.dp-wari {
-  background: 
-    linear-gradient(rgba(5, 4, 2, 0.72), rgba(5, 4, 2, 0.85)),
-    url('/images/realistic/wari-procession.jpg') no-repeat center center;
-  background-size: cover;
-  position: relative;
-}
-
-/* Chapter 6: Galaxy spiritual watermark */
-.dp-galaxy {
-  background: 
-    linear-gradient(rgba(5, 4, 2, 0.9), rgba(5, 4, 2, 0.95)),
-    url('/images/saints/panduranga-vitthal.jpg') no-repeat center center;
-  background-size: cover;
-  position: relative;
-}
-
-/* Chapter 9: Community devotional background */
-.dp-community {
-  background: 
-    linear-gradient(rgba(5, 4, 2, 0.88), rgba(5, 4, 2, 0.94)),
-    url('/images/categories/bhajan.jpg') no-repeat center center;
-  background-size: cover;
-  position: relative;
-}
-
-/* Chapter 10: Preservation Redesign split-card layout */
-@media (min-width: 992px) {
-  .dp-preservation-grid {
-    grid-template-columns: 3fr 2fr !important;
-    align-items: center;
-  }
-}
-
-.dp-preservation-image-container {
-  position: relative;
-  aspect-ratio: 4 / 3;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid rgba(246, 188, 85, 0.15);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
-}
-
-.dp-preservation-image {
-  transition: transform 0.6s var(--dp-ease-out);
-}
-
-.dp-preservation-image-container:hover .dp-preservation-image {
-  transform: scale(1.04);
-}
-
-.dp-preservation-image-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, transparent 60%, rgba(5, 4, 2, 0.85));
-  display: flex;
-  align-items: flex-end;
-  padding: 1.25rem;
-}
-
-.dp-preservation-image-caption {
-  color: var(--dp-gold);
-  font-family: var(--font-inter), sans-serif;
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.6);
 }

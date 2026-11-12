@@ -12,6 +12,9 @@ import { CompositionReader } from '@/components/composition-reader';
 import RelatedCompositions from '@/components/related-compositions';
 import CorrectionPanel from '@/components/correction-panel';
 import VersionHistory from '@/components/version-history';
+import { ChevronRight, Scroll, Volume2 } from 'lucide-react';
+import { TanpuraDrone } from '@/components/tanpura-drone';
+import '@/app/homepage.css';
 
 export default async function CompositionPage({
   params,
@@ -91,8 +94,8 @@ export default async function CompositionPage({
   }
 
   return (
-    <>
-      {/* JSON-LD Structured Data — CreativeWork + Article + BreadcrumbList */}
+    <div className="vitthalaya-shell min-h-screen py-10">
+      {/* JSON-LD Structured Data */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -135,192 +138,227 @@ export default async function CompositionPage({
         }}
       />
 
-      <article className="container mx-auto px-4 py-8 max-w-4xl">
-      {/* Header */}
-      <header className="mb-8 text-center">
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <span className="px-3 py-1 bg-saffron/10 text-saffron text-sm rounded-full">
-            {composition.type.toLowerCase()}
+      <article className="vitthalaya-container max-w-4xl">
+        {/* Breadcrumb */}
+        <nav className="mb-6" aria-label="ब्रेडक्रंब">
+          <ol className="flex items-center gap-2 text-xs font-marathi text-[var(--dp-muted)]">
+            <li>
+              <Link href="/" className="hover:text-[var(--dp-gold)] transition-colors">
+                मुख्यपृष्ठ
+              </Link>
+            </li>
+            <li aria-hidden="true"><ChevronRight size={12} /></li>
+            <li>
+              <Link
+                href={`/category/${composition.type.toLowerCase()}`}
+                className="hover:text-[var(--dp-gold)] transition-colors"
+              >
+                {composition.type}
+              </Link>
+            </li>
+            <li aria-hidden="true"><ChevronRight size={12} /></li>
+            <li className="text-[var(--dp-ink)] truncate max-w-xs">{composition.titleMarathi}</li>
+          </ol>
+        </nav>
+
+        {/* Sacred Header */}
+        <header className="mb-8 text-center">
+          <span className="inline-block px-3 py-1 bg-[var(--dp-ground-well)] border border-[var(--dp-rule)] text-[var(--dp-gold)] text-xs font-marathi rounded mb-3">
+            {composition.type}
           </span>
-        </div>
 
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-marathiHeading text-maroon mb-3 leading-tight">
-          {composition.titleMarathi}
-        </h1>
+          <h1 className="vitthalaya-display text-3xl sm:text-4xl md:text-5xl font-bold mb-2">
+            {composition.titleMarathi}
+          </h1>
 
-        <p className="text-lg text-muted-foreground mb-4">
-          {composition.titleTranslit}
-        </p>
-
-        <div className="flex items-center justify-center gap-4 text-sm">
-          {composerSaint && (
-            <a
-              href={`/sant/${composerSaint.slug}`}
-              className="text-saffron hover:underline font-medium"
-            >
-              {composerSaint.nameMarathi}
-            </a>
-          )}
-          {composerDeity && (
-            <>
-              <span className="text-muted-foreground">•</span>
-              <span className="text-muted-foreground">{composerDeity.nameMarathi}</span>
-            </>
-          )}
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <div className="grid md:grid-cols-3 gap-8">
-        {/* Marathi Text - Main focus (rendered using CompositionReader client component) */}
-        <div className="md:col-span-2 space-y-6">
-          <CompositionReader
-            fullText={composition.fullText}
-            titleMarathi={composition.titleMarathi}
-            titleTranslit={composition.titleTranslit}
-            slug={slug}
-            saint={composerSaint}
-            deity={composerDeity}
-            embedUrl={embedUrl}
-            compositionId={composition.id}
-          />
-        </div>
-
-        {/* Sidebar - Meaning & Context */}
-        <aside className="space-y-6" aria-label="संदर्भ व मालमत">
-          {/* Meaning Panel */}
-          {composition.meaning && (
-            <div className="bg-card rounded-lg p-5 border border-saffron/10">
-              <h2 className="font-marathiHeading text-lg text-maroon mb-3">
-                अर्थ
-              </h2>
-              <p className="text-sm text-foreground leading-relaxed">
-                {composition.meaning}
-              </p>
-            </div>
+          {composition.titleTranslit && (
+            <p className="text-sm text-[var(--dp-muted)] font-marathi mb-3">
+              {composition.titleTranslit}
+            </p>
           )}
 
-          {/* Saint Mini-Card */}
-          {composerSaint && (
-            <div className="bg-card rounded-lg p-5 border border-saffron/10">
-              <h2 className="font-marathiHeading text-lg text-maroon mb-3">
-                संत
-              </h2>
-              <a
+          <div className="flex items-center justify-center gap-3 text-xs font-marathi">
+            {composerSaint && (
+              <Link
                 href={`/sant/${composerSaint.slug}`}
-                className="flex items-center gap-3 group"
+                className="text-[var(--dp-gold)] hover:underline font-semibold"
               >
-                <div className="w-12 h-12 rounded-full bg-saffron/20 flex items-center justify-center flex-shrink-0">
-                  <span className="text-xl" aria-hidden="true">
-                    🙏
-                  </span>
-                </div>
-                <div>
-                  <p className="font-marathi font-medium text-foreground group-hover:text-saffron transition-colors">
-                    {composerSaint.nameMarathi}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    विठ्ठल वारकरीचा संत
-                  </p>
-                </div>
-              </a>
-            </div>
-          )}
+                {composerSaint.nameMarathi}
+              </Link>
+            )}
+            {composerDeity && (
+              <span className="text-[var(--dp-muted)]">
+                , आराध्य: {composerDeity.nameMarathi}
+              </span>
+            )}
+          </div>
+        </header>
 
-          {/* Audio Embed */}
-          {embedUrl && (
-            <div className="bg-card rounded-lg p-5 border border-saffron/10">
-              <h2 className="font-marathiHeading text-lg text-maroon mb-3">
-                ऑडियो
-              </h2>
-              <div className="aspect-video">
-                <iframe
-                  src={embedUrl}
-                  title={`${composition.titleMarathi} ऑडियो`}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className="w-full h-full rounded"
-                />
+        {/* Main Content Grid */}
+        <div className="grid md:grid-cols-3 gap-8">
+          {/* Marathi Text: Primary Reading Area */}
+          <div className="md:col-span-2 space-y-6">
+            <div className="vitthalaya-manuscript rounded">
+              <CompositionReader
+                fullText={composition.fullText}
+                titleMarathi={composition.titleMarathi}
+                titleTranslit={composition.titleTranslit}
+                slug={slug}
+                saint={composerSaint}
+                deity={composerDeity}
+                embedUrl={embedUrl}
+                compositionId={composition.id}
+              />
+            </div>
+          </div>
+
+          {/* Sidebar */}
+          <aside className="space-y-6" aria-label="संदर्भ व माहिती">
+            {/* Meaning Panel */}
+            {composition.meaning && (
+              <div className="vitthalaya-card rounded p-5">
+                <h2 className="vitthalaya-display text-base font-bold text-[var(--dp-gold)] mb-2">
+                  भावार्थ
+                </h2>
+                <p className="vitthalaya-prose text-xs leading-relaxed">
+                  {composition.meaning}
+                </p>
               </div>
+            )}
+
+            {/* Ambient Tanpura Drone for Chanting */}
+            <div className="vitthalaya-card rounded p-5 space-y-3">
+              <h2 className="vitthalaya-display text-base font-bold text-[var(--dp-gold)]">
+                पठण तानपुरा नाद
+              </h2>
+              <p className="vitthalaya-prose text-xs leading-relaxed">
+                अभंग पठण करताना सात्त्विक तानपुऱ्याचा नाद सुरू करा:
+              </p>
+              <TanpuraDrone baseFrequency={130.81} autoPlay={false} />
             </div>
-          )}
 
-          {/* Source */}
-          {composition.source && (
-            <div className="text-xs text-muted-foreground">
-              स्रोत: {composition.source}
+            {/* Composer Saint Mini-Card */}
+            {composerSaint && (
+              <div className="vitthalaya-card rounded p-5">
+                <h2 className="vitthalaya-display text-base font-bold text-[var(--dp-gold)] mb-3">
+                  रचनाकार संत
+                </h2>
+                <Link
+                  href={`/sant/${composerSaint.slug}`}
+                  className="flex items-center gap-3 group focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--dp-focus)] rounded"
+                >
+                  <div className="w-10 h-10 rounded bg-[var(--dp-ground-well)] border border-[var(--dp-rule)] flex items-center justify-center flex-shrink-0 text-[var(--dp-gold)]">
+                    <Scroll size={18} aria-hidden="true" />
+                  </div>
+                  <div>
+                    <p className="font-marathi font-medium text-sm text-[var(--dp-ink)] group-hover:text-[var(--dp-gold)] transition-colors">
+                      {composerSaint.nameMarathi}
+                    </p>
+                    <p className="text-xs text-[var(--dp-muted)] font-marathi">
+                      वारकरी परंपरा
+                    </p>
+                  </div>
+                </Link>
+              </div>
+            )}
+
+            {/* Audio Embed */}
+            {embedUrl && (
+              <div className="vitthalaya-card rounded p-5">
+                <div className="flex items-center gap-2 mb-3 text-[var(--dp-gold)]">
+                  <Volume2 size={16} aria-hidden="true" />
+                  <h2 className="vitthalaya-display text-base font-bold">
+                    श्राव्य मुद्रण
+                  </h2>
+                </div>
+                <div className="aspect-video rounded overflow-hidden border border-[var(--dp-rule)]">
+                  <iframe
+                    src={embedUrl}
+                    title={`${composition.titleMarathi} ऑडिओ`}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    className="w-full h-full"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Source */}
+            {composition.source && (
+              <div className="text-xs text-[var(--dp-muted)] font-marathi px-1">
+                प्रमाणित संदर्भ: {composition.source}
+              </div>
+            )}
+
+            {/* Community Corrections */}
+            <div className="mt-4">
+              <CorrectionPanel
+                compositionId={composition.id}
+                compositionTitle={composition.titleMarathi}
+                isAuthenticated={!!session?.user}
+              />
             </div>
-          )}
 
-          {/* Community: Correction Suggestion */}
-          <div className="mt-4">
-            <CorrectionPanel
-              compositionId={composition.id}
-              compositionTitle={composition.titleMarathi}
-              isAuthenticated={!!session?.user}
-            />
-          </div>
+            {/* Version History */}
+            <div className="mt-3">
+              <VersionHistory
+                compositionId={composition.id}
+              />
+            </div>
+          </aside>
+        </div>
 
-          {/* Community: Version History */}
-          <div className="mt-3">
-            <VersionHistory
-              compositionId={composition.id}
-            />
-          </div>
-        </aside>
-      </div>
+        {/* Related Compositions */}
+        {sameSaintComps.length > 0 && (
+          <section className="mt-12 pt-8 border-t border-[var(--dp-rule)]" aria-labelledby="related-compositions">
+            <h2 id="related-compositions" className="vitthalaya-display text-xl font-bold mb-4">
+              संतांचे इतर अभंग
+            </h2>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {sameSaintComps.map((related) => (
+                <Link
+                  key={related.slug}
+                  href={`/abhang/${related.slug}`}
+                  className="vitthalaya-card rounded p-4 group block hover:border-[var(--dp-gold)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--dp-focus)] active:translate-y-px"
+                >
+                  <p className="font-marathi font-medium text-sm text-[var(--dp-ink)] group-hover:text-[var(--dp-gold)] transition-colors">
+                    {related.titleMarathi}
+                  </p>
+                  <p className="text-xs text-[var(--dp-muted)] font-marathi mt-1">
+                    {composerSaint?.nameMarathi}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
-      {/* Related Compositions by same saint */}
-      {sameSaintComps.length > 0 && (
-        <section className="mt-12" aria-labelledby="related-compositions">
-          <h2 id="related-compositions" className="font-marathiHeading text-2xl text-maroon mb-6">
-            संतांचे इतर अभंग
-          </h2>
-          <div className="grid sm:grid-cols-2 gap-4">
-            {sameSaintComps.map((related) => (
-              <Link
-                key={related.slug}
-                href={`/abhang/${related.slug}`}
-                className="block rounded-lg border border-saffron/10 bg-card p-4 hover:shadow-md hover:border-saffron/30 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-saffron"
-              >
-                <p className="font-marathi font-medium text-foreground">
-                  {related.titleMarathi}
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {composerSaint?.nameMarathi}
-                </p>
-              </Link>
-            ))}
-          </div>
+        {/* Cross-links from knowledge graph */}
+        {graphLinks.length > 0 && (
+          <section className="mt-8 pt-6 border-t border-[var(--dp-rule)]" aria-labelledby="explore-more">
+            <h2 id="explore-more" className="vitthalaya-display text-lg font-bold mb-3">
+              संबंधित विषय
+            </h2>
+            <div className="flex flex-wrap gap-2">
+              {graphLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="inline-flex items-center gap-1.5 rounded border border-[var(--dp-rule)] bg-[var(--dp-ground-well)] px-3 py-1.5 text-xs font-marathi text-[var(--dp-ink-dim)] hover:border-[var(--dp-gold)] hover:text-[var(--dp-ink)] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--dp-focus)] active:translate-y-px"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Related Compositions Knowledge Graph */}
+        <section className="mt-8">
+          <RelatedCompositions compositionId={composition.id} limit={6} />
         </section>
-      )}
-
-      {/* Cross-links from knowledge graph — link equity distribution */}
-      {graphLinks.length > 0 && (
-        <section className="mt-8" aria-labelledby="explore-more">
-          <h2 id="explore-more" className="font-marathiHeading text-2xl text-maroon mb-6">
-            अधिक शोधा
-          </h2>
-          <div className="flex flex-wrap gap-3">
-            {graphLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="inline-flex items-center gap-2 rounded-full border border-saffron/20 bg-saffron/5 px-4 py-2 text-sm font-medium text-foreground hover:bg-saffron/10 hover:border-saffron/30 transition-colors focus:outline-none focus:ring-2 focus:ring-saffron"
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Related compositions via knowledge graph */}
-      <section className="mt-8">
-        <RelatedCompositions compositionId={composition.id} limit={6} />
-      </section>
-    </article>
-    </>
+      </article>
+    </div>
   );
 }
 

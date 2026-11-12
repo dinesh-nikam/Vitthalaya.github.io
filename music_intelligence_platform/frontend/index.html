@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Music Composition & Lyrics Intelligence Platform</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @keyframes pulseSlow {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .animate-pulse-slow {
+      animation: pulseSlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col font-sans antialiased selection:bg-amber-500 selection:text-black">
+  <!-- Top Header Navigation -->
+  <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-lg bg-gradient-to-tr from-amber-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-amber-500/20">
+          <i class="fa-solid fa-music text-white text-lg"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+            Music Intelligence Engine
+            <span class="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full font-medium">Scrapling 0.5</span>
+          </h1>
+          <p class="text-xs text-slate-400">Composition, Poetics, Production & Multi-Source Research</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="flex items-center space-x-1 sm:space-x-2">
+        <button onclick="switchTab('catalog')" id="tab-catalog" class="tab-btn px-3 py-1.5 rounded-md text-sm font-medium bg-slate-800 text-amber-400 border border-slate-700">
+          <i class="fa-solid fa-table-list mr-1.5"></i> Catalog
+        </button>
+        <button onclick="switchTab('scrape')" id="tab-scrape" class="tab-btn px-3 py-1.5 rounded-md text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/60">
+          <i class="fa-solid fa-compass mr-1.5"></i> Single Scrape
+        </button>
+        <button onclick="switchTab('batch')" id="tab-batch" class="tab-btn px-3 py-1.5 rounded-md text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/60">
+          <i class="fa-solid fa-layer-group mr-1.5"></i> Batch
+        </button>
+        <button onclick="switchTab('discography')" id="tab-discography" class="tab-btn px-3 py-1.5 rounded-md text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/60">
+          <i class="fa-solid fa-compact-disc mr-1.5"></i> Discography
+        </button>
+        <button onclick="switchTab('sources')" id="tab-sources" class="tab-btn px-3 py-1.5 rounded-md text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/60">
+          <i class="fa-solid fa-shield-halved mr-1.5"></i> Sources
+        </button>
+      </nav>
+
+      <!-- System Health Indicator -->
+      <div class="hidden md:flex items-center space-x-2 text-xs text-slate-400 bg-slate-950 px-3 py-1.5 rounded-full border border-slate-800">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span id="health-status">Engine Online</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+
+    <!-- VIEW 1: CATALOG & SEARCH -->
+    <section id="view-catalog" class="space-y-6">
+      <!-- Search & Faceted Filter Bar -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-xl space-y-4">
+        <div class="flex flex-col sm:flex-row gap-3">
+          <div class="flex-1 relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-400"></i>
+            <input type="text" id="search-query" placeholder="Search by song title, lyric excerpt, or artist name..." 
+              class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-10 pr-4 py-2.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500">
+          </div>
+          <button onclick="runSearch()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold px-6 py-2.5 rounded-lg text-sm transition flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20">
+            <i class="fa-solid fa-sliders"></i> Filter Catalog
+          </button>
+          <div class="dropdown relative">
+            <button onclick="toggleExportMenu()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium px-4 py-2.5 rounded-lg text-sm flex items-center gap-2">
+              <i class="fa-solid fa-download"></i> Export Data <i class="fa-solid fa-chevron-down text-xs"></i>
+            </button>
+            <div id="export-menu" class="hidden absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl z-50 py-1">
+              <a href="/api/exports/download?format=json" class="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-amber-400"><i class="fa-solid fa-file-code mr-2"></i> Structured JSON</a>
+              <a href="/api/exports/download?format=csv" class="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-amber-400"><i class="fa-solid fa-file-csv mr-2"></i> Tabular CSV</a>
+              <a href="/api/exports/download?format=excel" class="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-800 hover:text-amber-400"><i class="fa-solid fa-file-excel mr-2"></i> Multi-Sheet Excel</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Facets (Key, Genre, Tempo) -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-slate-800/80 text-xs">
+          <div>
+            <label class="block text-slate-400 mb-1">Artist</label>
+            <input type="text" id="filter-artist" placeholder="e.g. Queen, Bach" class="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Genre</label>
+            <input type="text" id="filter-genre" placeholder="e.g. Rock, Choral" class="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Musical Key</label>
+            <input type="text" id="filter-key" placeholder="e.g. C Major, A Minor" class="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-slate-200">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Tempo Range (BPM)</label>
+            <div class="flex items-center gap-1">
+              <input type="number" id="filter-min-bpm" placeholder="Min" class="w-1/2 bg-slate-950 border border-slate-800 rounded px-2 py-1.5 text-slate-200">
+              <span class="text-slate-600">-</span>
+              <input type="number" id="filter-max-bpm" placeholder="Max" class="w-1/2 bg-slate-950 border border-slate-800 rounded px-2 py-1.5 text-slate-200">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results Table -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+        <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
+          <h2 class="text-sm font-semibold text-slate-200 flex items-center gap-2">
+            <i class="fa-solid fa-list-check text-amber-500"></i> Discovered Music Works
+            <span id="results-count" class="text-xs bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full">0 entries</span>
+          </h2>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm text-slate-300">
+            <thead class="bg-slate-950/80 text-xs uppercase text-slate-400 border-b border-slate-800">
+              <tr>
+                <th class="px-4 py-3">Title</th>
+                <th class="px-4 py-3">Artist</th>
+                <th class="px-4 py-3">Key & Scale</th>
+                <th class="px-4 py-3">BPM</th>
+                <th class="px-4 py-3">Genre</th>
+                <th class="px-4 py-3">Duration</th>
+                <th class="px-4 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="catalog-table-body" class="divide-y divide-slate-800">
+              <tr>
+                <td colspan="7" class="px-4 py-8 text-center text-slate-500">
+                  <i class="fa-solid fa-music text-2xl mb-2 block text-slate-600"></i>
+                  No indexed songs yet. Trigger a scrape or search above!
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: SINGLE SONG SCRAPE -->
+    <section id="view-scrape" class="hidden space-y-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl max-w-3xl mx-auto space-y-5">
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i>
+            Scrapling Research & Extraction Trigger
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">
+            Initiates the 9-stage pipeline: source discovery, robots.txt verification, adaptive element parsing, multi-source conflict resolution, and poetics analysis.
+          </p>
+        </div>
+
+        <form id="single-scrape-form" onsubmit="handleSingleScrape(event)" class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Song Title *</label>
+              <input type="text" id="scrape-title" required placeholder="e.g. Bohemian Rhapsody" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Artist Name</label>
+              <input type="text" id="scrape-artist" placeholder="e.g. Queen" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Album Name (Optional)</label>
+              <input type="text" id="scrape-album" placeholder="e.g. A Night at the Opera" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Genre (Optional)</label>
+              <input type="text" id="scrape-genre" placeholder="e.g. Progressive Rock" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Direct Authorized URL (Optional)</label>
+            <input type="url" id="scrape-url" placeholder="https://..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none">
+          </div>
+
+          <div class="flex items-center justify-between pt-2">
+            <span class="text-xs text-slate-500 flex items-center gap-1">
+              <i class="fa-solid fa-shield-halved text-emerald-500"></i> Copyright & robots.txt strictly enforced
+            </span>
+            <button type="submit" id="scrape-submit-btn" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-6 py-2.5 rounded-lg text-sm transition flex items-center gap-2">
+              <i class="fa-solid fa-play"></i> Start Research Pipeline
+            </button>
+          </div>
+        </form>
+
+        <!-- Live Progress Status -->
+        <div id="scrape-progress" class="hidden p-4 rounded-lg bg-slate-950 border border-slate-800 space-y-2">
+          <div class="flex items-center justify-between text-xs font-semibold text-slate-300">
+            <span class="flex items-center gap-2"><i class="fa-solid fa-spinner fa-spin text-amber-500"></i> Processing 9-stage pipeline...</span>
+            <span id="scrape-step-label" class="text-amber-400">Step 1: Discovering Sources</span>
+          </div>
+          <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+            <div id="scrape-progress-bar" class="bg-amber-500 h-1.5 rounded-full transition-all duration-300" style="width: 25%"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: BATCH PROCESSING -->
+    <section id="view-batch" class="hidden space-y-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl max-w-3xl mx-auto space-y-4">
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-layer-group text-amber-500"></i> Batch Queue Orchestrator
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">Submit multiple songs or tracklists for concurrent scraping with rate limiting and polite backoff.</p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Songs List (One JSON array or Title - Artist per line)</label>
+          <textarea id="batch-input" rows="6" class="w-full font-mono text-xs bg-slate-950 border border-slate-700 rounded-lg p-3 text-slate-200 focus:border-amber-500 focus:outline-none" placeholder='[
+  {"title": "Hallelujah", "artist": "Leonard Cohen"},
+  {"title": "Yesterday", "artist": "The Beatles"},
+  {"title": "Clair de Lune", "artist": "Claude Debussy"}
+]'></textarea>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2 text-xs text-slate-400">
+            <label>Concurrency:</label>
+            <select id="batch-concurrency" class="bg-slate-950 border border-slate-700 rounded px-2 py-1 text-slate-200">
+              <option value="2">2 concurrent workers</option>
+              <option value="3" selected>3 concurrent workers (polite)</option>
+              <option value="5">5 concurrent workers</option>
+            </select>
+          </div>
+          <button onclick="submitBatch()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-6 py-2.5 rounded-lg text-sm flex items-center gap-2">
+            <i class="fa-solid fa-bolt"></i> Submit Batch Job
+          </button>
+        </div>
+
+        <div id="batch-job-status" class="hidden p-4 rounded-lg bg-slate-950 border border-slate-800 text-xs space-y-2">
+          <!-- Live Batch Tracking Output -->
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 4: DISCOGRAPHY CRAWLER -->
+    <section id="view-discography" class="hidden space-y-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl max-w-3xl mx-auto space-y-4">
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-compact-disc text-amber-500"></i> Discography Spider
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">Crawl an artist's catalog of releases, albums, and tracklists using Scrapling's crawler engine.</p>
+        </div>
+
+        <div class="flex gap-3">
+          <input type="text" id="disco-artist" placeholder="Enter artist name (e.g. Pink Floyd, Miles Davis)..." class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none">
+          <button onclick="crawlDiscography()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-6 py-2 rounded-lg text-sm flex items-center gap-2">
+            <i class="fa-solid fa-spider"></i> Crawl Discography
+          </button>
+        </div>
+
+        <div id="disco-results" class="hidden space-y-2 pt-2">
+          <!-- Results populated via JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 5: SOURCES & COMPLIANCE -->
+    <section id="view-sources" class="hidden space-y-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-xl space-y-4">
+        <h2 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-shield-halved text-emerald-500"></i> Source Registry & Ethics Policy
+        </h2>
+        <div id="sources-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Populated from /api/sources -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- DETAIL MODAL FOR SONG INTELLIGENCE (SECTION 7 DISPLAY) -->
+  <div id="song-detail-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl p-6 space-y-6">
+      <!-- Modal Header -->
+      <div class="flex items-start justify-between border-b border-slate-800 pb-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <h3 id="modal-song-title" class="text-xl font-bold text-white">Song Title</h3>
+            <span id="modal-lyrics-badge" class="text-xs px-2 py-0.5 rounded-full font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Authorized</span>
+          </div>
+          <p id="modal-song-artist" class="text-sm text-slate-400">Primary Artist</p>
+        </div>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-white p-1 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Modal Content Sections -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Col 1: Basic Metadata -->
+        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2 text-xs">
+          <h4 class="font-semibold text-slate-300 uppercase tracking-wider text-[11px]"><i class="fa-solid fa-circle-info text-amber-500 mr-1"></i> Metadata</h4>
+          <div><span class="text-slate-500">Album:</span> <span id="modal-album" class="text-slate-200"></span></div>
+          <div><span class="text-slate-500">Release Date:</span> <span id="modal-release-date" class="text-slate-200"></span></div>
+          <div><span class="text-slate-500">Genre:</span> <span id="modal-genre" class="text-slate-200"></span></div>
+          <div><span class="text-slate-500">Duration:</span> <span id="modal-duration" class="text-slate-200"></span></div>
+          <div><span class="text-slate-500">Language:</span> <span id="modal-language" class="text-slate-200"></span></div>
+          <div><span class="text-slate-500">ISRC:</span> <span id="modal-isrc" class="text-slate-200 font-mono"></span></div>
+        </div>
+
+        <!-- Col 2: Composition & Chords -->
+        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2 text-xs">
+          <h4 class="font-semibold text-slate-300 uppercase tracking-wider text-[11px]"><i class="fa-solid fa-guitar text-amber-500 mr-1"></i> Composition & Harmony</h4>
+          <div><span class="text-slate-500">Key:</span> <span id="modal-key" class="text-amber-400 font-bold"></span></div>
+          <div><span class="text-slate-500">BPM:</span> <span id="modal-bpm" class="text-slate-200"></span></div>
+          <div><span class="text-slate-500">Time Signature:</span> <span id="modal-meter" class="text-slate-200"></span></div>
+          <div><span class="text-slate-500">Chords:</span> <div id="modal-chords" class="flex flex-wrap gap-1 mt-1"></div></div>
+          <div><span class="text-slate-500">Structure:</span> <div id="modal-structure" class="flex flex-wrap gap-1 mt-1"></div></div>
+        </div>
+
+        <!-- Col 3: Songwriting & Production -->
+        <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2 text-xs">
+          <h4 class="font-semibold text-slate-300 uppercase tracking-wider text-[11px]"><i class="fa-solid fa-sliders text-amber-500 mr-1"></i> Credits & Production</h4>
+          <div><span class="text-slate-500">Writers:</span> <span id="modal-writers" class="text-slate-200"></span></div>
+          <div><span class="text-slate-500">Composers:</span> <span id="modal-composers" class="text-slate-200"></span></div>
+          <div><span class="text-slate-500">Producers:</span> <span id="modal-producers" class="text-slate-200"></span></div>
+          <div><span class="text-slate-500">Mixing / Studio:</span> <span id="modal-mixing" class="text-slate-200"></span></div>
+        </div>
+      </div>
+
+      <!-- Poetic & Lyrical Analysis -->
+      <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3">
+        <h4 class="font-semibold text-slate-300 uppercase tracking-wider text-xs"><i class="fa-solid fa-feather-pointed text-amber-500 mr-1"></i> Poetics & Structural Lyrics</h4>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <div class="bg-slate-900/60 p-2.5 rounded border border-slate-800">
+            <span class="text-slate-500 block">Rhyme Scheme</span>
+            <span id="modal-rhyme-scheme" class="font-mono text-amber-400 font-bold text-sm"></span>
+          </div>
+          <div class="bg-slate-900/60 p-2.5 rounded border border-slate-800">
+            <span class="text-slate-500 block">Syllables (Avg/Line)</span>
+            <span id="modal-syllables" class="font-mono text-slate-200 text-sm"></span>
+          </div>
+          <div class="bg-slate-900/60 p-2.5 rounded border border-slate-800">
+            <span class="text-slate-500 block">Lyrical Themes</span>
+            <span id="modal-themes" class="text-slate-200 text-sm"></span>
+          </div>
+        </div>
+        <div id="modal-sections-container" class="space-y-2 max-h-48 overflow-y-auto pt-2 text-xs text-slate-400">
+          <!-- Structured Verse/Chorus Lines -->
+        </div>
+      </div>
+
+      <!-- Multi-Source Confidence Gauge -->
+      <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+        <h4 class="font-semibold text-slate-300 uppercase tracking-wider text-xs"><i class="fa-solid fa-chart-simple text-amber-500 mr-1"></i> Field-Level Confidence Scores</h4>
+        <div id="modal-confidence-bars" class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs"></div>
+      </div>
+
+      <!-- Raw JSON View Drawer -->
+      <details class="bg-slate-950 rounded-xl border border-slate-800 p-3 text-xs">
+        <summary class="font-mono text-slate-400 cursor-pointer hover:text-amber-400"><i class="fa-solid fa-code mr-1"></i> View Formatted Section 7 JSON Payload</summary>
+        <pre id="modal-raw-json" class="mt-3 p-3 bg-slate-900 rounded font-mono text-slate-300 overflow-x-auto text-[11px]"></pre>
+      </details>
+    </div>
+  </div>
+
+  <!-- Client-side Interactive Logic -->
+  <script>
+    // Tab switching
+    function switchTab(tab) {
+      ['catalog', 'scrape', 'batch', 'discography', 'sources'].forEach(t => {
+        document.getElementById(`view-${t}`).classList.add('hidden');
+        document.getElementById(`tab-${t}`).classList.remove('bg-slate-800', 'text-amber-400', 'border', 'border-slate-700');
+        document.getElementById(`tab-${t}`).classList.add('text-slate-300');
+      });
+      document.getElementById(`view-${tab}`).classList.remove('hidden');
+      document.getElementById(`tab-${tab}`).classList.add('bg-slate-800', 'text-amber-400', 'border', 'border-slate-700');
+      document.getElementById(`tab-${tab}`).classList.remove('text-slate-300');
+
+      if (tab === 'catalog') runSearch();
+      if (tab === 'sources') loadSources();
+    }
+
+    function toggleExportMenu() {
+      const m = document.getElementById('export-menu');
+      m.classList.toggle('hidden');
+    }
+
+    // Health check
+    async function checkHealth() {
+      try {
+        const res = await fetch('/api/health');
+        const data = await res.json();
+        document.getElementById('health-status').innerText = data.status === 'healthy' ? 'Scrapling Engine Online' : 'Engine Degraded';
+      } catch (e) {
+        document.getElementById('health-status').innerText = 'Backend Offline';
+      }
+    }
+
+    // Catalog Search
+    async function runSearch() {
+      const q = document.getElementById('search-query').value;
+      const artist = document.getElementById('filter-artist').value;
+      const genre = document.getElementById('filter-genre').value;
+      const key = document.getElementById('filter-key').value;
+      const minBpm = document.getElementById('filter-min-bpm').value;
+      const maxBpm = document.getElementById('filter-max-bpm').value;
+
+      const params = new URLSearchParams();
+      if (q) params.set('query', q);
+      if (artist) params.set('artist', artist);
+      if (genre) params.set('genre', genre);
+      if (key) params.set('key', key);
+      if (minBpm) params.set('min_bpm', minBpm);
+      if (maxBpm) params.set('max_bpm', maxBpm);
+
+      try {
+        const res = await fetch(`/api/search/songs?${params.toString()}`);
+        const data = await res.json();
+        document.getElementById('results-count').innerText = `${data.total} entries`;
+        const tbody = document.getElementById('catalog-table-body');
+        tbody.innerHTML = '';
+
+        if (!data.items || data.items.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="7" class="px-4 py-8 text-center text-slate-500">No songs found matching query.</td></tr>`;
+          return;
+        }
+
+        data.items.forEach(song => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-800/40 transition';
+          tr.innerHTML = `
+            <td class="px-4 py-3 font-medium text-white">${song.title}</td>
+            <td class="px-4 py-3 text-slate-300">${song.artist}</td>
+            <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono">${song.key || 'N/A'}</span></td>
+            <td class="px-4 py-3 font-mono text-xs">${song.bpm || '-'}</td>
+            <td class="px-4 py-3 text-xs text-slate-400">${song.genre || '-'}</td>
+            <td class="px-4 py-3 text-xs font-mono text-slate-400">${song.duration || '-'}</td>
+            <td class="px-4 py-3 text-right">
+              <button onclick="viewSongDetails(${song.id})" class="px-2.5 py-1 text-xs rounded bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700">
+                <i class="fa-solid fa-eye mr-1"></i> Inspect
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error('Search error:', err);
+      }
+    }
+
+    // View song details modal
+    async function viewSongDetails(songId) {
+      try {
+        const res = await fetch(`/api/compositions/${songId}`);
+        const data = await res.json();
+
+        document.getElementById('modal-song-title').innerText = data.song.title;
+        document.getElementById('modal-song-artist').innerText = data.song.artist;
+        document.getElementById('modal-album').innerText = data.song.album || '-';
+        document.getElementById('modal-release-date').innerText = data.song.release_date || '-';
+        document.getElementById('modal-genre').innerText = data.song.genre || '-';
+        document.getElementById('modal-duration').innerText = data.song.duration || '-';
+        document.getElementById('modal-language').innerText = data.song.language || 'en';
+        document.getElementById('modal-isrc').innerText = data.song.isrc || 'N/A';
+
+        // Lyrics authorization badge
+        const badge = document.getElementById('modal-lyrics-badge');
+        badge.innerText = data.lyrics.availability;
+        if (data.lyrics.availability === 'authorized' || data.lyrics.availability === 'public_domain') {
+          badge.className = 'text-xs px-2 py-0.5 rounded-full font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+        } else {
+          badge.className = 'text-xs px-2 py-0.5 rounded-full font-medium bg-slate-800 text-slate-400 border border-slate-700';
+        }
+
+        // Composition
+        document.getElementById('modal-key').innerText = data.composition.key || 'Not analyzed';
+        document.getElementById('modal-bpm').innerText = data.composition.bpm ? `${data.composition.bpm} BPM` : 'N/A';
+        document.getElementById('modal-meter').innerText = data.composition.time_signature || '4/4';
+
+        const chordsBox = document.getElementById('modal-chords');
+        chordsBox.innerHTML = (data.composition.chord_progression || []).map(c => 
+          `<span class="px-2 py-0.5 bg-slate-900 border border-slate-700 rounded text-amber-400 font-mono text-[11px]">${c}</span>`
+        ).join('') || '<span class="text-slate-500">None detected</span>';
+
+        const structBox = document.getElementById('modal-structure');
+        structBox.innerHTML = (data.composition.structure || []).map(s => 
+          `<span class="px-1.5 py-0.5 bg-slate-800 text-slate-300 rounded text-[10px]">${s}</span>`
+        ).join('');
+
+        // Credits
+        document.getElementById('modal-writers').innerText = (data.songwriting.writers || []).join(', ') || '-';
+        document.getElementById('modal-composers').innerText = (data.songwriting.composers || []).join(', ') || '-';
+        document.getElementById('modal-producers').innerText = (data.production.producer || []).join(', ') || '-';
+        document.getElementById('modal-mixing').innerText = (data.production.mixing_engineer || []).join(', ') || '-';
+
+        // Poetics
+        document.getElementById('modal-rhyme-scheme').innerText = data.lyrics.rhyme_patterns?.scheme || 'N/A';
+        const avgSyll = data.lyrics.syllable_patterns?.length ? 
+          Math.round(data.lyrics.syllable_patterns.reduce((a,b)=>a+b,0)/data.lyrics.syllable_patterns.length) : 'N/A';
+        document.getElementById('modal-syllables').innerText = avgSyll;
+        document.getElementById('modal-themes').innerText = (data.lyrics.themes || []).join(', ') || 'General';
+
+        // Sections
+        const secCont = document.getElementById('modal-sections-container');
+        secCont.innerHTML = '';
+        if (data.lyrics.sections && data.lyrics.sections.length) {
+          data.lyrics.sections.forEach(sec => {
+            const div = document.createElement('div');
+            div.className = 'p-2 rounded bg-slate-900 border border-slate-800/80';
+            div.innerHTML = `<span class="text-[10px] font-bold uppercase text-amber-500 block">[${sec.type}]</span>` +
+              sec.lines.map(l => `<p class="text-slate-300 text-xs">${l}</p>`).join('');
+            secCont.appendChild(div);
+          });
+        } else {
+          secCont.innerHTML = '<p class="text-slate-500 italic">Sections unavailable or lyrics restricted to authorized licensing.</p>';
+        }
+
+        // Confidence
+        const confBox = document.getElementById('modal-confidence-bars');
+        confBox.innerHTML = '';
+        for (const [k, v] of Object.entries(data.confidence || {})) {
+          const pct = Math.round(v * 100);
+          confBox.innerHTML += `
+            <div class="bg-slate-900 p-2 rounded border border-slate-800">
+              <div class="flex justify-between text-[11px] mb-1">
+                <span class="text-slate-400 capitalize">${k}</span>
+                <span class="text-amber-400 font-mono">${pct}%</span>
+              </div>
+              <div class="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
+                <div class="bg-amber-500 h-1 rounded-full" style="width: ${pct}%"></div>
+              </div>
+            </div>
+          `;
+        }
+
+        document.getElementById('modal-raw-json').innerText = JSON.stringify(data, null, 2);
+        document.getElementById('song-detail-modal').classList.remove('hidden');
+      } catch (err) {
+        alert('Failed to load song intelligence: ' + err);
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('song-detail-modal').classList.add('hidden');
+    }
+
+    // Trigger Single Scrape
+    async function handleSingleScrape(e) {
+      e.preventDefault();
+      const title = document.getElementById('scrape-title').value;
+      const artist = document.getElementById('scrape-artist').value;
+      const album = document.getElementById('scrape-album').value;
+      const genre = document.getElementById('scrape-genre').value;
+      const url = document.getElementById('scrape-url').value;
+
+      const progress = document.getElementById('scrape-progress');
+      const pBar = document.getElementById('scrape-progress-bar');
+      const pLabel = document.getElementById('scrape-step-label');
+      progress.classList.remove('hidden');
+      pBar.style.width = '20%';
+      pLabel.innerText = 'Step 1: Source Discovery & Robots Validation';
+
+      setTimeout(() => { pBar.style.width = '55%'; pLabel.innerText = 'Step 4: Scrapling Adaptive Element Extraction'; }, 800);
+      setTimeout(() => { pBar.style.width = '85%'; pLabel.innerText = 'Step 7: Musicology & Conflict Resolution'; }, 1600);
+
+      try {
+        const res = await fetch('/api/scrape/song', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, artist, album, genre, url: url || null })
+        });
+        const data = await res.json();
+        pBar.style.width = '100%';
+        pLabel.innerText = 'Extraction Completed!';
+
+        setTimeout(() => {
+          progress.classList.add('hidden');
+          switchTab('catalog');
+        }, 1000);
+      } catch (err) {
+        alert('Scraping error: ' + err);
+        progress.classList.add('hidden');
+      }
+    }
+
+    // Batch Submit
+    async function submitBatch() {
+      const raw = document.getElementById('batch-input').value;
+      const conc = parseInt(document.getElementById('batch-concurrency').value);
+      let songs = [];
+      try {
+        songs = JSON.parse(raw);
+      } catch {
+        alert('Please provide a valid JSON array of songs.');
+        return;
+      }
+
+      const res = await fetch('/api/scrape/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ songs, concurrency: conc })
+      });
+      const data = await res.json();
+      const statusBox = document.getElementById('batch-job-status');
+      statusBox.classList.remove('hidden');
+      statusBox.innerHTML = `
+        <div class="flex items-center justify-between">
+          <span class="text-white font-semibold">Job ID: ${data.job_id}</span>
+          <span class="text-amber-400 font-mono">${data.status}</span>
+        </div>
+        <p class="text-slate-400">Total queued songs: ${data.total_songs}. Concurrency: ${data.concurrency}</p>
+      `;
+    }
+
+    // Crawl Discography
+    async function crawlDiscography() {
+      const artist = document.getElementById('disco-artist').value;
+      if (!artist) return alert('Enter artist name');
+      const resCont = document.getElementById('disco-results');
+      resCont.classList.remove('hidden');
+      resCont.innerHTML = `<p class="text-amber-400 text-xs"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Crawling catalog for ${artist}...</p>`;
+
+      try {
+        const res = await fetch('/api/scrape/discography', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ artist_name: artist, max_albums: 10 })
+        });
+        const data = await res.json();
+        resCont.innerHTML = `<h4 class="text-xs font-bold text-white mb-2">Discovered ${data.albums_found} Releases:</h4>`;
+        (data.catalog || []).forEach(alb => {
+          resCont.innerHTML += `
+            <div class="p-2.5 bg-slate-950 rounded border border-slate-800 flex justify-between items-center text-xs">
+              <span class="text-white font-medium">${alb.title}</span>
+              <span class="text-slate-400 font-mono">${alb.year || 'Unknown Year'}</span>
+            </div>
+          `;
+        });
+      } catch (err) {
+        resCont.innerHTML = `<p class="text-red-400 text-xs">Crawl failed: ${err}</p>`;
+      }
+    }
+
+    // Load Sources
+    async function loadSources() {
+      try {
+        const res = await fetch('/api/sources');
+        const data = await res.json();
+        const container = document.getElementById('sources-list-container');
+        container.innerHTML = '';
+        data.sources.forEach(s => {
+          container.innerHTML += `
+            <div class="p-4 bg-slate-950 rounded-xl border border-slate-800 text-xs space-y-2">
+              <div class="flex justify-between items-start">
+                <div>
+                  <h4 class="font-bold text-white">${s.name}</h4>
+                  <a href="${s.base_url}" target="_blank" class="text-slate-500 hover:text-amber-400 text-[11px]">${s.base_url}</a>
+                </div>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                  Auth Score: ${s.authority_score}
+                </span>
+              </div>
+              <div class="text-slate-400">
+                <span class="text-slate-500">Permitted:</span> ${s.permitted_content.join(', ')}
+              </div>
+              <div class="text-[11px] text-slate-500 flex gap-4">
+                <span>Rate Limit: ${s.rate_limit_per_second}/s</span>
+                <span>Requires JS: ${s.requires_js ? 'Yes (StealthyFetcher)' : 'No (Fast Fetcher)'}</span>
+              </div>
+            </div>
+          `;
+        });
+      } catch (e) {
+        console.error('Failed to load sources:', e);
+      }
+    }
+
+    // Init
+    checkHealth();
+    runSearch();
+  </script>
+</body>
+</html>

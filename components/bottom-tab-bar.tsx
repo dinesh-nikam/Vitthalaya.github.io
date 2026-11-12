@@ -27,6 +27,7 @@ const PRIMARY_TABS: Tab[] = [
 ];
 
 const MORE_ITEMS = [
+  { href: '/japa', icon: Sparkles, label: 'नामजप माळ', desc: '१०८ मणी तुळशी जप साधना' },
   { href: '/daily', icon: Sparkles, label: 'आजचे भक्ती', desc: 'रोजचे अभंग आणि चिंतन' },
   { href: '/explore', icon: Compass, label: 'एक्सप्लोर', desc: 'नवीन साहित्य शोधा' },
   { href: '/playlists', icon: ListMusic, label: 'प्लेलिस्ट', desc: 'माझ्या ऑडिओ प्लेलिस्ट' },

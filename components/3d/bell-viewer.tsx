@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import * as THREE from 'three';
+import { Bell } from 'lucide-react';
 
 export function BellViewer() {
   const containerRef = React.useRef<HTMLDivElement | null>(null);
@@ -11,7 +12,7 @@ export function BellViewer() {
   // Sound synthesis using Web Audio API
   const playChime = () => {
     try {
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (!AudioContextClass) return;
 
       const ctx = new AudioContextClass();
@@ -21,7 +22,6 @@ export function BellViewer() {
       const baseFreq = 261.63; // Middle C
 
       // Overtones for a rich metallic, authentic bronze bell resonance
-      // Bell overtones are typically non-harmonic (non-integer multiples)
       const partials = [
         { ratio: 1.0, decay: 3.5, gain: 0.35 },  // Fundamental
         { ratio: 2.0, decay: 2.0, gain: 0.15 },  // Octave
@@ -47,8 +47,8 @@ export function BellViewer() {
         osc.start(now);
         osc.stop(now + p.decay + 0.1);
       });
-    } catch (e) {
-      console.warn('Web Audio Context not allowed or initialized: ', e);
+    } catch {
+      // Audio autoplay policy fallback
     }
   };
 
@@ -56,187 +56,149 @@ export function BellViewer() {
     if (!containerRef.current) return;
 
     const width = containerRef.current.clientWidth || 300;
-    const height = containerRef.current.clientHeight || 300;
+    const height = containerRef.current.clientHeight || 250;
 
-    // 1. Scene Setup
     const scene = new THREE.Scene();
-
-    // 2. Camera Setup
     const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
-    camera.position.set(0, 1.2, 5.0);
+    camera.position.set(0, 0, 7.5);
     camera.lookAt(0, 0, 0);
 
-    // 3. Renderer Setup
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     containerRef.current.appendChild(renderer.domElement);
 
-    // 4. Lights
-    const ambientLight = new THREE.AmbientLight(0xfff8ec, 0.55);
-    scene.add(ambientLight);
-
-    const goldLight = new THREE.DirectionalLight(0xffd700, 1.5); // Golden highlight
-    goldLight.position.set(4, 3, 2);
-    goldLight.castShadow = true;
-    scene.add(goldLight);
-
-    // 5. Build Bell Model
     const bellGroup = new THREE.Group();
-    // Pivot points at the top of the chain (Y = 1.5)
-    bellGroup.position.set(0, 1.5, 0);
-    scene.add(bellGroup);
     bellGroupRef.current = bellGroup;
+    scene.add(bellGroup);
 
-    // Materials
+    // Bronze Material
     const bronzeMat = new THREE.MeshStandardMaterial({
-      color: 0xc8983c, // Rich bronze gold
-      roughness: 0.28,
-      metalness: 0.85
+      color: 0xc8963e,
+      roughness: 0.35,
+      metalness: 0.85,
+      flatShading: false
     });
 
     const chainMat = new THREE.MeshStandardMaterial({
-      color: 0x907030, // Antique gold
-      roughness: 0.4,
-      metalness: 0.8
+      color: 0x8a6524,
+      roughness: 0.6,
+      metalness: 0.7
     });
 
-    // 5a. Hanging Chain (Cylinder representing chain links)
-    const chainGeo = new THREE.CylinderGeometry(0.015, 0.015, 1.2, 8);
-    const chain = new THREE.Mesh(chainGeo, chainMat);
-    // Chain hangs from pivot (Y=0) down to bell top (Y=-0.6)
-    chain.position.y = -0.6;
-    bellGroup.add(chain);
-
-    // Torus representing hanger loop at top of bell
-    const loopGeo = new THREE.TorusGeometry(0.08, 0.02, 8, 16);
-    const loop = new THREE.Mesh(loopGeo, chainMat);
-    loop.position.y = -1.2;
-    bellGroup.add(loop);
-
-    // 5b. Bell Body (using Lathe Geometry)
+    // Construct Bell Body using Lathe
     const points: THREE.Vector2[] = [];
-    points.push(new THREE.Vector2(0, 0));
-    points.push(new THREE.Vector2(0.2, 0));
-    points.push(new THREE.Vector2(0.35, -0.15));
-    points.push(new THREE.Vector2(0.38, -0.4));
-    points.push(new THREE.Vector2(0.48, -0.75));
-    points.push(new THREE.Vector2(0.65, -0.9)); // Flare rim outwards
-    points.push(new THREE.Vector2(0.68, -0.95)); // Rim lip
-    points.push(new THREE.Vector2(0.64, -0.98)); // Rim bottom
-    points.push(new THREE.Vector2(0.58, -0.92)); // Inward curve
-    points.push(new THREE.Vector2(0.0, -0.85)); // Closed center
+    points.push(new THREE.Vector2(0, 1.8));
+    points.push(new THREE.Vector2(0.4, 1.7));
+    points.push(new THREE.Vector2(0.6, 1.5));
+    points.push(new THREE.Vector2(0.7, 1.1));
+    points.push(new THREE.Vector2(0.9, 0.5));
+    points.push(new THREE.Vector2(1.2, 0.0));
+    points.push(new THREE.Vector2(1.6, -0.6));
+    points.push(new THREE.Vector2(1.8, -1.0));
+    points.push(new THREE.Vector2(1.9, -1.2)); // Lip flare
+    points.push(new THREE.Vector2(1.6, -1.2)); // Rim inner
+    points.push(new THREE.Vector2(1.4, -0.8));
+    points.push(new THREE.Vector2(1.0, 0.0));
+    points.push(new THREE.Vector2(0.6, 0.8));
+    points.push(new THREE.Vector2(0.3, 1.4));
+    points.push(new THREE.Vector2(0, 1.5));
 
     const latheGeometry = new THREE.LatheGeometry(points, 32);
-    const bellBowl = new THREE.Mesh(latheGeometry, bronzeMat);
-    // Position lath so it aligns correctly under loop (centered around Y = -2.0)
-    bellBowl.position.y = -1.2;
-    bellBowl.castShadow = true;
-    bellBowl.receiveShadow = true;
-    bellGroup.add(bellBowl);
+    const bellMesh = new THREE.Mesh(latheGeometry, bronzeMat);
+    bellMesh.castShadow = true;
+    bellMesh.receiveShadow = true;
+    bellGroup.add(bellMesh);
 
-    // 5c. Clapper (Striker ball inside bell)
+    // Clapper Assembly
     const clapperGroup = new THREE.Group();
-    clapperGroup.position.set(0, -2.05, 0); // Center of clapper rod
+    clapperGroup.position.set(0, 1.2, 0);
+
+    const rodGeo = new THREE.CylinderGeometry(0.04, 0.04, 2.0, 8);
+    const rodMesh = new THREE.Mesh(rodGeo, chainMat);
+    rodMesh.position.set(0, -1.0, 0);
+    clapperGroup.add(rodMesh);
+
+    const strikerGeo = new THREE.SphereGeometry(0.3, 16, 16);
+    const strikerMesh = new THREE.Mesh(strikerGeo, bronzeMat);
+    strikerMesh.position.set(0, -2.1, 0);
+    clapperRef.current = strikerMesh;
+    clapperGroup.add(strikerMesh);
+
     bellGroup.add(clapperGroup);
 
-    const rodGeo = new THREE.CylinderGeometry(0.01, 0.01, 0.35, 8);
-    const rod = new THREE.Mesh(rodGeo, chainMat);
-    rod.position.y = 0.15;
-    clapperGroup.add(rod);
+    // Hanging loop & Chain
+    const loopGeo = new THREE.TorusGeometry(0.25, 0.08, 8, 24);
+    const loopMesh = new THREE.Mesh(loopGeo, bronzeMat);
+    loopMesh.position.set(0, 2.0, 0);
+    loopMesh.rotation.y = Math.PI / 2;
+    bellGroup.add(loopMesh);
 
-    const strikerGeo = new THREE.SphereGeometry(0.09, 16, 16);
-    const clapper = new THREE.Mesh(strikerGeo, bronzeMat);
-    clapper.position.y = 0;
-    clapperGroup.add(clapper);
-    clapperRef.current = clapper;
+    const chainGeo = new THREE.CylinderGeometry(0.06, 0.06, 1.5, 8);
+    const chainMesh = new THREE.Mesh(chainGeo, chainMat);
+    chainMesh.position.set(0, 2.9, 0);
+    bellGroup.add(chainMesh);
 
-    // 6. Damped Harmonic Swing Physics
-    let swingAngle = 0;
+    // Lighting
+    const keyLight = new THREE.DirectionalLight(0xffeedd, 2.5);
+    keyLight.position.set(3, 4, 5);
+    scene.add(keyLight);
+
+    const rimLight = new THREE.DirectionalLight(0xffaa44, 2.0);
+    rimLight.position.set(-4, -1, -3);
+    scene.add(rimLight);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+
+    let animationId: number;
+    let clock = new THREE.Clock();
     let swingVelocity = 0;
-    let swingAcceleration = 0;
-    
-    // Physics constants
-    const gravity = 9.8;
-    const damping = 0.02; // Slows down over time
-    const restLength = 1.5; // distance from top pivot
+    let swingAngle = 0;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // Swing trigger function
-    const triggerSwing = () => {
-      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (prefersReducedMotion) {
-        playChime();
-        return;
-      }
-      // Add a sudden impulse (push the bell)
-      swingVelocity = 12.0; // Angled velocity kick
+    const ring = () => {
+      swingVelocity = 0.35;
       playChime();
     };
 
-    // 7. Event Listeners for Interaction
-    const onCanvasClick = () => {
-      triggerSwing();
-    };
-
     const domElement = renderer.domElement;
-    domElement.addEventListener('click', onCanvasClick);
-    
-    // Mouseenter hover trigger
+    const onCanvasClick = () => ring();
     const onMouseEnter = () => {
-      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (!prefersReducedMotion) {
-        triggerSwing();
+      if (swingAngle < 0.05 && swingVelocity < 0.02) {
+        swingVelocity = 0.12;
       }
     };
-    domElement.addEventListener('mouseenter', onMouseEnter);
 
-    // 8. Animation Loop
-    let clock = new THREE.Clock();
-    let animationId: number;
-    let lastTime = 0;
+    domElement.addEventListener('click', onCanvasClick);
+    domElement.addEventListener('mouseenter', onMouseEnter);
 
     const animate = () => {
       animationId = requestAnimationFrame(animate);
 
-      const currentTime = clock.getElapsedTime();
-      const dt = Math.min(currentTime - lastTime, 0.1); // cap delta time
-      lastTime = currentTime;
+      if (!prefersReducedMotion) {
+        const dt = clock.getDelta();
+        const damping = 0.96;
+        const spring = 8.0;
 
-      // Update swing pendulum physics using Euler integration
-      // Theta'' = - (g/L) * sin(Theta) - damping * Theta'
-      swingAcceleration = -(gravity / restLength) * Math.sin(swingAngle) - damping * swingVelocity;
-      swingVelocity += swingAcceleration * dt;
-      swingAngle += swingVelocity * dt;
+        const force = -spring * swingAngle;
+        swingVelocity += force * dt;
+        swingVelocity *= damping;
+        swingAngle += swingVelocity;
 
-      // Apply swing rotation around Z-axis
-      bellGroup.rotation.z = swingAngle;
-
-      // Dynamic clapper lag (clapper swings slightly out of phase with bell body!)
-      clapperGroup.rotation.z = -swingAngle * 0.45;
+        bellGroup.rotation.z = swingAngle;
+        clapperGroup.rotation.z = -swingAngle * 1.4;
+        bellGroup.rotation.y = Math.sin(clock.getElapsedTime() * 0.4) * 0.15;
+      }
 
       renderer.render(scene, camera);
     };
 
     animate();
 
-    // 9. Resize Handler
-    const handleResize = () => {
-      if (!containerRef.current) return;
-      const newWidth = containerRef.current.clientWidth;
-      const newHeight = containerRef.current.clientHeight;
-
-      camera.aspect = newWidth / newHeight;
-      camera.updateProjectionMatrix();
-
-      renderer.setSize(newWidth, newHeight);
-    };
-
-    window.addEventListener('resize', handleResize);
-
     return () => {
       cancelAnimationFrame(animationId);
-      window.removeEventListener('resize', handleResize);
       domElement.removeEventListener('click', onCanvasClick);
       domElement.removeEventListener('mouseenter', onMouseEnter);
 
@@ -255,17 +217,19 @@ export function BellViewer() {
   }, []);
 
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div className="flex flex-col items-center gap-3">
       <div 
         ref={containerRef} 
-        className="w-full h-[250px] flex items-center justify-center cursor-pointer active:scale-95 transition-transform duration-200"
+        className="w-full h-[250px] flex items-center justify-center cursor-pointer motion-safe:active:scale-95 motion-safe:transition-transform motion-reduce:transition-none"
         aria-label="३डी घंटा स्पर्श आणि नाद अनुभव"
       />
       <button 
+        type="button"
         onClick={playChime}
-        className="px-4 py-1.5 rounded-full border border-saffron/20 bg-saffron/5 hover:bg-saffron/10 text-xs font-semibold text-saffron transition-all"
+        className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-[var(--dp-rule)] bg-[var(--dp-ground-well)] hover:border-[var(--dp-gold)] text-xs font-semibold text-[var(--dp-gold)] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--dp-focus)] active:translate-y-px disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        घंटा नाद ऐका 🔔
+        <Bell size={13} aria-hidden="true" />
+        <span>घंटा नाद ऐका</span>
       </button>
     </div>
   );
